@@ -37,7 +37,7 @@ class User(AbstractUser):
         medium_tier = 2,
         high_tier = 3
 
-    subscription_plan = models.IntegerChoices("PlanChoices", names="enum")
+    subscription_plan = models.IntegerChoices("PlanChoices", names="enum") #, default=0?
     product_history = models.ManyToManyField(Product)
     ingredient_history = models.ManyToManyField(Ingredient)
 
