@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User, AbstractBaseUser, AbstractUser
+from django.contrib.auth.models import User, AbstractUser
 
 # Create your models here.
 class Product(models.Model):
@@ -32,12 +32,12 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=255)
     class PlanChoices(models.IntegerChoices):
-        free = 0,
-        base_tier = 1, 
-        medium_tier = 2,
-        high_tier = 3
+        free = 0, "Free plan"
+        base_tier = 1, "Base tier"
+        medium_tier = 2, "Medium tier"
+        high_tier = 3, "VIP plan"
 
-    subscription_plan = models.IntegerChoices("PlanChoices", names="enum") #, default=0?
+    subscription_plan = models.IntegerField(choices=PlanChoices.choices, default=PlanChoices.free) #, default=0?
     product_history = models.ManyToManyField(Product)
     ingredient_history = models.ManyToManyField(Ingredient)
 
@@ -46,14 +46,14 @@ class User(AbstractUser):
     favourite_shops = models.ManyToManyField(FoodShop, related_name="liked_by")
 
     class DietChoices(models.IntegerChoices):
-        Normal = 0,
-        Vegan = 1, 
-        Vegetarian = 2,
-        Keto = 3,
-        Paleo = 4,
-        Carnivore = 5,
+        Normal = 0, "Average diet"
+        Vegan = 1, "No meat"
+        Vegetarian = 2, "No animal products"
+        Keto = 3, "no carbs"
+        Paleo = 4, "no new things"
+        Carnivore = 5, "nothing apart from meat"
 
-    diet_type = models.IntegerChoices("DietChoices", names="enum") #Normal, Vegan, Vegetarian, Keto, Paleo, Carnivore
+    diet_type = models.IntegerField(choices=DietChoices, default=DietChoices.Normal) #Normal, Vegan, Vegetarian, Keto, Paleo, Carnivore
 
     
     USERNAME_FIELD = "email"
