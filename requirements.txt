@@ -1,6 +1,0 @@
-django
-djangorestframework
-markdown
-django-filter
-requests
-djangorestframework_simplejwt
