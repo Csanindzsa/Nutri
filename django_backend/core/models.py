@@ -9,7 +9,7 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(email=email, is_active=True, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -37,16 +37,22 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    class Meta:
+        db_table = "Users"
 
 
 from django.db import models
 class Restaurant(models.Model):
     """Model representing a restaurant"""
     name = models.CharField(max_length=255, unique=True)
-    foods_on_menu = models.CharField(max_length=255, blank=True, null=True)  # Optional
+    foods_on_menu = models.IntegerField(default=0)  # Optional
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = "Restaurants"
 
 
 class Ingredient(models.Model):
@@ -65,6 +71,9 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = "Ingredients"
 
 
 class Food(models.Model):
@@ -82,8 +91,14 @@ class Food(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
+    
+    class Meta:
+        db_table = "Foods"
 
 
 class ConfirmationToken(models.Model):
     code = models.CharField(max_length=32)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="confirmation_codes")
+
+    class Meta:
+        db_table = "ConfirmationTokens"
