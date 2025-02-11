@@ -1,10 +1,10 @@
 import React from 'react'
 
-interface MainPageProps = {
-    
+interface MainPageProps {
+    accessToken: string | null
 }
 
-const MainPage = () => {
+const MainPage: React.FC<MainPageProps> = ({accessToken, }) => {
   return (
     <div>MainPage</div>
   )

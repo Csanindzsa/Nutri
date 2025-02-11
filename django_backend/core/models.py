@@ -80,7 +80,7 @@ class Food(models.Model):
     """Model representing a food item in a restaurant"""
     
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="foods")
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
     is_organic = models.BooleanField(default=False)
     is_gluten_free = models.BooleanField(default=False)
