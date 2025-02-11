@@ -3,6 +3,7 @@ import { Route, Routes, Link, useNavigate } from 'react-router-dom'
 import Register from './Register'
 import Login from './Login'  // Import the new Login component
 import ConfirmEmail from './ConfirmEmail'
+import MainPage from './MainPage'
 
 // A utility function to refresh the access token
 const refreshAccessToken = async (refreshToken: string | null) => {
@@ -33,6 +34,8 @@ const App = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  
 
   // Try to refresh the access token when the app loads
   useEffect(() => {
@@ -86,7 +89,7 @@ const App = () => {
       </nav>
 
       <Routes>
-        <Route path="/" element={<h1>Home Page</h1>} />
+        <Route path="/" element={<MainPage accessToken={accessToken}/>} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login setAccessToken={setAccessToken} setRefreshToken={setRefreshToken} />} />  {/* Pass setter functions */}
         <Route path="/confirm-email/:token" element={<ConfirmEmail />} />

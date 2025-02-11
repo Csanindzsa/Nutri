@@ -167,7 +167,7 @@ EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider's SMTP server
 EMAIL_PORT = 465 #587  # Port for Gmail, may vary based on provider
 EMAIL_USE_TLS = False  # Enable TLS for secure connection
 EMAIL_USE_SSL = True
-print(os.getenv("EMAIL"))
-print( os.getenv("PASSWORD") )
+# print(os.getenv("EMAIL"))
+# print( os.getenv("PASSWORD") )
 EMAIL_HOST_USER = os.getenv("EMAIL")  # Your email address
 EMAIL_HOST_PASSWORD = os.getenv("PASSWORD")  # Your email password (consider using environment variables for security)
