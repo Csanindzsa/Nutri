@@ -1,4 +1,4 @@
-import React, { useEffect, Dispatch } from 'react';
+import React, { useEffect } from 'react';
 import { Restaurant, Food, Ingredient, ExactLocation } from './interfaces';
 
 interface MainPageProps {
@@ -10,7 +10,7 @@ interface MainPageProps {
   foods: Food[];
   setFoods: React.Dispatch<React.SetStateAction<Food[]>>;
   exactLocations: Array<ExactLocation>;
-  setExactLocations: Dispatch<React.SetStateAction<Array<ExactLocation>>>;
+  setExactLocations: React.Dispatch<React.SetStateAction<Array<ExactLocation>>>;
 }
 
 const MainPage: React.FC<MainPageProps> = ({
@@ -52,7 +52,19 @@ const MainPage: React.FC<MainPageProps> = ({
     fetchFoods();
   }, [setRestaurants, setFoods]); // Dependencies to ensure re-fetching only when necessary
 
-  return <div>MainPage</div>;
+  return (
+  <React.Fragment>
+    <div className="restaurants-tab">
+      {restaurants.map(r=><span>{r.name}</span>)}
+    </div>
+    <div className="ingredients-filter">
+      
+    </div>
+    
+  </React.Fragment>
+
+
+  );
 };
 
 export default MainPage;
