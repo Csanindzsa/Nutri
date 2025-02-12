@@ -94,7 +94,7 @@ class RestaurantListView(generics.ListAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
-class ListViewLocations(generics.ListAPIView):
+class ListViewExactLocations(generics.ListAPIView):
     queryset = ExactLocation.objects.all()
     serializer_class = ExactLocationSerializer
 
