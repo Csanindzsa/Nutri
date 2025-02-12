@@ -1,14 +1,14 @@
 import random
 import string
 
-from .serializers import UserSerializer
+from .serializers import *
 from rest_framework import generics
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils.http import urlsafe_base64_decode
-from .models import ConfirmationToken
+from .models import ConfirmationToken, User, Restaurant, Ingredient, Food
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -89,3 +89,16 @@ class ConfirmEmail(generics.CreateAPIView):
         return Response({
             "message": "User has been successfully activated."
         }, status=status.HTTP_200_OK)
+
+class RestaurantListView(generics.ListAPIView):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+
+class ListViewLocations(generics.ListAPIView):
+    queryset = ExactLocation.objects.all()
+    serializer_class = ExactLocationSerializer
+
+
+class FoodListView(generics.ListAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer

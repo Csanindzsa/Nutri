@@ -54,6 +54,25 @@ class Restaurant(models.Model):
     class Meta:
         db_table = "Restaurants"
 
+#unused (for now)
+class Location(models.Model):
+    city_name = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+    restaurants = models.ManyToManyField(Restaurant, related_name="locations")
+    
+    class Meta:
+        db_table = "Locations"
+
+class ExactLocation(models.Model):
+    city_name = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+    street_name = models.CharField(max_length=255)
+    street_type = models.CharField(max_length=50)
+    house_number = models.IntegerField()
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="exact_locations")
+    
+    class Meta:
+        db_table = "ExactLocations"
 
 class Ingredient(models.Model):
     """Model representing an ingredient with hazard levels"""
