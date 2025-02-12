@@ -4,6 +4,7 @@ import Register from './Register'
 import Login from './Login'  // Import the new Login component
 import ConfirmEmail from './ConfirmEmail'
 import MainPage from './MainPage'
+import {Restaurant, Food, Ingredient, ExactLocation } from "./interfaces"
 
 // A utility function to refresh the access token
 const refreshAccessToken = async (refreshToken: string | null) => {
@@ -33,6 +34,11 @@ const refreshAccessToken = async (refreshToken: string | null) => {
 const App = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState<string | null>(null)
+  const [restaurants, setRestaurants] = useState<Array<Restaurant>>([]);
+  const [exactLocations, setExactLocations] = useState<ExactLocation[]>([]);
+
+  const [ingredients, setIngredients] = useState<Array<Ingredient>>([]);
+  const [foods, setFoods] = useState<Array<Food>>([]);
   const navigate = useNavigate()
 
   
@@ -89,7 +95,17 @@ const App = () => {
       </nav>
 
       <Routes>
-        <Route path="/" element={<MainPage accessToken={accessToken}/>} />
+        <Route path="/" element={<MainPage accessToken={accessToken}
+          restaurants={restaurants} 
+          setRestaurants={setRestaurants} 
+          ingredients={ingredients} 
+          setIngredients={setIngredients} 
+          foods={foods} 
+          setFoods={setFoods} 
+          exactLocations={exactLocations}
+          setExactLocations={setExactLocations}
+          />} 
+        />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login setAccessToken={setAccessToken} setRefreshToken={setRefreshToken} />} />  {/* Pass setter functions */}
         <Route path="/confirm-email/:token" element={<ConfirmEmail />} />

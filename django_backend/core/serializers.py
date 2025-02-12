@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Restaurant, Ingredient, Food, ExactLocation
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)  # Password should be write-only
@@ -15,3 +15,19 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)  # Hash the password
         user.save()
         return user
+
+class RestaurantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = '__all__'
+
+class ExactLocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExactLocation
+        fields = ['city_name', 'postal_code', 'street_name', 'street_type', 'house_number', 'restaurant_id']
+
+
+class FoodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Food
+        fields = '__all__'

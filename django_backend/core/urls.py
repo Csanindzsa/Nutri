@@ -13,4 +13,9 @@ urlpatterns = [
     path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),  # Verify Token
     path('create-user/', CreateUserView.as_view(), name='create_user'),
     path('confirm-email/', ConfirmEmail.as_view(), name='confirm-email'),
+
+    path('restaurants/', RestaurantListView.as_view(), name='restaurants_list'),
+    path('locations/', ListViewLocations.as_view(), name='locations_list'),
+    path('foods/', FoodListView.as_view(), name='foods_list'),
+    # path('ingredients/', IngredientListView.as_view()),
 ]
