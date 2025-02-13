@@ -90,6 +90,12 @@ class ConfirmEmail(generics.CreateAPIView):
             "message": "User has been successfully activated."
         }, status=status.HTTP_200_OK)
 
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
 class RestaurantListView(generics.ListAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
