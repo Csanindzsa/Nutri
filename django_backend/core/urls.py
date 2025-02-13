@@ -17,5 +17,5 @@ urlpatterns = [
     path('restaurants/', RestaurantListView.as_view(), name='restaurants_list'),
     path('locations/', ListViewExactLocations.as_view(), name='locations_list'),
     path('foods/', FoodListView.as_view(), name='foods_list'),
-    # path('ingredients/', IngredientListView.as_view()),
+    path('ingredients/', IngredientListView.as_view()),
 ]

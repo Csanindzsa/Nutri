@@ -104,6 +104,9 @@ class ListViewExactLocations(generics.ListAPIView):
     queryset = ExactLocation.objects.all()
     serializer_class = ExactLocationSerializer
 
+class IngredientListView(generics.ListAPIView):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
 
 class FoodListView(generics.ListAPIView):
     queryset = Food.objects.all()

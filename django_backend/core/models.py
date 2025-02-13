@@ -2,10 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 class CustomUserManager(BaseUserManager):
-    """Custom manager for CustomUser model"""
-
     def create_user(self, email, password=None, **extra_fields):
-        """Creates and returns a regular user with an email and password."""
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
@@ -22,8 +19,6 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Custom user model that uses email instead of username."""
-    
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=False)
@@ -44,7 +39,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 from django.db import models
 class Restaurant(models.Model):
-    """Model representing a restaurant"""
     name = models.CharField(max_length=255, unique=True)
     foods_on_menu = models.IntegerField(default=0)  # Optional
 
@@ -75,8 +69,6 @@ class ExactLocation(models.Model):
         db_table = "ExactLocations"
 
 class Ingredient(models.Model):
-    """Model representing an ingredient with hazard levels"""
-    
     HAZARD_LEVEL_CHOICES = [
         (0, "Safe"),
         (1, "Mild Risk"),
@@ -96,8 +88,6 @@ class Ingredient(models.Model):
 
 
 class Food(models.Model):
-    """Model representing a food item in a restaurant"""
-    
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="foods")
     name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
