@@ -95,7 +95,7 @@ class Food(models.Model):
     is_gluten_free = models.BooleanField(default=False)
     is_alcohol_free = models.BooleanField(default=False)
     is_lactose_free = models.BooleanField(default=False)
-
+    image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
     ingredients = models.ManyToManyField(Ingredient, related_name="foods")  # Many-to-Many Relationship
 
     def __str__(self):

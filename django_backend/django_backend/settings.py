@@ -171,3 +171,8 @@ EMAIL_USE_SSL = True
 # print( os.getenv("PASSWORD") )
 EMAIL_HOST_USER = os.getenv("EMAIL")  # Your email address
 EMAIL_HOST_PASSWORD = os.getenv("PASSWORD")  # Your email password (consider using environment variables for security)
+
+MEDIA_URL = '/media/'
+
+# Directory where media files are stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
