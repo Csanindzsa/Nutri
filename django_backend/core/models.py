@@ -2,14 +2,11 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 
 class CustomUserManager(BaseUserManager):
-    """Custom manager for CustomUser model"""
-
     def create_user(self, email, password=None, **extra_fields):
-        """Creates and returns a regular user with an email and password."""
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(email=email, is_active=True, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -22,8 +19,6 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Custom user model that uses email instead of username."""
-    
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, blank=True, null=True)
     is_active = models.BooleanField(default=False)
@@ -37,21 +32,43 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    class Meta:
+        db_table = "Users"
 
 
 from django.db import models
 class Restaurant(models.Model):
-    """Model representing a restaurant"""
     name = models.CharField(max_length=255, unique=True)
-    foods_on_menu = models.CharField(max_length=255, blank=True, null=True)  # Optional
+    foods_on_menu = models.IntegerField(default=0)  # Optional
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = "Restaurants"
 
+#unused (for now)
+class Location(models.Model):
+    city_name = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+    restaurants = models.ManyToManyField(Restaurant, related_name="locations")
+    
+    class Meta:
+        db_table = "Locations"
+
+class ExactLocation(models.Model):
+    city_name = models.CharField(max_length=255)
+    postal_code = models.CharField(max_length=20)
+    street_name = models.CharField(max_length=255)
+    street_type = models.CharField(max_length=50)
+    house_number = models.IntegerField()
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="exact_locations")
+    
+    class Meta:
+        db_table = "ExactLocations"
 
 class Ingredient(models.Model):
-    """Model representing an ingredient with hazard levels"""
-    
     HAZARD_LEVEL_CHOICES = [
         (0, "Safe"),
         (1, "Mild Risk"),
@@ -65,25 +82,32 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = "Ingredients"
 
 
 class Food(models.Model):
-    """Model representing a food item in a restaurant"""
-    
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="foods")
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
     is_organic = models.BooleanField(default=False)
     is_gluten_free = models.BooleanField(default=False)
     is_alcohol_free = models.BooleanField(default=False)
     is_lactose_free = models.BooleanField(default=False)
-
+    image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
     ingredients = models.ManyToManyField(Ingredient, related_name="foods")  # Many-to-Many Relationship
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
+    
+    class Meta:
+        db_table = "Foods"
 
 
 class ConfirmationToken(models.Model):
     code = models.CharField(max_length=32)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="confirmation_codes")
+
+    class Meta:
+        db_table = "ConfirmationTokens"
