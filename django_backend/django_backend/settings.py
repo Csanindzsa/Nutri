@@ -145,7 +145,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,  # Issue a new refresh token on every refresh
     'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,  # Uses Django's secret key for signing
+    'SIGNING_KEY': "", #SECRET_KEY,  # Uses Django's secret key for signing
     'AUTH_HEADER_TYPES': ('Bearer',),  # Authorization: Bearer <token>
 }
 
@@ -167,7 +167,12 @@ EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider's SMTP server
 EMAIL_PORT = 465 #587  # Port for Gmail, may vary based on provider
 EMAIL_USE_TLS = False  # Enable TLS for secure connection
 EMAIL_USE_SSL = True
-print(os.getenv("EMAIL"))
-print( os.getenv("PASSWORD") )
+# print(os.getenv("EMAIL"))
+# print( os.getenv("PASSWORD") )
 EMAIL_HOST_USER = os.getenv("EMAIL")  # Your email address
 EMAIL_HOST_PASSWORD = os.getenv("PASSWORD")  # Your email password (consider using environment variables for security)
+
+MEDIA_URL = '/media/'
+
+# Directory where media files are stored
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
