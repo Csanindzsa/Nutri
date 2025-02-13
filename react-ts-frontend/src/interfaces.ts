@@ -29,5 +29,5 @@ export interface Food {
     is_gluten_free: boolean;
     is_alcohol_free: boolean;
     is_lactose_free: boolean;
-    ingredients: Ingredient[];
+    ingredients: number[];
 }

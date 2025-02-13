@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Restaurant, Food, Ingredient, ExactLocation } from './interfaces';
 
 interface MainPageProps {
@@ -13,6 +13,8 @@ interface MainPageProps {
   setExactLocations: React.Dispatch<React.SetStateAction<Array<ExactLocation>>>;
   selectedRestaurants: number[];
   setSelectedRestaurants: React.Dispatch<React.SetStateAction<number[]>>;
+  selectedIngredients: number[];
+  setSelectedIngredients: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
 const MainPage: React.FC<MainPageProps> = ({
@@ -26,63 +28,44 @@ const MainPage: React.FC<MainPageProps> = ({
   exactLocations,
   setExactLocations,
   selectedRestaurants,
-  setSelectedRestaurants
+  setSelectedRestaurants,
+  selectedIngredients,
+  setSelectedIngredients,
 }) => {
-  const [ingredientFoodMap, setIngredientFoodMap] = useState<{ [key: number]: number[] }>({});
-  const [selectedIngredients, setSelectedIngredients] = useState<number[]>([]);
+  const isDataLoaded = React.useRef(false); // Track if data has been loaded
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/restaurants/');
-        if (!response.ok) throw new Error('Failed to fetch restaurants');
-        const data: Restaurant[] = await response.json();
-        setRestaurants(data);
-        setSelectedRestaurants(data.map(r => r.id)); // Initialize selected restaurants
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
-      }
-    };
+    if (!isDataLoaded.current) {
+      const fetchData = async () => {
+        try {
+          const [restaurantsResponse, foodsResponse, ingredientsResponse] = await Promise.all([
+            fetch('http://localhost:8000/restaurants/'),
+            fetch('http://localhost:8000/foods/'),
+            fetch('http://localhost:8000/ingredients/'),
+          ]);
 
-    const fetchFoods = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/foods/');
-        if (!response.ok) throw new Error('Failed to fetch foods');
-        const data: Food[] = await response.json();
-        setFoods(data);
-        
-        // Create ingredient-food mapping
-        const ingredientMap: { [key: number]: number[] } = {};
-        data.forEach(food => {
-          food.ingredients.forEach(ingredient => {
-            if (!ingredientMap[ingredient.id]) {
-              ingredientMap[ingredient.id] = [];
-            }
-            ingredientMap[ingredient.id].push(food.id);
-          });
-        });
-        setIngredientFoodMap(ingredientMap);
-      } catch (error) {
-        console.error('Error fetching foods:', error);
-      }
-    };
+          if (!restaurantsResponse.ok || !foodsResponse.ok || !ingredientsResponse.ok) {
+            throw new Error('Failed to fetch data');
+          }
 
-    const fetchIngredients = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/ingredients/');
-        if (!response.ok) throw new Error('Failed to fetch ingredients');
-        const data: Ingredient[] = await response.json();
-        setIngredients(data);
-        setSelectedIngredients(data.map(i => i.id)); // Initialize selected ingredients
-      } catch (error) {
-        console.error('Error fetching ingredients:', error);
-      }
-    };
+          const restaurantsData = await restaurantsResponse.json();
+          const foodsData = await foodsResponse.json();
+          const ingredientsData = await ingredientsResponse.json();
 
-    fetchRestaurants();
-    fetchFoods();
-    fetchIngredients();
-  }, [setRestaurants, setFoods, setIngredients, setSelectedRestaurants]);
+          setRestaurants(restaurantsData);
+          setFoods(foodsData);
+          setIngredients(ingredientsData);
+
+          // Mark data as loaded
+          isDataLoaded.current = true;
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
+      };
+
+      fetchData();
+    }
+  }, [setRestaurants, setFoods, setIngredients]);
 
   const toggleRestaurantSelection = (id: number) => {
     setSelectedRestaurants(prevSelected =>
@@ -95,15 +78,15 @@ const MainPage: React.FC<MainPageProps> = ({
   const toggleIngredientSelection = (id: number) => {
     setSelectedIngredients(prevSelected =>
       prevSelected.includes(id)
-        ? prevSelected.filter(iid => iid !== id)
-        : [...prevSelected, id]
+        ? prevSelected.filter(iid => iid !== id) // Uncheck the ingredient
+        : [...prevSelected, id] // Check the ingredient
     );
   };
 
-  // Filter foods based on selected restaurants and ingredients
+  // Filter foods based on selected restaurants and selected ingredients
   const filteredFoods = foods.filter(food => 
     selectedRestaurants.includes(food.restaurant) &&
-    food.ingredients.every(ingredient => selectedIngredients.includes(ingredient.id))
+    food.ingredients.every(ingredientId => selectedIngredients.includes(ingredientId))
   );
 
   return (
@@ -119,7 +102,8 @@ const MainPage: React.FC<MainPageProps> = ({
         ))}
       </div>
 
-      <div className="ingredients-filter">
+      <div className="ingredients-tab">
+        <h3>Ingredients</h3>
         {ingredients.map(ingredient => (
           <div key={ingredient.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span>{ingredient.name}</span>
@@ -135,7 +119,7 @@ const MainPage: React.FC<MainPageProps> = ({
           <div key={food.id}>
             <h3>{food.name}</h3>
             <p>Restaurant: {restaurants.find(r => r.id === food.restaurant)?.name}</p>
-            <p>Ingredients: {food.ingredients.map(i => i.name).join(', ')}</p>
+            <p>Ingredients: {food.ingredients.map(i => ingredients.find(ing => ing.id === i)?.name).join(', ')}</p>
           </div>
         ))}
       </div>
