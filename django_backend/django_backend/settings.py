@@ -145,7 +145,7 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,  # Issue a new refresh token on every refresh
     'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,  # Uses Django's secret key for signing
+    'SIGNING_KEY': "", #SECRET_KEY,  # Uses Django's secret key for signing
     'AUTH_HEADER_TYPES': ('Bearer',),  # Authorization: Bearer <token>
 }
 
