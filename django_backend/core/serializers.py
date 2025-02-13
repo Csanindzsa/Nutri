@@ -49,8 +49,13 @@ class ExactLocationSerializer(serializers.ModelSerializer):
         model = ExactLocation
         fields = ['city_name', 'postal_code', 'street_name', 'street_type', 'house_number', 'restaurant_id']
 
+class IngredientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
 
 class FoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
         fields = '__all__'
+

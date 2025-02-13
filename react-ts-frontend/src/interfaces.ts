@@ -22,7 +22,7 @@ export interface Ingredient {
 
 export interface Food {
     id: number;
-    restaurant: Restaurant;
+    restaurant: number;
     name: string;
     macro_table: Record<string, any>; // JSON field (assumes key-value pairs)
     is_organic: boolean;
