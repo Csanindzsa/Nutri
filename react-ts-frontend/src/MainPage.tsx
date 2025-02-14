@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Restaurant, Food, Ingredient, ExactLocation } from './interfaces';
 
 interface MainPageProps {
@@ -32,6 +33,12 @@ const MainPage: React.FC<MainPageProps> = ({
   selectedIngredients,
   setSelectedIngredients,
 }) => {
+  const [searchParams] = useSearchParams();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isOrganicFilter, setIsOrganicFilter] = useState(false);
+  const [isAlcoholFreeFilter, setIsAlcoholFreeFilter] = useState(false);
+  const [isGlutenFreeFilter, setIsGlutenFreeFilter] = useState(false);
+  const [isLactoseFreeFilter, setIsLactoseFreeFilter] = useState(false);
   const isDataLoaded = React.useRef(false); // Track if data has been loaded
 
   useEffect(() => {
@@ -67,6 +74,21 @@ const MainPage: React.FC<MainPageProps> = ({
     }
   }, [setRestaurants, setFoods, setIngredients]);
 
+  useEffect(() => {
+    // Check for success parameter and show message
+    if (searchParams.get('success') === 'true') {
+      setShowSuccess(true);
+      // Remove success message after 3 seconds
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        // Remove the success parameter from URL
+        searchParams.delete('success');
+        window.history.replaceState({}, '', window.location.pathname);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
+
   const toggleRestaurantSelection = (id: number) => {
     setSelectedRestaurants(prevSelected =>
       prevSelected.includes(id)
@@ -83,14 +105,65 @@ const MainPage: React.FC<MainPageProps> = ({
     );
   };
 
-  // Filter foods based on selected restaurants and selected ingredients
+  // Filter foods based on selected restaurants, selected ingredients, and additional filters
   const filteredFoods = foods.filter(food => 
     selectedRestaurants.includes(food.restaurant) &&
-    food.ingredients.every(ingredientId => selectedIngredients.includes(ingredientId))
+    food.ingredients.every(ingredientId => selectedIngredients.includes(ingredientId)) &&
+    (!isOrganicFilter || food.is_organic) &&
+    (!isAlcoholFreeFilter || food.is_alcohol_free) &&
+    (!isGlutenFreeFilter || food.is_gluten_free) &&
+    (!isLactoseFreeFilter || food.is_lactose_free)
   );
 
   return (
     <React.Fragment>
+      {showSuccess && (
+        <div style={{ 
+          backgroundColor: '#e6ffe6', 
+          padding: '10px', 
+          marginBottom: '20px',
+          borderRadius: '4px'
+        }}>
+          Food successfully created!
+        </div>
+      )}
+
+      {/* Filter Controls */}
+      <div className="filters">
+        <label>
+          <input
+            type="checkbox"
+            checked={isOrganicFilter}
+            onChange={() => setIsOrganicFilter(!isOrganicFilter)}
+          />
+          Organic
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={isAlcoholFreeFilter}
+            onChange={() => setIsAlcoholFreeFilter(!isAlcoholFreeFilter)}
+          />
+          Alcohol-Free
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={isGlutenFreeFilter}
+            onChange={() => setIsGlutenFreeFilter(!isGlutenFreeFilter)}
+          />
+          Gluten-Free
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={isLactoseFreeFilter}
+            onChange={() => setIsLactoseFreeFilter(!isLactoseFreeFilter)}
+          />
+          Lactose-Free
+        </label>
+      </div>
+
       <div className="restaurants-tab">
         {restaurants.map(r => (
           <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -116,8 +189,35 @@ const MainPage: React.FC<MainPageProps> = ({
 
       <div className="foods-list">
         {filteredFoods.map(food => (
-          <div key={food.id}>
+          <div key={food.id} style={{ 
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            padding: '15px',
+            marginBottom: '15px'
+          }}>
             <h3>{food.name}</h3>
+            <div style={{ marginBottom: '10px' }}>
+              {food.image ? (
+                <img
+                  src={`${food.image}`}
+                  alt={food.name}
+                  style={{
+                    maxWidth: '200px',
+                    height: 'auto',
+                    borderRadius: '4px'
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    const noImageText = document.createElement('span');
+                    noImageText.textContent = 'No image available';
+                    noImageText.style.color = '#666';
+                    e.currentTarget.parentNode?.appendChild(noImageText);
+                  }}
+                />
+              ) : (
+                <span style={{ color: '#666' }}>No image available</span>
+              )}
+            </div>
             <p>Restaurant: {restaurants.find(r => r.id === food.restaurant)?.name}</p>
             <p>Ingredients: {food.ingredients.map(i => ingredients.find(ing => ing.id === i)?.name).join(', ')}</p>
           </div>

@@ -7,6 +7,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils.http import urlsafe_base64_decode
 from .models import ConfirmationToken, User, Restaurant, Ingredient, Food
 from django.core.mail import send_mail
@@ -111,3 +113,9 @@ class IngredientListView(generics.ListAPIView):
 class FoodListView(generics.ListAPIView):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
+
+class FoodCreateView(generics.CreateAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
