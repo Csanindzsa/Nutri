@@ -30,4 +30,5 @@ export interface Food {
     is_alcohol_free: boolean;
     is_lactose_free: boolean;
     ingredients: number[];
+    image?: string;  // Optional string for image URL
 }

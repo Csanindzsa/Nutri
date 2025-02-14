@@ -19,7 +19,10 @@ urlpatterns = [
 
     path('restaurants/', RestaurantListView.as_view(), name='restaurants_list'),
     path('locations/', ListViewExactLocations.as_view(), name='locations_list'),
+
     path('foods/', FoodListView.as_view(), name='foods_list'),
+    path('foods/create/', FoodCreateView.as_view(), name='food_create'),
+
     path('ingredients/', IngredientListView.as_view()),
 ]
 

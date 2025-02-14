@@ -4,6 +4,7 @@ import Register from './Register';
 import Login from './Login';
 import ConfirmEmail from './ConfirmEmail';
 import MainPage from './MainPage';
+import CreateFood from './CreateFood';
 import { Restaurant, Food, Ingredient, ExactLocation } from './interfaces';
 
 // Function to decode JWT token
@@ -163,6 +164,7 @@ const App = () => {
           <li><Link to="/">Home</Link></li>
           <li><Link to="/register">Register</Link></li>
           <li><Link to="/login">Login</Link></li>
+          <li><Link to="/create-food">Create Food</Link></li>
         </ul>
       </nav>
 
@@ -184,6 +186,17 @@ const App = () => {
               setSelectedRestaurants={setSelectedRestaurants}
               selectedIngredients={selectedIngredients}
               setSelectedIngredients={setSelectedIngredients}
+            />
+          }
+        />
+        <Route
+          path="/create-food"
+          element={
+            <CreateFood
+              accessToken={accessToken}
+              restaurants={restaurants}
+              ingredients={ingredients}
+              onCreateFood={(newFood) => setFoods(prevFoods => [...prevFoods, newFood])}
             />
           }
         />
