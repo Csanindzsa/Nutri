@@ -100,11 +100,36 @@ class Food(models.Model):
     image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
     ingredients = models.ManyToManyField(Ingredient, related_name="foods")  # Many-to-Many Relationship
 
+    approved_supervisors = models.ManyToManyField(User, related_name="approved_foods", blank=True)
+    is_approved = models.BooleanField(default=True)
+
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
     
     class Meta:
         db_table = "Foods"
+
+class FoodChange(models.Model):
+    old_version = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="new_versions")
+
+    new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
+    new_name = models.CharField(max_length=255, unique=True)
+    new_macro_table = models.JSONField(default=dict)  # Stores macros as JSON
+    new_is_organic = models.BooleanField(default=False)
+    new_is_gluten_free = models.BooleanField(default=False)
+    new_is_alcohol_free = models.BooleanField(default=False)
+    new_is_lactose_free = models.BooleanField(default=False)
+    new_image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
+    new_ingredients = models.ManyToManyField(Ingredient, related_name="new_food_versions")  # Many-to-Many Relationship
+
+    new_approved_supervisors = models.ManyToManyField(User, related_name="approved_food_changes", blank=True)
+    new_is_approved = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.restaurant.name})"
+    
+    class Meta:
+        db_table = "FoodChanges"
 
 
 class ConfirmationToken(models.Model):

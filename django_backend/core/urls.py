@@ -22,6 +22,8 @@ urlpatterns = [
 
     path('foods/', FoodListView.as_view(), name='foods_list'),
     path('foods/create/', FoodCreateView.as_view(), name='food_create'),
+    path('food/<int:pk>/accept/', AcceptFood.as_view(), name='accept-food'),
+    path('foods/approvable/', GetApprovableFoods.as_view(), name='accept-food'),
 
     path('ingredients/', IngredientListView.as_view()),
 ]

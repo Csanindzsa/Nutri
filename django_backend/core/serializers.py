@@ -26,6 +26,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Add custom claims
         data['username'] = self.user.username
         data['email'] = self.user.email
+        data['is_supervisor'] = self.user.is_supervisor
 
         return data
     @classmethod
@@ -35,6 +36,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         # Add custom claims
         token['username'] = user.username
         token['email'] = user.email
+        token['is_supervisor'] = user.is_supervisor
 
         return token
 

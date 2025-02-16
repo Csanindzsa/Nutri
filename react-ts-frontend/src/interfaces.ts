@@ -23,12 +23,14 @@ export interface Ingredient {
 export interface Food {
     id: number;
     restaurant: number;
+    restaurant_name: string;  // Add this field
     name: string;
-    macro_table: Record<string, any>; // JSON field (assumes key-value pairs)
+    macro_table: Record<string, any>;
     is_organic: boolean;
     is_gluten_free: boolean;
     is_alcohol_free: boolean;
     is_lactose_free: boolean;
     ingredients: number[];
-    image?: string;  // Optional string for image URL
+    image?: string;
+    approved_supervisors_count?: number;
 }
