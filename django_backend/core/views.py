@@ -111,7 +111,7 @@ class IngredientListView(generics.ListAPIView):
     serializer_class = IngredientSerializer
 
 class FoodListView(generics.ListAPIView):
-    queryset = Food.objects.all()
+    queryset = Food.objects.filter(is_approved=True)
     serializer_class = FoodSerializer
 
 class FoodCreateView(generics.CreateAPIView):
@@ -119,3 +119,65 @@ class FoodCreateView(generics.CreateAPIView):
     serializer_class = FoodSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Set is_approved to False upon creation
+        serializer.validated_data['is_approved'] = False
+
+        # Save the Food instance
+        food = serializer.save()
+
+        # If the user is a supervisor, add them to the approved_users
+        if self.request.user.is_supervisor:
+            food.approved_users.add(self.request.user)
+
+        # Save the updated Food instance
+        food.save()
+
+
+class GetApprovableFoods(generics.ListAPIView):
+    queryset = Food.objects.filter(is_approved=False).select_related('restaurant')  # Optimize query
+    serializer_class = FoodSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+
+        for i, food in enumerate(queryset):
+            data[i]['approved_supervisors_count'] = food.approved_supervisors.filter(is_supervisor=True).count()
+            data[i]['restaurant_name'] = food.restaurant.name  # Add restaurant name
+
+        return Response(data)
+
+
+class AcceptFood(generics.UpdateAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        # Get the food instance
+        food = self.get_object()
+
+        # Check if the user is a supervisor
+        if not request.user.is_supervisor:
+            return Response(
+                {"detail": "Only supervisors can approve food items."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Add the supervisor to the approved_users
+        food.approved_users.add(request.user)
+
+        # Save the updated food instance
+        food.save()
+
+        # Return a success response
+        return Response(
+            {"detail": "Food item approved successfully."},
+            status=status.HTTP_200_OK
+        )
