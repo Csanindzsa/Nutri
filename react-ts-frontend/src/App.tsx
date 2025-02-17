@@ -147,6 +147,7 @@ const App = () => {
   }, [selectedRestaurants, selectedIngredients]);
 
   return (
+    
     <div>
       <h2>Account:</h2>
       {accessToken ? (
@@ -169,6 +170,7 @@ const App = () => {
           <li><Link to="/approvable-foods">Approvable Foods</Link></li>
         </ul>
       </nav>
+      
 
       <Routes>
         <Route

@@ -1,14 +1,22 @@
-// import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router } from 'react-router-dom'
-import App from './App'
+import React from "react";
+import ReactDOM from "react-dom";
+import App from "./App";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import theme from "./theme";
+import { BrowserRouter as Router } from "react-router-dom";
 
-const rootElement = document.getElementById('root') as HTMLElement
+const rootElement = document.getElementById("root") as HTMLElement;
 
-const root = ReactDOM.createRoot(rootElement)
-
-root.render(
+//fix issue idk
+ReactDOM.render(
   <Router>
-    <App />
-  </Router>
-)
+    <React.StrictMode>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </React.StrictMode>
+  </Router>,
+  rootElement
+);
