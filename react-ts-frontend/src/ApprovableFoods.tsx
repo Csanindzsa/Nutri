@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Food } from "./interfaces";
 import "./assets/css/ApprovableFoods.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface ApprovableFoodsProps {
   accessToken: string | null;
@@ -10,6 +10,7 @@ interface ApprovableFoodsProps {
 const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
   const [foods, setFoods] = useState<Food[]>([]);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchApprovableFoods = async () => {
@@ -49,11 +50,16 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ is_approved: 1 }),
         }
       );
 
       if (response.ok) {
+        console.log("Food approved successfully");
+        alert("Food approved successfully");
+        navigate("/approvable-foods");
         setFoods((prevFoods) =>
           prevFoods.map((food) =>
             food.id === foodId
@@ -61,6 +67,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
                   ...food,
                   approved_supervisors_count:
                     (food.approved_supervisors_count ?? 0) + 1,
+                  is_approved: 1,
                 }
               : food
           )

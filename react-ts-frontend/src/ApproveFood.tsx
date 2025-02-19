@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Food } from "./interfaces";
 import { Ingredient } from "./interfaces";
 
@@ -11,6 +11,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
   const { foodId } = useParams<{ foodId: string }>();
   const [food, setFood] = useState<Food | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!foodId) {
@@ -67,6 +68,32 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
     return ingredient ? ingredient.name : "Unknown";
   };
 
+  const handleApproveAndRedirect = async (id: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8000/foods/${id}/accept/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ is_approved: 1 }),
+        }
+      );
+
+      if (response.ok) {
+        handleApprove(id);
+        console.log("Food approved successfully");
+        alert("Food approved successfully");
+        navigate("/approvable-foods");
+      } else {
+        console.error("Failed to approve food", response.status);
+      }
+    } catch (error) {
+      console.error("Error approving food:", error);
+    }
+  };
+
   return (
     <div className="food-dropdown" style={{ border: "1px solid red" }}>
       <div className="food-details">
@@ -116,7 +143,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
         )}
         <button
           className="approve-button"
-          onClick={() => handleApprove(food.id)}
+          onClick={() => handleApproveAndRedirect(food.id)}
         >
           Approve Food
         </button>
