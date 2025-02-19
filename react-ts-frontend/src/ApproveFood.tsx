@@ -3,22 +3,35 @@ import { useParams } from "react-router-dom";
 import { Food } from "./interfaces";
 
 interface ApproveFoodProps {
-  handleApprove: (foodId: number) => void;
+  handleApprove: (id: number) => void;
 }
 
 const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
-  const { id } = useParams<{ id: string }>();
+  const { foodId } = useParams<{ foodId: string }>();
   const [food, setFood] = useState<Food | null>(null);
 
   useEffect(() => {
+    if (!foodId) {
+      console.error("No foodId parameter found in the URL");
+      return;
+    }
+
+    const id = Number(foodId); // Convert foodId to number
+
+    if (isNaN(id)) {
+      console.error("Invalid foodId parameter, not a number:", foodId);
+      return;
+    }
+
     const fetchFood = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/food/${id}/`);
+        console.log(`Fetching food details for ID: ${id}`);
+        const response = await fetch(`http://localhost:8000/foods/${id}/`);
         if (response.ok) {
           const data = await response.json();
           setFood(data);
         } else {
-          console.error("Failed to fetch food details");
+          console.error("Failed to fetch food details", response.status);
         }
       } catch (error) {
         console.error("Error fetching food details:", error);
@@ -26,7 +39,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
     };
 
     fetchFood();
-  }, [id]);
+  }, [foodId]);
 
   if (!food) {
     return <div>Loading...</div>;
