@@ -6,7 +6,7 @@ import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-// import "./MainPage.css"; // Import the CSS file
+import "./assets/css/MainPage.css"; // Import the CSS file
 
 interface MainPageProps {
   accessToken: string | null;
