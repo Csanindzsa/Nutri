@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Restaurant, Ingredient, Food, ExactLocation
+from .models import User, Restaurant, Ingredient, Food, ExactLocation, FoodChange
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class UserSerializer(serializers.ModelSerializer):
@@ -61,3 +61,7 @@ class FoodSerializer(serializers.ModelSerializer):
         model = Food
         fields = '__all__'
 
+class FoodChangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodChange
+        fields = '__all__'
