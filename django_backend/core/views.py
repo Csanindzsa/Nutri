@@ -170,8 +170,7 @@ class AcceptFood(generics.UpdateAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Add the supervisor to the approved_users
-        food.approved_users.add(request.user)
+        food.approved_supervisors.add(request.user)
 
         # Save the updated food instance
         food.save()
@@ -181,3 +180,66 @@ class AcceptFood(generics.UpdateAPIView):
             {"detail": "Food item approved successfully."},
             status=status.HTTP_200_OK
         )
+    
+### GENERICS - mainly for testing purposes
+
+from rest_framework import generics
+from .models import User, Restaurant, ExactLocation, Ingredient, Food, FoodChange, ConfirmationToken
+from .serializers import (
+    UserSerializer, RestaurantSerializer, ExactLocationSerializer, 
+    IngredientSerializer, FoodSerializer, FoodChangeSerializer, ConfirmationTokenSerializer
+)
+
+# User CRUD
+class UserListCreateView(generics.ListCreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+# Restaurant CRUD
+class RestaurantListCreateView(generics.ListCreateAPIView):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+
+class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+
+# ExactLocation CRUD
+class ExactLocationListCreateView(generics.ListCreateAPIView):
+    queryset = ExactLocation.objects.all()
+    serializer_class = ExactLocationSerializer
+
+class ExactLocationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ExactLocation.objects.all()
+    serializer_class = ExactLocationSerializer
+
+# Ingredient CRUD
+class IngredientListCreateView(generics.ListCreateAPIView):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+
+class IngredientRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+
+# Food CRUD
+class FoodListCreateView(generics.ListCreateAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer
+
+class FoodRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Food.objects.all()
+    serializer_class = FoodSerializer
+
+# FoodChange CRUD
+class FoodChangeListCreateView(generics.ListCreateAPIView):
+    queryset = FoodChange.objects.all()
+    serializer_class = FoodChangeSerializer
+
+class FoodChangeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = FoodChange.objects.all()
+    serializer_class = FoodChangeSerializer

@@ -26,6 +26,31 @@ urlpatterns = [
     path('foods/approvable/', GetApprovableFoods.as_view(), name='accept-food'),
 
     path('ingredients/', IngredientListView.as_view()),
+
+
+    ### GENERICS - mainly for testing purposes
+    path('users/', UserListCreateView.as_view(), name='user-list-create'),
+    path('users/<int:pk>/', UserRetrieveUpdateDestroyView.as_view(), name='user-retrieve-update-destroy'),
+
+    # Restaurant URLs
+    path('restaurants/', RestaurantListCreateView.as_view(), name='restaurant-list-create'),
+    path('restaurants/<int:pk>/', RestaurantRetrieveUpdateDestroyView.as_view(), name='restaurant-retrieve-update-destroy'),
+
+    # ExactLocation URLs
+    path('exact-locations/', ExactLocationListCreateView.as_view(), name='exact-location-list-create'),
+    path('exact-locations/<int:pk>/', ExactLocationRetrieveUpdateDestroyView.as_view(), name='exact-location-retrieve-update-destroy'),
+
+    # Ingredient URLs
+    path('ingredients/', IngredientListCreateView.as_view(), name='ingredient-list-create'),
+    path('ingredients/<int:pk>/', IngredientRetrieveUpdateDestroyView.as_view(), name='ingredient-retrieve-update-destroy'),
+
+    # Food URLs
+    path('foods/', FoodListCreateView.as_view(), name='food-list-create'),
+    path('foods/<int:pk>/', FoodRetrieveUpdateDestroyView.as_view(), name='food-retrieve-update-destroy'),
+
+    # FoodChange URLs
+    path('food-changes/', FoodChangeListCreateView.as_view(), name='food-change-list-create'),
+    path('food-changes/<int:pk>/', FoodChangeRetrieveUpdateDestroyView.as_view(), name='food-change-retrieve-update-destroy'),
 ]
 
 
