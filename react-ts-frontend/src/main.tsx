@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 import App from "./App";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -8,8 +8,10 @@ import { BrowserRouter as Router } from "react-router-dom";
 
 const rootElement = document.getElementById("root") as HTMLElement;
 
+const root = ReactDOM.createRoot(rootElement);
+
 //fix issue idk
-ReactDOM.render(
+root.render(
   <Router>
     <React.StrictMode>
       <ThemeProvider theme={theme}>
@@ -17,6 +19,5 @@ ReactDOM.render(
         <App />
       </ThemeProvider>
     </React.StrictMode>
-  </Router>,
-  rootElement
+  </Router>
 );
