@@ -182,11 +182,16 @@ const App = () => {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
+          body: JSON.stringify({ is_approved: 1 }),
         }
       );
 
       if (response.ok) {
+        // console.log("Food approved successfully");
+        // alert("Food approved successfully");
+        navigate("/approvable-foods");
         setFoods((prevFoods) =>
           prevFoods.map((food) =>
             food.id === foodId
@@ -194,6 +199,7 @@ const App = () => {
                   ...food,
                   approved_supervisors_count:
                     (food.approved_supervisors_count ?? 0) + 1,
+                  is_approved: 1,
                 }
               : food
           )
