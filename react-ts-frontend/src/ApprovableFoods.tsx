@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Food, Ingredient } from "./interfaces";
+import { Food } from "./interfaces";
 import "./assets/css/ApprovableFoods.css";
+import { Link } from "react-router-dom";
 
 interface ApprovableFoodsProps {
   accessToken: string | null;
@@ -74,6 +75,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
   };
 
   const toggleDropdown = (foodId: number) => {
+    console.log(`Toggling dropdown for food ID: ${foodId}`);
     setOpenDropdownId((prevId) => (prevId === foodId ? null : foodId));
   };
 
@@ -83,74 +85,11 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
       <div className="foods-grid">
         {foods.map((food) => (
           <div key={food.id} className="food-card">
-            <button
-              className="food-trigger"
-              onClick={() => toggleDropdown(food.id)}
-            >
-              <span>{food.name}</span>
-            </button>
-            {openDropdownId === food.id && (
-              <div className="food-dropdown">
-                <div className="food-details">
-                  <p>
-                    <strong>Name:</strong> {food.name}
-                  </p>
-                  <p>
-                    <strong>Restaurant:</strong> {food.restaurant_name}
-                  </p>
-                  <p>
-                    <strong>Approvals:</strong>{" "}
-                    {food.approved_supervisors_count ?? 0}
-                  </p>
-                  <p>
-                    <strong>Organic:</strong> {food.is_organic ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Gluten-Free:</strong>{" "}
-                    {food.is_gluten_free ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Alcohol-Free:</strong>{" "}
-                    {food.is_alcohol_free ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Lactose-Free:</strong>{" "}
-                    {food.is_lactose_free ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Macro Table:</strong>
-                  </p>
-                  <ul>
-                    {Object.entries(food.macro_table).map(([key, value]) => (
-                      <li key={key}>
-                        <strong>{key}:</strong> {value}
-                      </li>
-                    ))}
-                  </ul>
-                  <p>
-                    <strong>Ingredients:</strong>
-                  </p>
-                  <ul>
-                    {food.ingredients.map((ingredientId) => (
-                      <li key={ingredientId}>Ingredient ID: {ingredientId}</li>
-                    ))}
-                  </ul>
-                  {food.image && (
-                    <img
-                      src={food.image}
-                      alt={food.name}
-                      className="food-image"
-                    />
-                  )}
-                  <button
-                    className="approve-button"
-                    onClick={() => handleApprove(food.id)}
-                  >
-                    Approve Food
-                  </button>
-                </div>
-              </div>
-            )}
+            <Link to={`/approve-food/${food.id}`}>
+              <button className="food-trigger">
+                <span>{food.name}</span>
+              </button>
+            </Link>
           </div>
         ))}
       </div>
