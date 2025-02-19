@@ -170,8 +170,7 @@ class AcceptFood(generics.UpdateAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Add the supervisor to the approved_users
-        food.approved_users.add(request.user)
+        food.approved_supervisors.add(request.user)
 
         # Save the updated food instance
         food.save()
