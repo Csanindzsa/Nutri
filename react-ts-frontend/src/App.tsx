@@ -199,8 +199,14 @@ const App = () => {
           )
         );
       } else {
-        const errorData = await response.json();
-        alert(errorData.detail || "Failed to approve food");
+        const errorText = await response.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          alert(errorData.detail || "Failed to approve food");
+        } catch (e) {
+          console.error("Error parsing JSON:", e);
+          alert("Failed to approve food");
+        }
       }
     } catch (error) {
       console.error("Error approving food:", error);

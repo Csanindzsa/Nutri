@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Food } from "./interfaces";
+import { Ingredient } from "./interfaces";
 
 interface ApproveFoodProps {
   handleApprove: (id: number) => void;
@@ -9,6 +10,7 @@ interface ApproveFoodProps {
 const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
   const { foodId } = useParams<{ foodId: string }>();
   const [food, setFood] = useState<Food | null>(null);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   useEffect(() => {
     if (!foodId) {
@@ -38,12 +40,32 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
       }
     };
 
+    const fetchIngredients = async () => {
+      try {
+        const response = await fetch(`http://localhost:8000/ingredients/`);
+        if (response.ok) {
+          const data = await response.json();
+          setIngredients(data);
+        } else {
+          console.error("Failed to fetch ingredients", response.status);
+        }
+      } catch (error) {
+        console.error("Error fetching ingredients:", error);
+      }
+    };
+
     fetchFood();
+    fetchIngredients();
   }, [foodId]);
 
   if (!food) {
     return <div>Loading...</div>;
   }
+
+  const getIngredientName = (id: number) => {
+    const ingredient = ingredients.find((ingredient) => ingredient.id === id);
+    return ingredient ? ingredient.name : "Unknown";
+  };
 
   return (
     <div className="food-dropdown" style={{ border: "1px solid red" }}>
@@ -84,7 +106,9 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
         </p>
         <ul>
           {food.ingredients.map((ingredientId) => (
-            <li key={ingredientId}>Ingredient ID: {ingredientId}</li>
+            <li key={ingredientId}>
+              {getIngredientName(ingredientId)} (ID: {ingredientId})
+            </li>
           ))}
         </ul>
         {food.image && (
