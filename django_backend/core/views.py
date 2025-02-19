@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils.http import urlsafe_base64_decode
-from .models import ConfirmationToken, User, Restaurant, Ingredient, Food
+from .models import *
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -185,10 +185,7 @@ class AcceptFood(generics.UpdateAPIView):
 
 from rest_framework import generics
 from .models import User, Restaurant, ExactLocation, Ingredient, Food, FoodChange, ConfirmationToken
-from .serializers import (
-    UserSerializer, RestaurantSerializer, ExactLocationSerializer, 
-    IngredientSerializer, FoodSerializer, FoodChangeSerializer, ConfirmationTokenSerializer
-)
+
 
 # User CRUD
 class UserListCreateView(generics.ListCreateAPIView):

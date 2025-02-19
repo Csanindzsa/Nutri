@@ -3,3 +3,4 @@
 *.env
 */target/
 */Cargo.lock
+*.pyc
