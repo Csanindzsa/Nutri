@@ -3,13 +3,11 @@ import string
 
 from .serializers import *
 from rest_framework import generics
-from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.utils.http import urlsafe_base64_decode
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import *
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -92,8 +90,6 @@ class ConfirmEmail(generics.CreateAPIView):
             "message": "User has been successfully activated."
         }, status=status.HTTP_200_OK)
 
-
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -182,10 +178,6 @@ class AcceptFood(generics.UpdateAPIView):
         )
     
 ### GENERICS - mainly for testing purposes
-
-from rest_framework import generics
-from .models import User, Restaurant, ExactLocation, Ingredient, Food, FoodChange, ConfirmationToken
-
 
 # User CRUD
 class UserListCreateView(generics.ListCreateAPIView):
