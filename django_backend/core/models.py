@@ -39,7 +39,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         db_table = "Users"
 
 
-from django.db import models
 class Restaurant(models.Model):
     name = models.CharField(max_length=255, unique=True)
     foods_on_menu = models.IntegerField(default=0)  # Optional
@@ -93,6 +92,7 @@ class Food(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="foods")
     name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
+    calories = models.IntegerField()
     is_organic = models.BooleanField(default=False)
     is_gluten_free = models.BooleanField(default=False)
     is_alcohol_free = models.BooleanField(default=False)
@@ -115,6 +115,7 @@ class FoodChange(models.Model):
     new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
     new_name = models.CharField(max_length=255, unique=True)
     new_macro_table = models.JSONField(default=dict)  # Stores macros as JSON
+    new_calories = models.IntegerField()
     new_is_organic = models.BooleanField(default=False)
     new_is_gluten_free = models.BooleanField(default=False)
     new_is_alcohol_free = models.BooleanField(default=False)

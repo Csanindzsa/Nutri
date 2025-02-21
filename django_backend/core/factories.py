@@ -1,0 +1,96 @@
+# factories.py
+import factory
+from factory import Faker, SubFactory, LazyAttribute
+from .models import *
+
+# Factory for User model
+class UserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = User
+    
+    email = Faker('email')
+    username = Faker('user_name')
+    is_active = Faker('boolean')
+    is_staff = Faker('boolean')
+    is_supervisor = Faker('boolean')
+    date_joined = Faker('date_this_decade')
+
+# Factory for Restaurant model
+class RestaurantFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Restaurant
+    
+    name = Faker('company')
+    foods_on_menu = Faker('random_int', min=0, max=100)
+
+# Factory for Ingredient model
+class IngredientFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Ingredient
+    
+    name = Faker('word')
+    description = Faker('paragraph')
+    hazard_level = Faker('random_int', min=0, max=3)
+
+# Factory for Location model (Many-to-Many with Restaurant)
+class LocationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Location
+    
+    city_name = Faker('city')
+    postal_code = Faker('postcode')
+    
+    # This creates a random set of related restaurants
+    restaurants = factory.RelatedFactoryList(
+        RestaurantFactory, 'locations', size=2  # creates 2 related restaurants by default
+    )
+
+# Factory for ExactLocation model (ForeignKey to Restaurant)
+class ExactLocationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ExactLocation
+    
+    city_name = Faker('city')
+    postal_code = Faker('postcode')
+    street_name = Faker('street_name')
+    street_type = Faker('street_suffix')
+    house_number = Faker('building_number')
+    restaurant = SubFactory(RestaurantFactory)
+
+# Factory for Food model
+class FoodFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Food
+    
+    restaurant = SubFactory(RestaurantFactory)
+    name = Faker('food')
+    macro_table = LazyAttribute(lambda _: {'carbs': 30, 'protein': 20, 'fat': 10})  # You can adjust macros as needed
+    calories = Faker('random_int', min=1, max=2000)
+    is_organic = Faker('boolean')
+    is_gluten_free = Faker('boolean')
+    is_alcohol_free = Faker('boolean')
+    is_lactose_free = Faker('boolean')
+    image = None  # If you want to generate image files, you can use factory.Faker('image_url')
+    ingredients = factory.RelatedFactoryList(IngredientFactory, 'foods', size=3)  # Related ingredients, 3 by default
+    approved_supervisors = factory.RelatedFactoryList(UserFactory, 'approved_foods', size=2)  # Related approved supervisors, 2 by default
+    is_approved = Faker('boolean')
+
+
+class FoodChangeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = FoodChange
+
+    # Generate fields
+    old_version = factory.SubFactory(FoodFactory)  # Assuming FoodFactory is defined elsewhere
+    new_restaurant = factory.SubFactory(RestaurantFactory)  # Assuming RestaurantFactory is defined elsewhere
+    new_name = Faker('word')
+    new_macro_table = factory.LazyFunction(lambda: {"protein": 10, "carbs": 20, "fat": 15})  # Example macros
+    calories = Faker('random_int', min=1, max=2000)
+    new_is_organic = Faker('boolean')
+    new_is_gluten_free = Faker('boolean')
+    new_is_alcohol_free = Faker('boolean')
+    new_is_lactose_free = Faker('boolean')
+    new_image = None  # You can modify to create a real image if needed (e.g. using FileFactory)
+    new_ingredients = factory.SubFactory(IngredientFactory)  # Assuming IngredientFactory is defined elsewhere
+    new_approved_supervisors = factory.LazyFunction(lambda: [UserFactory(is_supervisor=True)])  # Assuming UserFactory is defined elsewhere
+    new_is_approved = Faker('boolean')
