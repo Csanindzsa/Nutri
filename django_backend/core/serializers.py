@@ -68,7 +68,7 @@ class FoodSerializer(serializers.ModelSerializer):
     is_lactose_free = serializers.BooleanField()
     image = serializers.ImageField()
     ingredients = serializers.StringRelatedField(many=True)
-    approved_supervisors = serializers.StringRelatedField(many=True)
+    # approved_supervisors = serializers.StringRelatedField(many=True)
     is_approved = serializers.BooleanField()
     
     class Meta:
@@ -76,7 +76,9 @@ class FoodSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'restaurant', 'name', 'macro_table', 'calories', 'is_organic',
             'is_gluten_free', 'is_alcohol_free', 'is_lactose_free', 'image',
-            'ingredients', 'approved_supervisors', 'is_approved'
+            'ingredients',
+            # 'approved_supervisors',
+            'is_approved',
         ]
 
 class FoodChangeSerializer(serializers.ModelSerializer):
