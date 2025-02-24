@@ -120,22 +120,16 @@ const MainPage: React.FC<MainPageProps> = ({
     );
   };
 
+  // Filter foods based on selected restaurants, selected ingredients, and additional filters
   const filteredFoods = foods.filter(
     (food) =>
-      // Filter by selected restaurants (if any are selected)
-      (selectedRestaurants.includes(food.restaurant)) &&
-      // // Filter by selected ingredients (if any are selected)
-      (food.ingredients.some((ingredientId) => selectedIngredients.includes(ingredientId))) &&
-      // Filter by organic
+      (selectedRestaurants.length === 0 || selectedRestaurants.includes(food.restaurant)) &&
+      (selectedIngredients.length === 0 || food.ingredients.every((ingredientId) => selectedIngredients.includes(ingredientId))) &&
       (!isOrganicFilter || food.is_organic) &&
-      // Filter by alcohol-free
       (!isAlcoholFreeFilter || food.is_alcohol_free) &&
-      // Filter by gluten-free
       (!isGlutenFreeFilter || food.is_gluten_free) &&
-      // Filter by lactose-free
       (!isLactoseFreeFilter || food.is_lactose_free)
   );
-  console.log("filtered foods: ", filteredFoods);
   
 
   return (
