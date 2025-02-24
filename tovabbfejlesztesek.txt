@@ -1,0 +1,2 @@
+1. Az approvable ételeknek üzenetet hagyhatnak a supervisor-ök, ami visszajelez az azt feltöltött felhasználónak
+2. Admin feature-ök oldalainak stílusát mássá tenni a sima felhasználók oldalának stílusaihoz képest
