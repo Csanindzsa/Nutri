@@ -48,7 +48,7 @@ const App = () => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [userData, setUserData] = useState<{
-    user_id?: string;
+    user_id?: number;
     username?: string;
     email?: string;
   }>({});
@@ -103,6 +103,7 @@ const App = () => {
             setAccessToken(newAccessToken);
             localStorage.setItem("access_token", newAccessToken);
             const newDecoded = decodeToken(newAccessToken);
+            console.log("decoded token: ", newDecoded);
             if (newDecoded) {
               setUserData({
                 user_id: newDecoded.user_id,
@@ -306,7 +307,7 @@ const App = () => {
         <Route path="/confirm-email/:token" element={<ConfirmEmail />} />
         <Route
           path="/approvable-foods"
-          element={<ApprovableFoods accessToken={accessToken} />}
+          element={<ApprovableFoods userId={userData.user_id} accessToken={accessToken} />}
         />
         {/* <Route
           path="/approve-food/:foodId"

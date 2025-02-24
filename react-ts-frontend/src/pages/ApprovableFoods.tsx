@@ -6,9 +6,10 @@ import ApproveFood from "../components/ApproveFood";
 
 interface ApprovableFoodsProps {
   accessToken: string | null;
+  userId: number | undefined;
 }
 
-const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
+const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken, userId }) => {
   const [foods, setFoods] = useState<Food[]>([]); // Array of Food objects
   const navigate = useNavigate();
 
@@ -60,7 +61,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
             <ApproveFood
               food={food}
               accessToken={accessToken}
-              userId={1} // Replace with the actual user ID from your app
+              userId={userId} // Replace with the actual user ID from your app
               onApprove={(updatedFood) => handleFoodApproval(food.id, updatedFood)}
             />
           </div>

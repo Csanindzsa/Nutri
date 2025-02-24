@@ -1,3 +1,10 @@
+export interface User {
+    id: number;
+    email: string;
+    username: string;
+    is_supervisor: boolean;
+}
+
 export interface Restaurant {
     id: number;
     name: string;
