@@ -20,6 +20,11 @@ export interface Ingredient {
     hazard_level: 0 | 1 | 2 | 3; // Enum values
 }
 
+export interface Supervisor {
+    id: number;
+    username: string;
+}
+
 export interface Food {
     id: number;
     restaurant: number;
@@ -33,4 +38,5 @@ export interface Food {
     ingredients: number[];
     image?: string;
     approved_supervisors_count?: number;
+    approved_supervisors?: Supervisor[];
 }

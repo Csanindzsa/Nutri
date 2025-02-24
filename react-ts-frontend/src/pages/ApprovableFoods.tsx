@@ -8,36 +8,29 @@ interface ApprovableFoodsProps {
   accessToken: string | null;
 }
 
-
 const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
-  const [foods, setFoods] = useState<Food[]>([]);
-  // const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [foods, setFoods] = useState<Food[]>([]); // Array of Food objects
   const navigate = useNavigate();
 
   useEffect(() => {
-
-    console.log("useffect ran");
+    console.log("useEffect ran");
     const fetchApprovableFoods = async () => {
-      if (!accessToken){
+      if (!accessToken) {
         console.log("access token not found");
         return;
-      };
+      }
 
       try {
-        const response = await fetch(
-          "http://localhost:8000/foods/approvable/",
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await fetch("http://localhost:8000/foods/approvable/", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
         if (response.ok) {
-          
           const data = await response.json();
           console.log(data);
-          setFoods(data);
+          setFoods(data); // Set the array of approvable foods
         } else {
           console.error("Failed to fetch approvable foods");
         }
@@ -49,6 +42,14 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
     fetchApprovableFoods();
   }, [accessToken]);
 
+  // Function to update the approved status of a food item
+  const handleFoodApproval = (foodId: number, updatedFood: Food) => {
+    setFoods((prevFoods) =>
+      prevFoods.map((food) =>
+        food.id === foodId ? { ...food, ...updatedFood } : food
+      )
+    );
+  };
 
   return (
     <div className="approvable-foods">
@@ -56,7 +57,12 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken }) => {
       <div className="foods-grid">
         {foods.map((food) => (
           <div key={food.id} className="food-card">
-            <ApproveFood food={food} accessToken={accessToken}  />
+            <ApproveFood
+              food={food}
+              accessToken={accessToken}
+              userId={1} // Replace with the actual user ID from your app
+              onApprove={(updatedFood) => handleFoodApproval(food.id, updatedFood)}
+            />
           </div>
         ))}
       </div>
