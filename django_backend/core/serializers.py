@@ -58,7 +58,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class FoodSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
-    restaurant = serializers.StringRelatedField()
+    # restaurant = serializers.StringRelatedField()
     name = serializers.CharField(max_length=255)
     macro_table = serializers.JSONField()
     calories = serializers.IntegerField()
@@ -67,7 +67,7 @@ class FoodSerializer(serializers.ModelSerializer):
     is_alcohol_free = serializers.BooleanField()
     is_lactose_free = serializers.BooleanField()
     image = serializers.ImageField()
-    ingredients = serializers.StringRelatedField(many=True)
+    # ingredients = serializers.StringRelatedField(many=True)
     # approved_supervisors = serializers.StringRelatedField(many=True)
     is_approved = serializers.BooleanField()
     
