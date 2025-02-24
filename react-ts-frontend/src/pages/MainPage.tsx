@@ -71,8 +71,11 @@ const MainPage: React.FC<MainPageProps> = ({
           const ingredientsData = await ingredientsResponse.json();
 
           setRestaurants(restaurantsData);
+          console.log("restaurants: ", restaurantsData);
           setFoods(foodsData);
+          console.log("foods: ", foodsData);
           setIngredients(ingredientsData);
+          console.log("ingredients: ", ingredientsData);
 
           // Mark data as loaded
           isDataLoaded.current = true;
@@ -117,18 +120,23 @@ const MainPage: React.FC<MainPageProps> = ({
     );
   };
 
-  // Filter foods based on selected restaurants, selected ingredients, and additional filters
   const filteredFoods = foods.filter(
     (food) =>
-      selectedRestaurants.includes(food.restaurant) &&
-      food.ingredients.every((ingredientId) =>
-        selectedIngredients.includes(ingredientId)
-      ) &&
+      // Filter by selected restaurants (if any are selected)
+      (selectedRestaurants.includes(food.restaurant)) &&
+      // // Filter by selected ingredients (if any are selected)
+      (food.ingredients.some((ingredientId) => selectedIngredients.includes(ingredientId))) &&
+      // Filter by organic
       (!isOrganicFilter || food.is_organic) &&
+      // Filter by alcohol-free
       (!isAlcoholFreeFilter || food.is_alcohol_free) &&
+      // Filter by gluten-free
       (!isGlutenFreeFilter || food.is_gluten_free) &&
+      // Filter by lactose-free
       (!isLactoseFreeFilter || food.is_lactose_free)
   );
+  console.log("filtered foods: ", filteredFoods);
+  
 
   return (
     <ThemeProvider theme={createTheme()}>
