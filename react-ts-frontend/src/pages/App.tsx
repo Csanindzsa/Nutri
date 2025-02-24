@@ -5,9 +5,9 @@ import Login from "./Login";
 import ConfirmEmail from "./ConfirmEmail";
 import MainPage from "./MainPage";
 import CreateFood from "./CreateFood";
-import { Restaurant, Food, Ingredient, ExactLocation } from "./interfaces";
+import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
 import ApprovableFoods from "./ApprovableFoods";
-import ApproveFood from "./ApproveFood";
+// import ApproveFood from "./ApproveFood";
 
 // Function to decode JWT token
 const decodeToken = (token: string) => {
@@ -308,10 +308,10 @@ const App = () => {
           path="/approvable-foods"
           element={<ApprovableFoods accessToken={accessToken} />}
         />
-        <Route
+        {/* <Route
           path="/approve-food/:foodId"
           element={<ApproveFood handleApprove={handleApprove} />}
-        />
+        /> */}
       </Routes>
     </div>
   );

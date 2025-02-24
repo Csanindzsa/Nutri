@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Restaurant, Food, Ingredient, ExactLocation } from "./interfaces";
+import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import "./assets/css/MainPage.css"; // Import the CSS file
+import "../assets/css/MainPage.css"; // Import the CSS file
 
 interface MainPageProps {
   accessToken: string | null;
