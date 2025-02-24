@@ -57,9 +57,27 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FoodSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
+    restaurant = serializers.StringRelatedField()
+    name = serializers.CharField(max_length=255)
+    macro_table = serializers.JSONField()
+    calories = serializers.IntegerField()
+    is_organic = serializers.BooleanField()
+    is_gluten_free = serializers.BooleanField()
+    is_alcohol_free = serializers.BooleanField()
+    is_lactose_free = serializers.BooleanField()
+    image = serializers.ImageField()
+    ingredients = serializers.StringRelatedField(many=True)
+    approved_supervisors = serializers.StringRelatedField(many=True)
+    is_approved = serializers.BooleanField()
+    
     class Meta:
         model = Food
-        fields = '__all__'
+        fields = [
+            'id', 'restaurant', 'name', 'macro_table', 'calories', 'is_organic',
+            'is_gluten_free', 'is_alcohol_free', 'is_lactose_free', 'image',
+            'ingredients', 'approved_supervisors', 'is_approved'
+        ]
 
 class FoodChangeSerializer(serializers.ModelSerializer):
     class Meta:

@@ -145,8 +145,10 @@ class GetApprovableFoods(generics.ListAPIView):
         for i, food in enumerate(queryset):
             data[i]['approved_supervisors_count'] = food.approved_supervisors.filter(is_supervisor=True).count()
             data[i]['restaurant_name'] = food.restaurant.name  # Add restaurant name
+            data[i]['approved_supervisors'] = list(food.approved_supervisors.filter(is_supervisor=True).values('id', 'username'))  # Add approved supervisors list
 
         return Response(data)
+
 
 
 class AcceptFood(generics.UpdateAPIView):
@@ -166,6 +168,14 @@ class AcceptFood(generics.UpdateAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
+        # Check if the user has already approved this food item
+        if food.approved_supervisors.filter(id=request.user.id).exists():
+            return Response(
+                {"detail": "You have already approved this food item."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Add the user to the approved supervisors
         food.approved_supervisors.add(request.user)
 
         # Save the updated food instance
