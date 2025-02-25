@@ -115,9 +115,9 @@ class FoodChange(models.Model):
     is_deletion = models.BooleanField(default=False)
 
     new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
-    new_name = models.CharField(max_length=255, unique=True)
+    new_name = models.CharField(max_length=255)
     new_macro_table = models.JSONField(default=dict)  # Stores macros as JSON
-    new_calories = models.IntegerField()
+    # new_calories = models.IntegerField()
     new_serving_size = models.IntegerField(default=100) #100 grams
     new_is_organic = models.BooleanField(default=False)
     new_is_gluten_free = models.BooleanField(default=False)

@@ -8,6 +8,7 @@ import CreateFood from "./CreateFood";
 import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
 import ApprovableFoods from "./ApprovableFoods";
 import ApproveRemovals from "./ApproveRemovals";
+import ApproveUpdates from "./ApproveUpdates";
 // import ApproveFood from "./ApproveFood";
 
 // Function to decode JWT token
@@ -261,6 +262,9 @@ const App = () => {
           <li>
             <Link to="/approve-removals">Approve Removals</Link>
           </li>
+          <li>
+            <Link to="/approve-updates">Approve Updates</Link>
+          </li>
         </ul>
       </nav>
 
@@ -320,6 +324,10 @@ const App = () => {
         <Route
           path="/approve-removals" // Step 2: Define the new route
           element={<ApproveRemovals accessToken={accessToken} userId={userData.user_id} ingredients={ingredients}/>} // Step 3: Pass accessToken
+        />
+        <Route
+          path="/approve-updates"
+          element={<ApproveUpdates accessToken={accessToken} userId={userData.user_id} ingredients={ingredients} />}
         />
       </Routes>
     </div>

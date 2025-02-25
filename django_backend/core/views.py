@@ -240,31 +240,60 @@ class CreateFoodChange(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        food_id = request.data.get("food_id")
-        new_data = request.data
+        try:
+            # Validate food_id
+            food_id = request.data.get("food_id")
+            if not food_id:
+                logger.error("food_id is required.")
+                return Response({"error": "food_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        food = get_object_or_404(Food, id=food_id)
+            # Fetch the food object
+            try:
+                food = Food.objects.get(id=food_id)
+            except Food.DoesNotExist:
+                logger.error(f"Food with id {food_id} does not exist.")
+                return Response({"error": f"Food with id {food_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        food_change = FoodChange.objects.create(
-            old_version=food,
-            is_deletion=new_data.get("is_deletion", False),
-            new_restaurant=food.restaurant,  # Keep the restaurant the same
-            new_name=new_data.get("new_name", food.name),
-            new_serving_size = new_data.get("new_serving_size", food.serving_size),
-            new_macro_table=new_data.get("new_macro_table", food.macro_table),
-            new_calories=new_data.get("new_calories", food.calories),
-            new_is_organic=new_data.get("new_is_organic", food.is_organic),
-            new_is_gluten_free=new_data.get("new_is_gluten_free", food.is_gluten_free),
-            new_is_alcohol_free=new_data.get("new_is_alcohol_free", food.is_alcohol_free),
-            new_is_lactose_free=new_data.get("new_is_lactose_free", food.is_lactose_free),
-            new_image=new_data.get("new_image", food.image),
-            new_is_approved=False,
-        )
+            # Extract new data
+            new_data = request.data
 
-        if "new_ingredients" in new_data:
-            food_change.new_ingredients.set(new_data["new_ingredients"])
+            # Create the FoodChange object
+            try:
+                food_change = FoodChange.objects.create(
+                    old_version=food,
+                    is_deletion=new_data.get("is_deletion", False),
+                    new_restaurant=food.restaurant,  # Keep the restaurant the same
+                    new_name=new_data.get("new_name", food.name),
+                    new_serving_size=new_data.get("new_serving_size", food.serving_size),
+                    new_macro_table=new_data.get("new_macro_table", food.macro_table),
+                    new_is_organic=new_data.get("new_is_organic", food.is_organic),
+                    new_is_gluten_free=new_data.get("new_is_gluten_free", food.is_gluten_free),
+                    new_is_alcohol_free=new_data.get("new_is_alcohol_free", food.is_alcohol_free),
+                    new_is_lactose_free=new_data.get("new_is_lactose_free", food.is_lactose_free),
+                    new_image=new_data.get("new_image", food.image),
+                    new_is_approved=False,
+                )
+            except ValidationError as e:
+                logger.error(f"Validation error while creating FoodChange: {e}")
+                return Response({"error": f"Validation error: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                logger.error(f"Error creating FoodChange: {e}")
+                return Response({"error": f"Error creating FoodChange: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"message": "Food change request created successfully."}, status=status.HTTP_201_CREATED)
+            # Set new_ingredients if provided
+            if "ingredients" in new_data:
+                try:
+                    food_change.new_ingredients.set(new_data["ingredients"])
+                except Exception as e:
+                    logger.error(f"Error setting new_ingredients: {e}")
+                    return Response({"error": f"Error setting new_ingredients: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Return success response
+            return Response({"message": "Food change request created successfully."}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in CreateFoodChange: {e}")
+            return Response({"error": f"Unexpected error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreateFoodRemoval(generics.CreateAPIView):
     queryset = FoodChange.objects.all()
