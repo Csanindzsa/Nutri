@@ -244,7 +244,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
         <div className="foods-list">
           {filteredFoods.map((food) => (
-            <ViewFood key={food.id} food={food} restaurants={restaurants} ingredients={ingredients} />
+            <ViewFood key={food.id} food={food} restaurants={restaurants} ingredients={ingredients} is_approval={false} />
           ))}
         </div>
       </React.Fragment>
