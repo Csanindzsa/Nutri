@@ -1,8 +1,7 @@
 use rusqlite::{params, Connection, Result};
-use rand::seq::SliceRandom;  // for random selection
 use serde_json::json;
 use std::fs::File;
-use std::io::{self, BufRead, Write};
+use std::io::{self, BufRead};
 use std::path::Path;
 use rand::prelude::*;  // Import for random selection
 
@@ -155,7 +154,7 @@ fn insert_food(conn: &Connection, name: &str, macro_table: &str, is_organic: boo
     }
 
     // Randomly choose a restaurant_id from the list of restaurant_ids
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let selected_restaurant_id = restaurant_ids.choose(&mut rng).unwrap();  // Safely unwrap as we know there's at least one restaurant
 
     // Insert the food into the randomly selected restaurant
@@ -187,9 +186,9 @@ fn create_random_food_ingredient_relations(conn: &Connection) -> Result<()> {
     }
 
     // Generate random relationships (linking each food to 1-3 random ingredients)
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for &food_id in food_ids.iter() {
-        let num_ingredients = rng.gen_range(1..=3); // Random number of ingredients (1 to 3)
+        let num_ingredients = rng.random_range(1..=3); // Random number of ingredients (1 to 3)
         let random_ingredients = ingredient_ids.choose_multiple(&mut rng, num_ingredients);
 
         println!("Food ID: {} will be linked to ingredients: {:?}", food_id, random_ingredients); // Debugging
