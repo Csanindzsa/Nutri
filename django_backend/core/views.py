@@ -177,9 +177,20 @@ class AcceptFood(generics.UpdateAPIView):
 
         # Add the user to the approved supervisors
         food.approved_supervisors.add(request.user)
-
-        # Save the updated food instance
+        
         food.save()
+
+        approved_count = food.approved_supervisors.count()
+
+        # Define the threshold for approval
+        REQUIRED_APPROVALS = 10
+
+        # If the threshold is met, mark the food as approved
+        if approved_count >= REQUIRED_APPROVALS:
+            food.is_approved = True
+        food.save()
+
+       
 
         # Return a success response
         return Response(
@@ -187,6 +198,40 @@ class AcceptFood(generics.UpdateAPIView):
             status=status.HTTP_200_OK
         )
     
+class CreateFoodChange(generics.CreateAPIView):
+    queryset = FoodChange.objects.all()
+    serializer_class = FoodChangeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        food_id = request.data.get("food_id")
+        new_data = request.data
+
+        food = get_object_or_404(Food, id=food_id)
+
+        food_change = FoodChange.objects.create(
+            old_version=food,
+            is_deletion=new_data.get("is_deletion", False),
+            new_restaurant=food.restaurant,  # Keep the restaurant the same
+            new_name=new_data.get("new_name", food.name),
+            new_macro_table=new_data.get("new_macro_table", food.macro_table),
+            new_calories=new_data.get("new_calories", food.calories),
+            new_is_organic=new_data.get("new_is_organic", food.is_organic),
+            new_is_gluten_free=new_data.get("new_is_gluten_free", food.is_gluten_free),
+            new_is_alcohol_free=new_data.get("new_is_alcohol_free", food.is_alcohol_free),
+            new_is_lactose_free=new_data.get("new_is_lactose_free", food.is_lactose_free),
+            new_image=new_data.get("new_image", food.image),
+            new_is_approved=False,
+        )
+
+        if "new_ingredients" in new_data:
+            food_change.new_ingredients.set(new_data["new_ingredients"])
+
+        return Response({"message": "Food change request created successfully."}, status=status.HTTP_201_CREATED)
+
+
+
 ### GENERICS - mainly for testing purposes
 
 # User CRUD
