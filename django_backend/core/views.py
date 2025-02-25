@@ -2,6 +2,8 @@ import random
 import string
 
 from django.db import IntegrityError
+from django.db.models import Count
+
 from .serializers import *
 from rest_framework import generics
 from rest_framework import status
@@ -275,9 +277,52 @@ class CreateFoodRemoval(generics.CreateAPIView):
 
 
 class FoodChangeDeletionListView(generics.ListAPIView):
-    queryset = FoodChange.objects.filter(is_deletion=True)  # Filter FoodChanges where is_deletion=True
-    serializer_class = FoodChangeSerializer  # Serializer to format the response
-    permission_classes = [IsAuthenticated]  # Only authenticated users can access this view
+    serializer_class = FoodChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Annotate the queryset with the count of new_approved_supervisors
+        queryset = FoodChange.objects.filter(is_deletion=True, new_is_approved=False).annotate(
+            new_approved_supervisors_count=Count('new_approved_supervisors')
+        )
+        return queryset
+
+class ApproveFoodRemoval(generics.UpdateAPIView):
+    queryset = FoodChange.objects.all()
+    serializer_class = FoodChangeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        # Retrieve the FoodChange instance
+        food_change = get_object_or_404(FoodChange, id=kwargs.get('pk'))
+
+        # Check if the user is a supervisor
+        if not request.user.is_supervisor:
+            return Response({"error": "Only supervisors can approve food changes."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Add the supervisor to the new_approved_supervisors
+        food_change.new_approved_supervisors.add(request.user)
+
+        # Check if the FoodChange has enough approvals to be marked as approved
+        required_approvals = 20  # Example: require 5 supervisor approvals
+        if food_change.new_approved_supervisors.count() >= required_approvals:
+            # Mark the FoodChange as approved
+            food_change.new_is_approved = True
+            food_change.save()
+
+            # Retrieve and delete the original Food object (if old_version is not null)
+            if food_change.old_version:
+                try:
+                    original_food = Food.objects.get(id=food_change.old_version.id)
+                    original_food.delete()  # Delete the original Food object
+                except Food.DoesNotExist:
+                    # Handle the case where the original Food object no longer exists
+                    return Response(
+                        {"error": "The original Food object does not even exist."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+
+        return Response({"message": "Food change approved successfully."}, status=status.HTTP_200_OK)
 
 ### GENERICS - mainly for testing purposes
 

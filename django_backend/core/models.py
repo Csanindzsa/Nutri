@@ -110,7 +110,7 @@ class Food(models.Model):
         db_table = "Foods"
 
 class FoodChange(models.Model):
-    old_version = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="new_versions")
+    old_version = models.ForeignKey(Food, on_delete=models.SET_NULL, related_name="new_versions", null=True, blank=True)
     is_deletion = models.BooleanField(default=False)
 
     new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
@@ -128,7 +128,7 @@ class FoodChange(models.Model):
     new_is_approved = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.name} ({self.restaurant.name})"
+        return f"{self.new_name} ({self.new_restaurant.name})"
     
     class Meta:
         db_table = "FoodChanges"

@@ -10,7 +10,7 @@ interface ApproveFoodProps {
 
 const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, onApprove }) => {
   const [isUserApproved, setIsUserApproved] = useState<boolean>(() => 
-    food.approved_supervisors != null ? food.approved_supervisors.some(supervisor => supervisor.id === userId) : false
+    food.approved_supervisors != null ? food.approved_supervisors.some(supervisorId => supervisorId === userId) : false
   );
   const [approvedCount, setApprovedCount] = useState<number>(food.approved_supervisors_count ?? 0);
 

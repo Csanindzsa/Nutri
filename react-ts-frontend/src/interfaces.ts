@@ -62,5 +62,23 @@ export interface Food {
     ingredients: number[];
     image?: string;
     approved_supervisors_count?: number;
-    approved_supervisors?: Supervisor[];
+    approved_supervisors?: number[];
+}
+
+export interface FoodChange {
+    id: number;
+    is_deletion: boolean;
+    old_version: number;
+    new_restaurant: number;
+    new_restaurant_name: string;  // Add this field
+    new_name: string;
+    new_macro_table: MacroTable;
+    new_is_organic: boolean;
+    new_is_gluten_free: boolean;
+    new_is_alcohol_free: boolean;
+    new_is_lactose_free: boolean;
+    new_ingredients: number[];
+    new_image?: string;
+    new_approved_supervisors_count?: number;
+    new_approved_supervisors?: number[];
 }
