@@ -14,7 +14,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .models import *
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from django.conf import settings
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
 import dotenv
 import os
 
@@ -119,6 +124,33 @@ class FoodCreateView(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        try:
+            # Log the incoming request data for debugging
+            logger.debug(f"Incoming request data: {request.data}")
+
+            # Perform the default create logic
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+
+            # Log the successful creation
+            logger.info(f"Food created successfully: {serializer.data}")
+
+            # Return the response with the created data
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        except ValidationError as e:
+            # Log validation errors
+            logger.error(f"Validation error: {e.detail}")
+            return Response({"error": "Validation failed", "details": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            # Log unexpected errors
+            logger.error(f"Unexpected error during food creation: {str(e)}")
+            return Response({"error": "An unexpected error occurred", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     def perform_create(self, serializer):
         # Set is_approved to False upon creation
         serializer.validated_data['is_approved'] = False
@@ -128,7 +160,7 @@ class FoodCreateView(generics.CreateAPIView):
 
         # If the user is a supervisor, add them to the approved_users
         if self.request.user.is_supervisor:
-            food.approved_users.add(self.request.user)
+            food.approved_supervisors.add(self.request.user)
 
         # Save the updated Food instance
         food.save()
@@ -218,6 +250,7 @@ class CreateFoodChange(generics.CreateAPIView):
             is_deletion=new_data.get("is_deletion", False),
             new_restaurant=food.restaurant,  # Keep the restaurant the same
             new_name=new_data.get("new_name", food.name),
+            new_serving_size = new_data.get("new_serving_size", food.serving_size),
             new_macro_table=new_data.get("new_macro_table", food.macro_table),
             new_calories=new_data.get("new_calories", food.calories),
             new_is_organic=new_data.get("new_is_organic", food.is_organic),

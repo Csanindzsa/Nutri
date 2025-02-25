@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Restaurant, Food, Ingredient } from './interfaces';
+import { Restaurant, Food, Ingredient, MacroTable, MacroDetail } from '../interfaces';
 
 interface CreateFoodProps {
   accessToken: string | null;
@@ -16,15 +16,20 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
     restaurant: null as number | null,
     ingredients: [] as number[],
     macro_table: {
-      calories: '',
-      protein: '',
-      carbs: '',
-      fats: ''
+      energy_kcal: 0,
+      fat: { per100g: 0, percentage: 0 },
+      saturated_fat: { per100g: 0, percentage: 0 },
+      carbohydrates: { per100g: 0, percentage: 0 },
+      sugars: { per100g: 0, percentage: 0 },
+      protein: { per100g: 0, percentage: 0 },
+      fiber: { per100g: 0, percentage: 0 },
+      salt: { per100g: 0, percentage: 0 },
     },
     is_organic: false,
     is_gluten_free: false,
     is_alcohol_free: false,
-    is_lactose_free: false
+    is_lactose_free: false,
+    serving_size: 0, // Add serving_size field
   });
   const [image, setImage] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,25 +39,41 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
     if (type === 'checkbox') {
       setFormData(prev => ({
         ...prev,
-        [name]: (e.target as HTMLInputElement).checked
+        [name]: (e.target as HTMLInputElement).checked,
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleMacroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      macro_table: {
-        ...prev.macro_table,
-        [name]: value
-      }
-    }));
+  
+    if (name === 'energy_kcal') {
+      setFormData(prev => ({
+        ...prev,
+        macro_table: {
+          ...prev.macro_table,
+          [name]: parseFloat(value) || 0, // Ensure the value is a number
+        },
+      }));
+    } else {
+      const [macroKey, detailKey] = name.split('.'); // Split the name into macroKey and detailKey
+  
+      setFormData(prev => ({
+        ...prev,
+        macro_table: {
+          ...prev.macro_table,
+          [macroKey]: {
+            ...(prev.macro_table[macroKey as keyof MacroTable] as MacroDetail), // Explicitly assert as MacroDetail
+            [detailKey]: parseFloat(value) || 0, // Ensure the value is a number
+          },
+        },
+      }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,36 +82,83 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
     }
   };
 
+  const calculatePercentages = (macroTable: MacroTable): MacroTable => {
+    const totalPer100g =
+      macroTable.fat.per100g +
+      macroTable.saturated_fat.per100g +
+      macroTable.carbohydrates.per100g +
+      macroTable.sugars.per100g +
+      macroTable.protein.per100g +
+      macroTable.fiber.per100g +
+      macroTable.salt.per100g;
+
+    return {
+      ...macroTable,
+      fat: {
+        ...macroTable.fat,
+        percentage: totalPer100g === 0 ? 0 : macroTable.fat.per100g,
+      },
+      saturated_fat: {
+        ...macroTable.saturated_fat,
+        percentage: totalPer100g === 0 ? 0 : macroTable.saturated_fat.per100g,
+      },
+      carbohydrates: {
+        ...macroTable.carbohydrates,
+        percentage: totalPer100g === 0 ? 0 : macroTable.carbohydrates.per100g,
+      },
+      sugars: {
+        ...macroTable.sugars,
+        percentage: totalPer100g === 0 ? 0 : macroTable.sugars.per100g,
+      },
+      protein: {
+        ...macroTable.protein,
+        percentage: totalPer100g === 0 ? 0 : macroTable.protein.per100g,
+      },
+      fiber: {
+        ...macroTable.fiber,
+        percentage: totalPer100g === 0 ? 0 : macroTable.fiber.per100g,
+      },
+      salt: {
+        ...macroTable.salt,
+        percentage: totalPer100g === 0 ? 0 : macroTable.salt.per100g,
+      },
+    };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
+  
     if (!accessToken) {
       setError('Please log in to create a food item');
       return;
     }
-
+  
     if (!formData.restaurant || formData.ingredients.length === 0) {
       setError('Please fill in all required fields and select at least one ingredient.');
       return;
     }
-
+  
+    // Calculate percentages before submitting
+    const macroTableWithPercentages = calculatePercentages(formData.macro_table);
+  
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('restaurant', String(formData.restaurant));
     formData.ingredients.forEach(ingredientId => {
       formDataToSend.append('ingredients', String(ingredientId));
     });
-    formDataToSend.append('macro_table', JSON.stringify(formData.macro_table));
+    formDataToSend.append('macro_table', JSON.stringify(macroTableWithPercentages));
     formDataToSend.append('is_organic', String(formData.is_organic));
     formDataToSend.append('is_gluten_free', String(formData.is_gluten_free));
     formDataToSend.append('is_alcohol_free', String(formData.is_alcohol_free));
     formDataToSend.append('is_lactose_free', String(formData.is_lactose_free));
+    formDataToSend.append('serving_size', String(formData.serving_size)); // Add serving_size to FormData
     
     if (image) {
       formDataToSend.append('image', image);
     }
-
+  
     try {
       const response = await fetch('http://localhost:8000/foods/create/', {
         method: 'POST',
@@ -99,7 +167,7 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
         },
         body: formDataToSend,
       });
-
+  
       if (response.ok) {
         const createdFood = await response.json();
         onCreateFood(createdFood);
@@ -149,38 +217,74 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
         <div>
           <h3>Macro Table</h3>
           <div>
-            <label>Calories:</label>
+            <label>Energy (kcal) per 100g:</label>
             <input
               type="number"
-              name="calories"
-              value={formData.macro_table.calories}
+              name="energy_kcal"
+              value={formData.macro_table.energy_kcal}
               onChange={handleMacroChange}
             />
           </div>
           <div>
-            <label>Protein (g):</label>
+            <label>Fat (per 100g):</label>
             <input
               type="number"
-              name="protein"
-              value={formData.macro_table.protein}
+              name="fat.per100g"
+              value={formData.macro_table.fat.per100g}
               onChange={handleMacroChange}
             />
           </div>
           <div>
-            <label>Carbs (g):</label>
+            <label>Saturated Fat (per 100g):</label>
             <input
               type="number"
-              name="carbs"
-              value={formData.macro_table.carbs}
+              name="saturated_fat.per100g"
+              value={formData.macro_table.saturated_fat.per100g}
               onChange={handleMacroChange}
             />
           </div>
           <div>
-            <label>Fats (g):</label>
+            <label>Carbohydrates (per 100g):</label>
             <input
               type="number"
-              name="fats"
-              value={formData.macro_table.fats}
+              name="carbohydrates.per100g"
+              value={formData.macro_table.carbohydrates.per100g}
+              onChange={handleMacroChange}
+            />
+          </div>
+          <div>
+            <label>Sugars (per 100g):</label>
+            <input
+              type="number"
+              name="sugars.per100g"
+              value={formData.macro_table.sugars.per100g}
+              onChange={handleMacroChange}
+            />
+          </div>
+          <div>
+            <label>Protein (per 100g):</label>
+            <input
+              type="number"
+              name="protein.per100g"
+              value={formData.macro_table.protein.per100g}
+              onChange={handleMacroChange}
+            />
+          </div>
+          <div>
+            <label>Fiber (per 100g):</label>
+            <input
+              type="number"
+              name="fiber.per100g"
+              value={formData.macro_table.fiber.per100g}
+              onChange={handleMacroChange}
+            />
+          </div>
+          <div>
+            <label>Salt (per 100g):</label>
+            <input
+              type="number"
+              name="salt.per100g"
+              value={formData.macro_table.salt.per100g}
               onChange={handleMacroChange}
             />
           </div>
@@ -232,6 +336,17 @@ const CreateFood: React.FC<CreateFoodProps> = ({ accessToken, restaurants, ingre
               Lactose Free
             </label>
           </div>
+        </div>
+
+        <div>
+          <label>Serving Size (grams):</label>
+          <input
+            type="number"
+            name="serving_size"
+            value={formData.serving_size}
+            onChange={handleInputChange}
+            required
+          />
         </div>
 
         <div>

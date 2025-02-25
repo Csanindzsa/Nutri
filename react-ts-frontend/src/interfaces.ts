@@ -54,6 +54,7 @@ export interface Food {
     restaurant: number;
     restaurant_name: string;  // Add this field
     name: string;
+    serving_size: number;
     macro_table: MacroTable;
     is_organic: boolean;
     is_gluten_free: boolean;
@@ -72,6 +73,7 @@ export interface FoodChange {
     new_restaurant: number;
     new_restaurant_name: string;  // Add this field
     new_name: string;
+    new_serving_size: number;
     new_macro_table: MacroTable;
     new_is_organic: boolean;
     new_is_gluten_free: boolean;

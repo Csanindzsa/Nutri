@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { FoodChange } from "../interfaces";
+import { FoodChange, Ingredient } from "../interfaces";
+import { renderTable } from "../utils/utils";
 
 interface ApproveChangeProps {
   change: FoodChange;
   accessToken: string | null;
   userId: number | undefined;
+  ingredients: Ingredient[];
   onApprove: (updatedChange: FoodChange) => void;
   is_removal: boolean;
 }
 
-const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, userId, onApprove, is_removal }) => {
+const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, userId, ingredients, onApprove, is_removal }) => {
   const [isUserApproved, setIsUserApproved] = useState<boolean>(false);
   const [approvedCount, setApprovedCount] = useState<number>(change.new_approved_supervisors_count ?? 0);
 
@@ -19,6 +21,16 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
       setIsUserApproved(change.new_approved_supervisors.includes(userId));
     }
   }, [change.new_approved_supervisors, userId]);
+
+  // Map ingredient IDs to their names
+  const getIngredientNames = (ingredientIds: number[]): string => {
+    return ingredientIds
+      .map((id) => {
+        const ingredient = ingredients.find((ing) => ing.id === id);
+        return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
+      })
+      .join(", ");
+  };
 
   const handleApprove = async () => {
     if (!accessToken || !userId) return;
@@ -64,6 +76,8 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
   return (
     <div>
       <div>
+        <h2>{is_removal ? "Remove Food" : "Update Food"}</h2>
+
         <div>
           {change.new_image && (
             <img
@@ -80,6 +94,9 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
             <p>
               <strong>Restaurant:</strong> {change.new_restaurant_name}
             </p>
+            <p>
+                <strong>Serving size:</strong> {change.new_serving_size}
+            </p>
 
             <div>
               <span>{change.new_is_organic ? "✓" : "✗"} Organic</span>
@@ -89,8 +106,11 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
             </div>
 
             <p>
-              <strong>Ingredients:</strong> {change.new_ingredients.join(", ")}
+              <strong>Ingredients:</strong> {getIngredientNames(change.new_ingredients)}
             </p>
+            <div>
+                {renderTable(change.new_macro_table)}
+            </div>
 
             <p>
               <strong>Approved by:</strong> {approvedCount} supervisor{approvedCount !== 1 ? "s" : ""}
