@@ -82,6 +82,24 @@ class FoodSerializer(serializers.ModelSerializer):
         ]
 
 class FoodChangeSerializer(serializers.ModelSerializer):
+    new_approved_supervisors_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = FoodChange
-        fields = '__all__'
+        fields = [
+            'id',
+            'is_deletion',
+            'old_version',
+            'new_restaurant',
+            # 'new_restaurant_name',
+            'new_name',
+            'new_macro_table',
+            'new_is_organic',
+            'new_is_gluten_free',
+            'new_is_alcohol_free',
+            'new_is_lactose_free',
+            'new_ingredients',
+            'new_image',
+            'new_approved_supervisors',
+            'new_approved_supervisors_count',  # Include the annotated field
+        ]
