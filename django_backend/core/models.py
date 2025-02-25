@@ -111,6 +111,7 @@ class Food(models.Model):
 
 class FoodChange(models.Model):
     old_version = models.ForeignKey(Food, on_delete=models.CASCADE, related_name="new_versions")
+    is_deletion = models.BooleanField(default=False)
 
     new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
     new_name = models.CharField(max_length=255, unique=True)
