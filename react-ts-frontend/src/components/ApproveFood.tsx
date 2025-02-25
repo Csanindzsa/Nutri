@@ -12,6 +12,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
   const [isUserApproved, setIsUserApproved] = useState<boolean>(() => 
     food.approved_supervisors != null ? food.approved_supervisors.some(supervisor => supervisor.id === userId) : false
   );
+  const [approvedCount, setApprovedCount] = useState<number>(food.approved_supervisors_count ?? 0);
 
   const handleApprove = async () => {
     if (!accessToken) return;
@@ -32,6 +33,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
 
         // After successful approval, update the local state to trigger re-render
         setIsUserApproved(true);
+        setApprovedCount(prev=>prev+1)
         onApprove(updatedFood);
       } else {
         const errorData = await response.json();
@@ -79,7 +81,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
             </div>
 
             <p>
-              <strong>Approved by:</strong> {food.approved_supervisors_count} supervisor{food.approved_supervisors_count !== 1 ? 's' : ''}
+              <strong>Approved by:</strong> {approvedCount} supervisor{approvedCount !== 1 ? 's' : ''}
             </p>
 
             <div>{renderApprovalStatus()}</div>
