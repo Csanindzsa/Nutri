@@ -35,8 +35,13 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
   const handleApprove = async () => {
     if (!accessToken || !userId) return;
 
+    // Determine the endpoint based on is_removal
+    const endpoint = is_removal
+      ? `http://localhost:8000/food-changes/${change.id}/approve-removal/`
+      : `http://localhost:8000/food-changes/${change.id}/approve-change/`;
+
     try {
-      const response = await fetch(`http://localhost:8000/food-changes/${change.id}/approve-removal/`, {
+      const response = await fetch(endpoint, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -95,7 +100,7 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
               <strong>Restaurant:</strong> {change.new_restaurant_name}
             </p>
             <p>
-                <strong>Serving size:</strong> {change.new_serving_size}
+              <strong>Serving size:</strong> {change.new_serving_size}
             </p>
 
             <div>
@@ -109,7 +114,7 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
               <strong>Ingredients:</strong> {getIngredientNames(change.new_ingredients)}
             </p>
             <div>
-                {renderTable(change.new_macro_table)}
+              {renderTable(change.new_macro_table)}
             </div>
 
             <p>
