@@ -311,7 +311,7 @@ const App = () => {
         <Route path="/confirm-email/:token" element={<ConfirmEmail />} />
         <Route
           path="/approvable-foods"
-          element={<ApprovableFoods userId={userData.user_id} accessToken={accessToken} />}
+          element={<ApprovableFoods userId={userData.user_id} ingredients={ingredients} accessToken={accessToken} />}
         />
         {/* <Route
           path="/approve-food/:foodId"
@@ -319,7 +319,7 @@ const App = () => {
         /> */}
         <Route
           path="/approve-removals" // Step 2: Define the new route
-          element={<ApproveRemovals accessToken={accessToken} userId={userData.user_id}/>} // Step 3: Pass accessToken
+          element={<ApproveRemovals accessToken={accessToken} userId={userData.user_id} ingredients={ingredients}/>} // Step 3: Pass accessToken
         />
       </Routes>
     </div>

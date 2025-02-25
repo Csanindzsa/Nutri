@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Food } from "../interfaces";
+import { Food, Ingredient } from "../interfaces";
 import "../assets/css/ApprovableFoods.css";
 import { Link, useNavigate } from "react-router-dom";
 import ApproveFood from "../components/ApproveFood";
@@ -7,9 +7,10 @@ import ApproveFood from "../components/ApproveFood";
 interface ApprovableFoodsProps {
   accessToken: string | null;
   userId: number | undefined;
+  ingredients: Ingredient[];
 }
 
-const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken, userId }) => {
+const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken, userId, ingredients }) => {
   const [foods, setFoods] = useState<Food[]>([]); // Array of Food objects
   const navigate = useNavigate();
 
@@ -62,6 +63,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({ accessToken, userId }
               food={food}
               accessToken={accessToken}
               userId={userId} // Replace with the actual user ID from your app
+              ingredients={ingredients}
               onApprove={(updatedFood) => handleFoodApproval(food.id, updatedFood)}
             />
           </div>

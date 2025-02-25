@@ -1,18 +1,34 @@
 import React, { useState } from "react";
-import { Food } from "../interfaces";
+import { Food, Ingredient, MacroTable, MacroDetail } from "../interfaces";
+import { renderTable } from "../utils/utils";
 
 interface ApproveFoodProps {
   food: Food;
   accessToken: string | null;
   userId: number | undefined;
+  ingredients: Ingredient[];
   onApprove: (updatedFood: Food) => void;
 }
 
-const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, onApprove }) => {
-  const [isUserApproved, setIsUserApproved] = useState<boolean>(() => 
-    food.approved_supervisors != null ? food.approved_supervisors.some(supervisorId => supervisorId === userId) : false
+
+
+const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, ingredients, onApprove }) => {
+  const [isUserApproved, setIsUserApproved] = useState<boolean>(() =>
+    food.approved_supervisors != null
+      ? food.approved_supervisors.some((supervisorId) => supervisorId === userId)
+      : false
   );
   const [approvedCount, setApprovedCount] = useState<number>(food.approved_supervisors_count ?? 0);
+
+  // Map ingredient IDs to their names
+  const getIngredientNames = (ingredientIds: number[]): string => {
+    return ingredientIds
+      .map((id) => {
+        const ingredient = ingredients.find((ing) => ing.id === id);
+        return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
+      })
+      .join(", ");
+  };
 
   const handleApprove = async () => {
     if (!accessToken) return;
@@ -33,7 +49,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
 
         // After successful approval, update the local state to trigger re-render
         setIsUserApproved(true);
-        setApprovedCount(prev=>prev+1)
+        setApprovedCount((prev) => prev + 1);
         onApprove(updatedFood);
       } else {
         const errorData = await response.json();
@@ -53,9 +69,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
       return <p>✓ Already approved</p>;
     }
 
-    return (
-      <button onClick={handleApprove}>Approve</button>
-    );
+    return <button onClick={handleApprove}>Approve</button>;
   };
 
   return (
@@ -64,14 +78,19 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
         <h2>{food.name}</h2>
 
         <div>
-          <img 
-            src={food.image || "/default-image.jpg"} 
-            alt={food.name} 
+          <img
+            src={food.image || "/default-image.jpg"}
+            alt={food.name}
             className="food-image"
           />
 
           <div>
-            <p><strong>Restaurant:</strong> {food.restaurant_name}</p>
+            <p>
+              <strong>Restaurant:</strong> {food.restaurant_name}
+            </p>
+            <p>
+                <strong>Serving size:</strong> {food.serving_size}
+            </p>
 
             <div>
               <span>{food.is_organic ? "✓" : "✗"} Organic</span>
@@ -81,7 +100,14 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, on
             </div>
 
             <p>
-              <strong>Approved by:</strong> {approvedCount} supervisor{approvedCount !== 1 ? 's' : ''}
+              <strong>Ingredients:</strong> {getIngredientNames(food.ingredients)}
+            </p>
+
+            <h4>Macros</h4>
+            {renderTable(food.macro_table)}
+
+            <p>
+              <strong>Approved by:</strong> {approvedCount} supervisor{approvedCount !== 1 ? "s" : ""}
             </p>
 
             <div>{renderApprovalStatus()}</div>

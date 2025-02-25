@@ -1,8 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { FoodChange } from "../interfaces";
+import { FoodChange, Ingredient } from "../interfaces";
 import ApproveChange from "../components/ApproveChange";
 
-const ApproveRemovals: React.FC<{ accessToken: string | null; userId: number | undefined }> = ({ accessToken, userId }) => {
+interface ApproveRemovalsProps {
+    accessToken: string | null; 
+    userId: number | undefined; 
+    ingredients: Ingredient[];
+}
+
+const ApproveRemovals: React.FC<ApproveRemovalsProps> = ({ accessToken, userId, ingredients }) => {
   const [removals, setRemovals] = useState<FoodChange[]>([]);
 
   useEffect(() => {
@@ -48,6 +54,7 @@ const ApproveRemovals: React.FC<{ accessToken: string | null; userId: number | u
                 accessToken={accessToken}
                 userId={userId}
                 onApprove={handleApprove}
+                ingredients={ingredients}
                 is_removal={true} // Set is_removal to true for all removals
               />
             </li>
