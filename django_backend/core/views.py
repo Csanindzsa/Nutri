@@ -1,6 +1,7 @@
 import random
 import string
 
+from django.db import IntegrityError
 from .serializers import *
 from rest_framework import generics
 from rest_framework import status
@@ -230,7 +231,53 @@ class CreateFoodChange(generics.CreateAPIView):
 
         return Response({"message": "Food change request created successfully."}, status=status.HTTP_201_CREATED)
 
+class CreateFoodRemoval(generics.CreateAPIView):
+    queryset = FoodChange.objects.all()
+    serializer_class = FoodChangeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request, food_id, *args, **kwargs):
+        food = get_object_or_404(Food, id=food_id)
+
+        try:
+            # Check if a removal proposal already exists for this food item
+            existing_proposal = FoodChange.objects.filter(old_version=food, is_deletion=True).first()
+            if existing_proposal:
+                raise IntegrityError("A removal proposal is already active for this food item.")
+
+            # Create the new food change record
+            food_change = FoodChange.objects.create(
+                old_version=food,
+                is_deletion=True,
+                new_restaurant=food.restaurant,
+                new_name=food.name,
+                new_macro_table=food.macro_table,
+                new_calories=food.calories,
+                new_is_organic=food.is_organic,
+                new_is_gluten_free=food.is_gluten_free,
+                new_is_alcohol_free=food.is_alcohol_free,
+                new_is_lactose_free=food.is_lactose_free,
+                new_image=food.image,
+                new_is_approved=False,
+            )
+
+            food_change.new_ingredients.set(food.ingredients.all())
+
+            if request.user.is_supervisor:
+                food_change.new_approved_supervisors.add(request.user)
+
+            return Response({"message": "Food deletion request created successfully."}, status=status.HTTP_201_CREATED)
+
+        except IntegrityError as e:
+            # Handle the integrity error by sending a specific error message
+            return Response({"error": "A removal proposal is already active for this food item."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FoodChangeDeletionListView(generics.ListAPIView):
+    queryset = FoodChange.objects.filter(is_deletion=True)  # Filter FoodChanges where is_deletion=True
+    serializer_class = FoodChangeSerializer  # Serializer to format the response
+    permission_classes = [IsAuthenticated]  # Only authenticated users can access this view
 
 ### GENERICS - mainly for testing purposes
 
