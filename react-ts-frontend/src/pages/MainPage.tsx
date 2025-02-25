@@ -6,6 +6,7 @@ import Paper from "@mui/material/Paper";
 import Checkbox from "@mui/material/Checkbox";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import ViewFood from "../components/ViewFood";
 import "../assets/css/MainPage.css"; // Import the CSS file
 
 interface MainPageProps {
@@ -243,49 +244,7 @@ const MainPage: React.FC<MainPageProps> = ({
 
         <div className="foods-list">
           {filteredFoods.map((food) => (
-            <div
-              key={food.id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                padding: "15px",
-                marginBottom: "15px",
-              }}
-            >
-              <h3>{food.name}</h3>
-              <div style={{ marginBottom: "10px" }}>
-                {food.image ? (
-                  <img
-                    src={`${food.image}`}
-                    alt={food.name}
-                    style={{
-                      maxWidth: "200px",
-                      height: "auto",
-                      borderRadius: "4px",
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                      const noImageText = document.createElement("span");
-                      noImageText.textContent = "No image available";
-                      noImageText.style.color = "#666";
-                      e.currentTarget.parentNode?.appendChild(noImageText);
-                    }}
-                  />
-                ) : (
-                  <span style={{ color: "#000" }}>No image available</span>
-                )}
-              </div>
-              <p>
-                Restaurant:{" "}
-                {restaurants.find((r) => r.id === food.restaurant)?.name}
-              </p>
-              <p>
-                Ingredients:{" "}
-                {food.ingredients
-                  .map((i) => ingredients.find((ing) => ing.id === i)?.name)
-                  .join(", ")}
-              </p>
-            </div>
+            <ViewFood key={food.id} food={food} restaurants={restaurants} ingredients={ingredients} />
           ))}
         </div>
       </React.Fragment>

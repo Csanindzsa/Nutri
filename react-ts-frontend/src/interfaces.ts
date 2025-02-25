@@ -34,6 +34,7 @@ export interface Supervisor {
 
 export interface Food {
     id: number;
+    // calories: number;
     restaurant: number;
     restaurant_name: string;  // Add this field
     name: string;
