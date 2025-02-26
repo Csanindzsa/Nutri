@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Food, Ingredient, MacroTable } from "../interfaces";
+import { Food, Ingredient } from "../interfaces";
 import { renderTable } from "../utils/utils";
 
 interface ApproveFoodProps {
@@ -17,6 +17,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, in
       : false
   );
   console.log("approved supervisors: ", food.approved_supervisors);
+  console.log("ingredients: ", food.ingredients);
   const [approvedCount, setApprovedCount] = useState<number>(food.approved_supervisors_count ?? 0);
 
   // Map ingredient IDs to their names
