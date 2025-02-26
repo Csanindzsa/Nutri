@@ -59,7 +59,7 @@ export interface Food {
     ingredients: number[];
     image?: string;
     approved_supervisors_count?: number;
-    approved_supervisors?: number[];
+    approved_supervisors?: Supervisor[];
 }
 
 export interface FoodChange {
