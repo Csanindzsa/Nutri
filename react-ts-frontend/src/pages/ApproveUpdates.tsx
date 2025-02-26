@@ -16,7 +16,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({ accessToken, userId, in
       if (!accessToken) return;
 
       try {
-        const response = await fetch("http://localhost:8000/food-changes/approve-updates/", {
+        const response = await fetch("http://localhost:8000/food-changes/updates/", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 

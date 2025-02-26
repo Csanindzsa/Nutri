@@ -26,11 +26,12 @@ urlpatterns = [
     path('foods/approvable/', GetApprovableFoods.as_view(), name='accept-food'),
 
     path('food-changes/create/', CreateFoodChange.as_view(), name='create-food-change'),
-    # path('food-changes/<int:pk>/approve-change/', CreateFoodChange.as_view(), name='create-food-change'),
+    path('food-changes/updates/', FoodChangeUpdateListView.as_view()),
+    path('food-changes/<int:pk>/approve-change/', ApproveProposal.as_view(), name='create-food-change'), #same as in approve-removal
 
     path('food/<int:food_id>/propose-removal/', CreateFoodRemoval.as_view(), name='food-delete'),
     path('food-changes/deletions/', FoodChangeDeletionListView.as_view(), name='food-change-deletions-list'),
-    path('food-changes/<int:pk>/approve-removal/', ApproveFoodRemoval.as_view(), name='approve-food-change'),
+    path('food-changes/<int:pk>/approve-removal/', ApproveProposal.as_view(), name='approve-food-change'),
 
     path('ingredients/', IngredientListView.as_view()),
 

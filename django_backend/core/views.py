@@ -295,6 +295,19 @@ class CreateFoodChange(generics.CreateAPIView):
             logger.error(f"Unexpected error in CreateFoodChange: {e}")
             return Response({"error": f"Unexpected error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class FoodChangeUpdateListView(generics.ListAPIView):
+    # queryset = FoodChange.objects.filter(is_deletion=False, new_is_approved=False)
+    serializer_class = FoodChangeSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Annotate the queryset with the count of new_approved_supervisors
+        queryset = FoodChange.objects.filter(is_deletion=False, new_is_approved=False).annotate(
+            new_approved_supervisors_count=Count('new_approved_supervisors')
+        )
+        return queryset
+
 class CreateFoodRemoval(generics.CreateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
@@ -349,7 +362,7 @@ class FoodChangeDeletionListView(generics.ListAPIView):
         )
         return queryset
 
-class ApproveFoodRemoval(generics.UpdateAPIView):
+class ApproveProposal(generics.UpdateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
     permission_classes = [IsAuthenticated]
