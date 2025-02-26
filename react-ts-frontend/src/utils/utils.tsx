@@ -1,4 +1,4 @@
-import { MacroTable, MacroDetail } from "../interfaces";
+import { MacroTable } from "../interfaces";
 
 export const formatNumber = (num: number) => {
   const decimalPart = (num % 1) * 10;
@@ -37,7 +37,6 @@ export const renderTable = (macroTable: MacroTable) => {
         <tr>
           <th style={{ padding: "5px" }}>Nutrient</th>
           <th style={{ padding: "5px" }}>Per 100g</th>
-          <th style={{ padding: "5px" }}>Percentage</th>
         </tr>
       </thead>
       <tbody>
@@ -50,18 +49,13 @@ export const renderTable = (macroTable: MacroTable) => {
                   {nutrientLabels[key] || key}
                 </td>
                 {key === "energy_kcal" ? (
-                  <td colSpan={2} style={{ padding: "5px" }}>
-                    {formatNumber(value as number)} kcal / {formatNumber((value as number) * 4.184)} kJ
+                  <td style={{ padding: "5px" }}>
+                    {formatNumber(value)} kcal / {formatNumber(value * 4.184)} kJ
                   </td>
                 ) : (
-                  <>
-                    <td style={{ padding: "5px" }}>
-                      {formatNumber((value as MacroDetail).per100g)}
-                    </td>
-                    <td style={{ padding: "5px" }}>
-                      {formatNumber((value as MacroDetail).percentage)}%
-                    </td>
-                  </>
+                  <td style={{ padding: "5px" }}>
+                    {formatNumber(value)}
+                  </td>
                 )}
               </tr>
             );
