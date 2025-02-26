@@ -32,20 +32,16 @@ export interface Supervisor {
     username: string;
 }
 
-export interface MacroDetail {
-    per100g: number;
-    percentage: number;
-}
   
 export interface MacroTable {
     energy_kcal: number;
-    fat: MacroDetail;
-    saturated_fat: MacroDetail;
-    carbohydrates: MacroDetail;
-    sugars: MacroDetail;
-    fiber: MacroDetail;
-    protein: MacroDetail;
-    salt: MacroDetail;
+    fat: number;
+    saturated_fat: number;
+    carbohydrates: number;
+    sugars: number;
+    fiber: number;
+    protein: number;
+    salt: number;
 }
 
 export interface Food {
