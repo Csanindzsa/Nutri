@@ -15,6 +15,8 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
   const [isUserApproved, setIsUserApproved] = useState<boolean>(false);
   const [approvedCount, setApprovedCount] = useState<number>(change.new_approved_supervisors_count ?? 0);
 
+  console.log("ingredients: ", ingredients);
+  console.log("ingredient ID's: ", change.new_ingredients);
   // Initialize isUserApproved based on new_approved_supervisors
   useEffect(() => {
     if (change.new_approved_supervisors && userId) {

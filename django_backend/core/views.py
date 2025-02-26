@@ -3,6 +3,7 @@ import string
 
 from django.db import IntegrityError
 from django.db.models import Count
+from django.core.exceptions import ObjectDoesNotExist
 
 from .serializers import *
 from rest_framework import generics
@@ -232,7 +233,42 @@ class AcceptFood(generics.UpdateAPIView):
             {"detail": "Food item approved successfully."},
             status=status.HTTP_200_OK
         )
-    
+
+def convert_value(value, target_type):
+    """
+    Convert the given value to the specified target type.
+    Supports: bool, int, float, str.
+    """
+    if target_type == bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.lower() in ["true", "1", "yes"]
+        return False  # Default to False if conversion fails
+    elif target_type == int:
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return 0  # Default to 0 if conversion fails
+    elif target_type == float:
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0  # Default to 0.0 if conversion fails
+    return value  # Return original value if no conversion is needed
+
+import json
+def parse_json(value):
+    """Ensure the value is properly stored as JSON, not a string."""
+    if isinstance(value, dict):  
+        return value  # Already a JSON object
+    if isinstance(value, str):
+        try:
+            return json.loads(value)  # Convert JSON string to actual JSON object
+        except json.JSONDecodeError:
+            return {}  # Return empty JSON if invalid
+    return {}  # Default to empty JSON if value is not vali
+
 class CreateFoodChange(generics.CreateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
@@ -240,6 +276,7 @@ class CreateFoodChange(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        print(f"ingredients: {request.data.get('ingredients')}")
         try:
             # Validate food_id
             food_id = request.data.get("food_id")
@@ -256,21 +293,63 @@ class CreateFoodChange(generics.CreateAPIView):
 
             # Extract new data
             new_data = request.data
+            logger.debug("new data: %s", new_data)
+
+            # Validate and parse ingredients
+            ingredients = new_data.get("ingredients", "[]")  # Default to an empty JSON array if not provided
+            try:
+                # Parse the JSON-encoded ingredients string into a Python list
+                ingredient_ids = json.loads(ingredients)
+                if not isinstance(ingredient_ids, list):
+                    return Response(
+                        {"error": "ingredients must be a JSON-encoded array."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            except json.JSONDecodeError:
+                return Response(
+                    {"error": "ingredients must be a valid JSON-encoded array."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Convert ingredient IDs to integers and validate
+            valid_ingredient_ids = []
+            invalid_ingredient_ids = []
+
+            for ing_id in ingredient_ids:
+                try:
+                    # Ensure the ingredient ID is a valid integer
+                    ing_id = int(ing_id)
+                    # Check if the ingredient exists in the database
+                    Ingredient.objects.get(id=ing_id)
+                    valid_ingredient_ids.append(ing_id)
+                except (ValueError, TypeError):
+                    # Handle cases where ing_id is not a valid integer
+                    invalid_ingredient_ids.append(ing_id)
+                except ObjectDoesNotExist:
+                    # Handle cases where the ingredient does not exist
+                    invalid_ingredient_ids.append(ing_id)
+
+            # If there are invalid ingredient IDs, return an error
+            if invalid_ingredient_ids:
+                return Response(
+                    {"error": f"Ingredients with IDs {', '.join(map(str, invalid_ingredient_ids))} are invalid or do not exist."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             # Create the FoodChange object
             try:
                 food_change = FoodChange.objects.create(
                     old_version=food,
-                    is_deletion=new_data.get("is_deletion", False),
-                    new_restaurant=food.restaurant,  # Keep the restaurant the same
-                    new_name=new_data.get("new_name", food.name),
-                    new_serving_size=new_data.get("new_serving_size", food.serving_size),
-                    new_macro_table=new_data.get("new_macro_table", food.macro_table),
-                    new_is_organic=new_data.get("new_is_organic", food.is_organic),
-                    new_is_gluten_free=new_data.get("new_is_gluten_free", food.is_gluten_free),
-                    new_is_alcohol_free=new_data.get("new_is_alcohol_free", food.is_alcohol_free),
-                    new_is_lactose_free=new_data.get("new_is_lactose_free", food.is_lactose_free),
-                    new_image=new_data.get("new_image", food.image),
+                    is_deletion=convert_value(new_data.get("is_deletion", False), bool),
+                    new_restaurant=food.restaurant,
+                    new_name=new_data.get("name", food.name),
+                    new_serving_size=convert_value(new_data.get("serving_size", food.serving_size), float),
+                    new_macro_table=parse_json(new_data.get("macro_table", food.macro_table)),
+                    new_is_organic=convert_value(new_data.get("is_organic", food.is_organic), bool),
+                    new_is_gluten_free=convert_value(new_data.get("is_gluten_free", food.is_gluten_free), bool),
+                    new_is_alcohol_free=convert_value(new_data.get("is_alcohol_free", food.is_alcohol_free), bool),
+                    new_is_lactose_free=convert_value(new_data.get("is_lactose_free", food.is_lactose_free), bool),
+                    new_image=new_data.get("image", food.image),
                     new_is_approved=False,
                 )
             except ValidationError as e:
@@ -280,10 +359,10 @@ class CreateFoodChange(generics.CreateAPIView):
                 logger.error(f"Error creating FoodChange: {e}")
                 return Response({"error": f"Error creating FoodChange: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # Set new_ingredients if provided
-            if "ingredients" in new_data:
+            # Set valid ingredients if provided
+            if valid_ingredient_ids:
                 try:
-                    food_change.new_ingredients.set(new_data["ingredients"])
+                    food_change.new_ingredients.set(valid_ingredient_ids)
                 except Exception as e:
                     logger.error(f"Error setting new_ingredients: {e}")
                     return Response({"error": f"Error setting new_ingredients: {e}"}, status=status.HTTP_400_BAD_REQUEST)

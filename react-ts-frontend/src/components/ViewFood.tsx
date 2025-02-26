@@ -84,6 +84,7 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     ingredients: food.ingredients,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  console.log("ingredients at viewfood: ", ingredients)
 
   const handleProposeRemoval = async () => {
     try {
@@ -109,6 +110,12 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
   };
 
   const handleProposeChange = async () => {
+    // Validate ingredients
+    if (!formData.ingredients || formData.ingredients.length === 0) {
+      alert("Please select at least one ingredient.");
+      return;
+    }
+  
     const formDataToSend = new FormData();
     formDataToSend.append("food_id", food.id.toString());
     formDataToSend.append("name", formData.name || "");
@@ -118,12 +125,13 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     formDataToSend.append("is_alcohol_free", formData.is_alcohol_free?.toString() || "false");
     formDataToSend.append("is_lactose_free", formData.is_lactose_free?.toString() || "false");
     formDataToSend.append("macro_table", JSON.stringify(formData.macro_table));
-    formData.ingredients?.forEach((ing) => formDataToSend.append("new_ingredients", ing.toString()));
+    formDataToSend.append("ingredients", JSON.stringify(formData.ingredients || []));
     if (imageFile) {
       formDataToSend.append("new_image", imageFile);
     }
-
+  
     try {
+      console.log("ingredients: ", formData.ingredients);
       const response = await fetch("http://localhost:8000/food-changes/propose-change/", {
         method: "POST",
         headers: {
@@ -131,12 +139,12 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
         },
         body: formDataToSend,
       });
-
+  
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to propose change.");
       }
-
+  
       const data = await response.json();
       alert(data.message);
       setIsFormOpen(false);
@@ -148,7 +156,7 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-
+  
     if (type === "checkbox") {
       setFormData((prev) => ({
         ...prev,
@@ -157,7 +165,7 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     } else if (name === "ingredients") {
       const selectedIngredients = Array.from(
         (e.target as HTMLSelectElement).selectedOptions,
-        (option) => parseInt(option.value)
+        (option) => parseInt(option.value)  // Ensure this is a number
       );
       setFormData((prev) => ({
         ...prev,
