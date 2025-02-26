@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Food, Ingredient, Restaurant, MacroTable, MacroDetail } from "../interfaces";
+import { Food, Ingredient, Restaurant, MacroTable } from "../interfaces";
 
 interface ViewFoodProps {
   food: Food;
@@ -35,19 +35,18 @@ const order = [
   "salt",
 ];
 
-const renderTable = (data: Record<string, any>) => {
+const renderTable = (data: MacroTable) => {
   return (
     <table border={1} style={{ width: "100%", marginTop: "10px" }}>
       <thead>
         <tr>
           <th style={{ padding: "5px" }}>Nutrient</th>
-          <th style={{ padding: "5px" }}>Per 100g</th>
-          <th style={{ padding: "5px" }}>Percentage</th>
+          <th style={{ padding: "5px" }}>Value</th>
         </tr>
       </thead>
       <tbody>
         {order.map((key) => {
-          const value = data[key];
+          const value = data[key as keyof MacroTable];
           if (value !== undefined) {
             return (
               <tr key={key}>
@@ -55,22 +54,11 @@ const renderTable = (data: Record<string, any>) => {
                   {nutrientLabels[key] || key}
                 </td>
                 {key === "energy_kcal" ? (
-                  <td colSpan={2} style={{ padding: "5px" }}>
+                  <td style={{ padding: "5px" }}>
                     {formatNumber(value)} kcal / {formatNumber(value * 4.184)} kJ
                   </td>
                 ) : (
-                  <>
-                    <td style={{ padding: "5px" }}>
-                      {typeof value.per100g === "number"
-                        ? formatNumber(value.per100g)
-                        : "-"}
-                    </td>
-                    <td style={{ padding: "5px" }}>
-                      {typeof value.percentage === "number"
-                        ? formatNumber(value.percentage) + "%"
-                        : "-"}
-                    </td>
-                  </>
+                  <td style={{ padding: "5px" }}>{formatNumber(value)}g</td>
                 )}
               </tr>
             );
@@ -136,7 +124,7 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     }
 
     try {
-      const response = await fetch("http://localhost:8000/food-changes/create/", {
+      const response = await fetch("http://localhost:8000/food-changes/propose-change/", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -183,35 +171,26 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     }
   };
 
-  const handleMacroChange = (key: keyof MacroTable, field: keyof MacroDetail, value: string) => {
+  const handleMacroChange = (key: keyof MacroTable, value: string) => {
     setFormData((prev) => {
       // Ensure macro_table is defined and initialize it if not
       const currentMacroTable = prev.macro_table || {
         energy_kcal: 0,
-        fat: { per100g: 0, percentage: 0 },
-        saturated_fat: { per100g: 0, percentage: 0 },
-        carbohydrates: { per100g: 0, percentage: 0 },
-        sugars: { per100g: 0, percentage: 0 },
-        protein: { per100g: 0, percentage: 0 },
-        fiber: { per100g: 0, percentage: 0 },
-        salt: { per100g: 0, percentage: 0 },
+        fat: 0,
+        saturated_fat: 0,
+        carbohydrates: 0,
+        sugars: 0,
+        protein: 0,
+        fiber: 0,
+        salt: 0,
       };
-
-      // Ensure the nested object for the key exists
-      const currentMacroDetail = (currentMacroTable[key] || { per100g: 0, percentage: 0 }) as MacroDetail;
-
-      // Update the specific field in the nested object
-      const updatedMacroDetail = {
-        ...currentMacroDetail,
-        [field]: parseFloat(value) || 0,
-      };
-
-      // Update the macro_table with the new nested object
+  
+      // Update the specific nutrient value
       const updatedMacroTable = {
         ...currentMacroTable,
-        [key]: updatedMacroDetail,
+        [key]: parseFloat(value) || 0,
       };
-
+  
       return {
         ...prev,
         macro_table: updatedMacroTable,
@@ -228,61 +207,35 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
   const renderMacroForm = () => {
     const macroTable = formData.macro_table || {
       energy_kcal: 0,
-      fat: { per100g: 0, percentage: 0 },
-      saturated_fat: { per100g: 0, percentage: 0 },
-      carbohydrates: { per100g: 0, percentage: 0 },
-      sugars: { per100g: 0, percentage: 0 },
-      protein: { per100g: 0, percentage: 0 },
-      fiber: { per100g: 0, percentage: 0 },
-      salt: { per100g: 0, percentage: 0 },
+      fat: 0,
+      saturated_fat: 0,
+      carbohydrates: 0,
+      sugars: 0,
+      protein: 0,
+      fiber: 0,
+      salt: 0,
     };
   
     return (
       <div>
         <h4>Edit Macros</h4>
         {order.map((key) => {
-          const value = macroTable[key as keyof MacroTable];
+          const nutrientKey = key as keyof MacroTable;
+          const value = macroTable[nutrientKey];
   
-          if (key === "energy_kcal") {
-            // Handle energy_kcal separately (it's a number)
-            return (
-              <div key={key}>
-                <h5>{nutrientLabels[key] || key}</h5>
-                <div>
-                  <label>Energy (kcal):</label>
-                  <input
-                    type="number"
-                    value={value as number || ""}
-                    onChange={(e) => handleMacroChange(key, "energy_kcal" as keyof MacroDetail, e.target.value)}
-                  />
-                </div>
+          return (
+            <div key={key}>
+              <h5>{nutrientLabels[key] || key}</h5>
+              <div>
+                <label>{key === "energy_kcal" ? "Value (kcal):" : "Value (g):"}</label>
+                <input
+                  type="number"
+                  value={value == null ? "" : value}
+                  onChange={(e) => handleMacroChange(nutrientKey, e.target.value)}
+                />
               </div>
-            );
-          } else {
-            // Handle other fields (they are MacroDetail objects)
-            const macroDetail = value as MacroDetail;
-            return (
-              <div key={key}>
-                <h5>{nutrientLabels[key] || key}</h5>
-                <div>
-                  <label>Per 100g:</label>
-                  <input
-                    type="number"
-                    value={macroDetail.per100g || ""}
-                    onChange={(e) => handleMacroChange(key as keyof MacroTable, "per100g", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label>Percentage:</label>
-                  <input
-                    type="number"
-                    value={macroDetail.percentage || ""}
-                    onChange={(e) => handleMacroChange(key as keyof MacroTable, "percentage", e.target.value)}
-                  />
-                </div>
-              </div>
-            );
-          }
+            </div>
+          );
         })}
       </div>
     );

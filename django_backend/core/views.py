@@ -330,7 +330,6 @@ class CreateFoodRemoval(generics.CreateAPIView):
                 new_restaurant=food.restaurant,
                 new_name=food.name,
                 new_macro_table=food.macro_table,
-                new_calories=food.calories,
                 new_is_organic=food.is_organic,
                 new_is_gluten_free=food.is_gluten_free,
                 new_is_alcohol_free=food.is_alcohol_free,

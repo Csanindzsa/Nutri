@@ -25,7 +25,7 @@ urlpatterns = [
     path('food/<int:pk>/accept/', AcceptFood.as_view(), name='accept-food'),
     path('foods/approvable/', GetApprovableFoods.as_view(), name='accept-food'),
 
-    path('food-changes/create/', CreateFoodChange.as_view(), name='create-food-change'),
+    path('food-changes/propose-change/', CreateFoodChange.as_view(), name='create-food-change'),
     path('food-changes/updates/', FoodChangeUpdateListView.as_view()),
     path('food-changes/<int:pk>/approve-change/', ApproveProposal.as_view(), name='create-food-change'), #same as in approve-removal
 

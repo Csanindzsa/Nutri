@@ -25,6 +25,27 @@ interface MainPageProps {
   setSelectedIngredients: React.Dispatch<React.SetStateAction<number[]>>;
 }
 
+// Reusable filtering function
+const filterFoods = (
+  foods: Food[],
+  selectedRestaurants: number[],
+  selectedIngredients: number[],
+  isOrganicFilter: boolean,
+  isAlcoholFreeFilter: boolean,
+  isGlutenFreeFilter: boolean,
+  isLactoseFreeFilter: boolean
+): Food[] => {
+  return foods.filter(
+    (food) =>
+      (selectedRestaurants.length === 0 || selectedRestaurants.includes(food.restaurant)) &&
+      (selectedIngredients.length === 0 || food.ingredients.every((ingredientId) => selectedIngredients.includes(ingredientId))) &&
+      (!isOrganicFilter || food.is_organic) &&
+      (!isAlcoholFreeFilter || food.is_alcohol_free) &&
+      (!isGlutenFreeFilter || food.is_gluten_free) &&
+      (!isLactoseFreeFilter || food.is_lactose_free)
+  );
+};
+
 const MainPage: React.FC<MainPageProps> = ({
   accessToken,
   restaurants,
@@ -121,17 +142,16 @@ const MainPage: React.FC<MainPageProps> = ({
     );
   };
 
-  // Filter foods based on selected restaurants, selected ingredients, and additional filters
-  const filteredFoods = foods.filter(
-    (food) =>
-      (selectedRestaurants.length === 0 || selectedRestaurants.includes(food.restaurant)) &&
-      (selectedIngredients.length === 0 || food.ingredients.every((ingredientId) => selectedIngredients.includes(ingredientId))) &&
-      (!isOrganicFilter || food.is_organic) &&
-      (!isAlcoholFreeFilter || food.is_alcohol_free) &&
-      (!isGlutenFreeFilter || food.is_gluten_free) &&
-      (!isLactoseFreeFilter || food.is_lactose_free)
+  // Use the reusable filter function
+  const filteredFoods = filterFoods(
+    foods,
+    selectedRestaurants,
+    selectedIngredients,
+    isOrganicFilter,
+    isAlcoholFreeFilter,
+    isGlutenFreeFilter,
+    isLactoseFreeFilter
   );
-  
 
   return (
     <ThemeProvider theme={createTheme()}>

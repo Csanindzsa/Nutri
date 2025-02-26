@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Food, Ingredient, MacroTable, MacroDetail } from "../interfaces";
+import { Food, Ingredient, MacroTable } from "../interfaces";
 import { renderTable } from "../utils/utils";
 
 interface ApproveFoodProps {
@@ -9,8 +9,6 @@ interface ApproveFoodProps {
   ingredients: Ingredient[];
   onApprove: (updatedFood: Food) => void;
 }
-
-
 
 const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, ingredients, onApprove }) => {
   const [isUserApproved, setIsUserApproved] = useState<boolean>(() =>
