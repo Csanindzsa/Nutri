@@ -3,8 +3,6 @@ export interface User {
     email: string;
     username: string;
     is_supervisor: boolean;
-    is_staff: boolean;
-    is_admin: boolean;
 }
 
 export interface Restaurant {

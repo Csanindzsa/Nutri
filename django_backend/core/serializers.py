@@ -27,8 +27,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['username'] = self.user.username
         data['email'] = self.user.email
         data['is_supervisor'] = self.user.is_supervisor
-        data['is_staff'] = self.user.is_supervisor
-        data['is_admin'] = self.user.is_supervisor
 
         return data
     @classmethod
@@ -39,8 +37,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username'] = user.username
         token['email'] = user.email
         token['is_supervisor'] = user.is_supervisor
-        token['is_staff'] = user.is_supervisor
-        token['is_admin'] = user.is_supervisor
 
         return token
 

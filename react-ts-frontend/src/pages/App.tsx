@@ -10,7 +10,7 @@ import ApprovableFoods from "./ApprovableFoods";
 import ApproveRemovals from "./ApproveRemovals";
 import ApproveUpdates from "./ApproveUpdates";
 import EditUser from "./EditUser";
-import DeleteUser from "./DeleteUser";
+import DeleteUser from "./Deleteuser";
 import AccountDeleted from "./AccountDeleted";
 // import ApproveFood from "./ApproveFood";
 
