@@ -102,6 +102,7 @@ class Food(models.Model):
     ingredients = models.ManyToManyField(Ingredient, related_name="foods")  # Many-to-Many Relationship
 
     approved_supervisors = models.ManyToManyField(User, related_name="approved_foods", blank=True)
+    approved_supervisors_count = models.PositiveIntegerField(default=0)
     is_approved = models.BooleanField(default=True)
 
     def __str__(self):
@@ -127,6 +128,7 @@ class FoodChange(models.Model):
     new_ingredients = models.ManyToManyField(Ingredient, related_name="new_food_versions")  # Many-to-Many Relationship
 
     new_approved_supervisors = models.ManyToManyField(User, related_name="approved_food_changes", blank=True)
+    new_approved_supervisors_count = models.PositiveIntegerField(default=0)
     new_is_approved = models.BooleanField(default=True)
 
     def __str__(self):
