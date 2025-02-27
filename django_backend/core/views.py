@@ -198,32 +198,43 @@ class FoodCreateView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         try:
+            # Log the incoming request data for debugging
+            logger.debug(f"Incoming request data: {request.data}")
+
+            # Perform the default create logic
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
+
+            # Log the successful creation
+            logger.info(f"Food created successfully: {serializer.data}")
+
+            # Return the response with the created data
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
         except ValidationError as e:
+            # Log validation errors
             logger.error(f"Validation error: {e.detail}")
             return Response({"error": "Validation failed", "details": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
+            # Log unexpected errors
             logger.error(f"Unexpected error during food creation: {str(e)}")
             return Response({"error": "An unexpected error occurred", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_create(self, serializer):
-        if self.request.user.is_supervisor:
-            serializer.validated_data['approved_supervisors_count'] = 1
-        if self.request.user.is_staff:
-            serializer.validated_data['approved_supervisors_count'] = 5
-        if self.request.user.is_admin:
-            serializer.validated_data['is_approved'] = True
-            serializer.validated_data['approved_supervisors_count'] = 10
-        else:
-            serializer.validated_data['is_approved'] = False
+        # Set is_approved to False upon creation
+        serializer.validated_data['is_approved'] = False
 
+        # Save the Food instance
         food = serializer.save()
+
+        # If the user is a supervisor, add them to the approved_users
         if self.request.user.is_supervisor:
             food.approved_supervisors.add(self.request.user)
+
+        # Save the updated Food instance
         food.save()
 
 
@@ -254,13 +265,24 @@ class AcceptFood(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
+        # Get the food instance
         food = self.get_object()
+
+        # Check if the user is a supervisor
         if not request.user.is_supervisor:
-            return Response({"detail": "Only supervisors can approve food items."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "Only supervisors can approve food items."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
+        # Check if the user has already approved this food item
         if food.approved_supervisors.filter(id=request.user.id).exists():
-            return Response({"detail": "You have already approved this food item."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"detail": "You have already approved this food item."},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
+        # Add the user to the approved supervisors
         food.approved_supervisors.add(request.user)
         
         food.save()
@@ -325,65 +347,100 @@ class CreateFoodChange(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        print(f"ingredients: {request.data.get('ingredients')}")
         try:
+            # Validate food_id
             food_id = request.data.get("food_id")
             if not food_id:
                 logger.error("food_id is required.")
                 return Response({"error": "food_id is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-            food = Food.objects.get(id=food_id)
+            # Fetch the food object
+            try:
+                food = Food.objects.get(id=food_id)
+            except Food.DoesNotExist:
+                logger.error(f"Food with id {food_id} does not exist.")
+                return Response({"error": f"Food with id {food_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+            # Extract new data
             new_data = request.data
             logger.debug("new data: %s", new_data)
 
-            ingredients = new_data.get("ingredients", "[]")
+            # Validate and parse ingredients
+            ingredients = new_data.get("ingredients", "[]")  # Default to an empty JSON array if not provided
             try:
+                # Parse the JSON-encoded ingredients string into a Python list
                 ingredient_ids = json.loads(ingredients)
                 if not isinstance(ingredient_ids, list):
-                    return Response({"error": "ingredients must be a JSON-encoded array."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {"error": "ingredients must be a JSON-encoded array."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             except json.JSONDecodeError:
-                return Response({"error": "ingredients must be a valid JSON-encoded array."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "ingredients must be a valid JSON-encoded array."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
+            # Convert ingredient IDs to integers and validate
             valid_ingredient_ids = []
             invalid_ingredient_ids = []
+
             for ing_id in ingredient_ids:
                 try:
+                    # Ensure the ingredient ID is a valid integer
                     ing_id = int(ing_id)
+                    # Check if the ingredient exists in the database
                     Ingredient.objects.get(id=ing_id)
                     valid_ingredient_ids.append(ing_id)
-                except (ValueError, TypeError, ObjectDoesNotExist):
+                except (ValueError, TypeError):
+                    # Handle cases where ing_id is not a valid integer
+                    invalid_ingredient_ids.append(ing_id)
+                except ObjectDoesNotExist:
+                    # Handle cases where the ingredient does not exist
                     invalid_ingredient_ids.append(ing_id)
 
+            # If there are invalid ingredient IDs, return an error
             if invalid_ingredient_ids:
-                return Response({"error": f"Ingredients with IDs {', '.join(map(str, invalid_ingredient_ids))} are invalid or do not exist."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": f"Ingredients with IDs {', '.join(map(str, invalid_ingredient_ids))} are invalid or do not exist."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-            food_change = FoodChange.objects.create(
-                old_version=food,
-                is_deletion=convert_value(new_data.get("is_deletion", False), bool),
-                new_restaurant=food.restaurant,
-                new_name=new_data.get("name", food.name),
-                new_serving_size=convert_value(new_data.get("serving_size", food.serving_size), float),
-                new_macro_table=parse_json(new_data.get("macro_table", food.macro_table)),
-                new_is_organic=convert_value(new_data.get("is_organic", food.is_organic), bool),
-                new_is_gluten_free=convert_value(new_data.get("is_gluten_free", food.is_gluten_free), bool),
-                new_is_alcohol_free=convert_value(new_data.get("is_alcohol_free", food.is_alcohol_free), bool),
-                new_is_lactose_free=convert_value(new_data.get("is_lactose_free", food.is_lactose_free), bool),
-                new_image=new_data.get("image", food.image),
-                new_is_approved=False,
-            )
+            # Create the FoodChange object
+            try:
+                food_change = FoodChange.objects.create(
+                    old_version=food,
+                    is_deletion=convert_value(new_data.get("is_deletion", False), bool),
+                    new_restaurant=food.restaurant,
+                    new_name=new_data.get("name", food.name),
+                    new_serving_size=convert_value(new_data.get("serving_size", food.serving_size), float),
+                    new_macro_table=parse_json(new_data.get("macro_table", food.macro_table)),
+                    new_is_organic=convert_value(new_data.get("is_organic", food.is_organic), bool),
+                    new_is_gluten_free=convert_value(new_data.get("is_gluten_free", food.is_gluten_free), bool),
+                    new_is_alcohol_free=convert_value(new_data.get("is_alcohol_free", food.is_alcohol_free), bool),
+                    new_is_lactose_free=convert_value(new_data.get("is_lactose_free", food.is_lactose_free), bool),
+                    new_image=new_data.get("image", food.image),
+                    new_is_approved=False,
+                )
+            except ValidationError as e:
+                logger.error(f"Validation error while creating FoodChange: {e}")
+                return Response({"error": f"Validation error: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                logger.error(f"Error creating FoodChange: {e}")
+                return Response({"error": f"Error creating FoodChange: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+            # Set valid ingredients if provided
             if valid_ingredient_ids:
-                food_change.new_ingredients.set(valid_ingredient_ids)
+                try:
+                    food_change.new_ingredients.set(valid_ingredient_ids)
+                except Exception as e:
+                    logger.error(f"Error setting new_ingredients: {e}")
+                    return Response({"error": f"Error setting new_ingredients: {e}"}, status=status.HTTP_400_BAD_REQUEST)
 
-            if request.user.is_supervisor:
-                food_change.new_approved_supervisors.add(request.user)
-                food_change.new_approved_supervisors_count = 1
-                if request.user.is_staff:
-                    food_change.new_approved_supervisors_count = 5
-                    if request.user.is_admin:
-                        food_change.new_approved_supervisors_count = 10
-            
-            food_change.save()
+            # Return success response
             return Response({"message": "Food change request created successfully."}, status=status.HTTP_201_CREATED)
+
         except Exception as e:
             logger.error(f"Unexpected error in CreateFoodChange: {e}")
             return Response({"error": f"Unexpected error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -435,11 +492,6 @@ class CreateFoodRemoval(generics.CreateAPIView):
 
             if request.user.is_supervisor:
                 food_change.new_approved_supervisors.add(request.user)
-                food_change.new_approved_supervisors_count = 1
-                if request.user.is_staff:
-                    food_change.new_approved_supervisors_count = 5
-                    if request.user.is_admin:
-                        food_change.new_approved_supervisors_count = 10
 
             return Response({"message": "Food deletion request created successfully."}, status=status.HTTP_201_CREATED)
 
@@ -465,10 +517,14 @@ class ApproveProposal(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
+        # Retrieve the FoodChange instance
         food_change = get_object_or_404(FoodChange, id=kwargs.get('pk'))
+
+        # Check if the user is a supervisor
         if not request.user.is_supervisor:
             return Response({"error": "Only supervisors can approve food changes."}, status=status.HTTP_403_FORBIDDEN)
 
+        # Add the supervisor to the new_approved_supervisors
         food_change.new_approved_supervisors.add(request.user)
 
         # Check if the FoodChange has enough approvals to be marked as approved
@@ -476,15 +532,19 @@ class ApproveProposal(generics.UpdateAPIView):
         if food_change.new_approved_supervisors.count() >= required_approvals:
             # Mark the FoodChange as approved
             food_change.new_is_approved = True
-            food_change.new_approved_supervisors_count = total_approval_weight
             food_change.save()
 
+            # Retrieve and delete the original Food object (if old_version is not null)
             if food_change.old_version:
                 try:
                     original_food = Food.objects.get(id=food_change.old_version.id)
-                    original_food.delete()
+                    original_food.delete()  # Delete the original Food object
                 except Food.DoesNotExist:
-                    return Response({"error": "The original Food object does not even exist."}, status=status.HTTP_404_NOT_FOUND)
+                    # Handle the case where the original Food object no longer exists
+                    return Response(
+                        {"error": "The original Food object does not even exist."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
 
         return Response({"message": "Food change approved successfully."}, status=status.HTTP_200_OK)
 

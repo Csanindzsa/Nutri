@@ -77,7 +77,7 @@ class FoodSerializer(serializers.ModelSerializer):
             'id', 'restaurant', 'restaurant_name', 'name', 'macro_table', 'serving_size', 'is_organic',
             'is_gluten_free', 'is_alcohol_free', 'is_lactose_free', 'image',
             'ingredients',
-            'approved_supervisors_count',
+            # 'approved_supervisors',
             'is_approved',
         ]
 
