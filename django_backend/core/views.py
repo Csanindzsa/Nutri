@@ -262,32 +262,27 @@ class AcceptFood(generics.UpdateAPIView):
             return Response({"detail": "You have already approved this food item."}, status=status.HTTP_403_FORBIDDEN)
 
         food.approved_supervisors.add(request.user)
+        
         food.save()
 
-        # Calculate the total approval weight
-        total_approval_weight = 0
-        for supervisor in food.approved_supervisors.all():
-            if supervisor.is_staff:
-                total_approval_weight += 5  # Staff approval is worth 5x
-            elif supervisor.is_supervisor:
-                total_approval_weight += 1  # Supervisor approval is worth 1x
-            elif supervisor.is_admin:
-                total_approval_weight += 10
+        approved_count = food.approved_supervisors.count()
 
         # Define the threshold for approval
-        REQUIRED_APPROVALS = 10  # Example: require 10 approval points
+        REQUIRED_APPROVALS = 10
 
         # If the threshold is met, mark the food as approved
-        if total_approval_weight >= REQUIRED_APPROVALS:
+        if approved_count >= REQUIRED_APPROVALS:
             food.is_approved = True
-            food.save()
+        food.save()
+
+       
 
         # Return a success response
         return Response(
             {"detail": "Food item approved successfully."},
             status=status.HTTP_200_OK
         )
-    
+
 def convert_value(value, target_type):
     """
     Convert the given value to the specified target type.
@@ -476,19 +471,9 @@ class ApproveProposal(generics.UpdateAPIView):
 
         food_change.new_approved_supervisors.add(request.user)
 
-        # Calculate the total approval weight
-        total_approval_weight = 0
-        for supervisor in food_change.new_approved_supervisors.all():
-            if supervisor.is_staff:
-                total_approval_weight += 5  # Staff approval is worth 5x
-            elif supervisor.is_supervisor:
-                total_approval_weight += 1  # Supervisor approval is worth 1x
-            elif supervisor.admin:
-                total_approval_weight += 10
-
         # Check if the FoodChange has enough approvals to be marked as approved
-        required_approvals = 15  # Example: require 20 approval points
-        if total_approval_weight >= required_approvals:
+        required_approvals = 20  # Example: require 5 supervisor approvals
+        if food_change.new_approved_supervisors.count() >= required_approvals:
             # Mark the FoodChange as approved
             food_change.new_is_approved = True
             food_change.new_approved_supervisors_count = total_approval_weight
