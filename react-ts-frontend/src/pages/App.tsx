@@ -342,7 +342,9 @@ const App = () => {
             <EditUser 
               accessToken={accessToken} 
               userData={userData} 
-              setUserData={setUserData} 
+              setUserData={setUserData}
+              setAccessToken={setAccessToken}
+              setRefreshToken={setRefreshToken}
             />
           }
         />
