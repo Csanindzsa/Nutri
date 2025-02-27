@@ -99,6 +99,68 @@ class ConfirmEmail(generics.CreateAPIView):
             "message": "User has been successfully activated."
         }, status=status.HTTP_200_OK)
 
+class EditUserView(generics.UpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        """Get the user object to be updated (the authenticated user)."""
+        return self.request.user
+    
+    def get_serializer(self, *args, **kwargs):
+        """Override to use a custom serializer for editing only allowed fields."""
+        kwargs['partial'] = True  # Allow partial updates
+        return super().get_serializer(*args, **kwargs)
+    
+    def update(self, request, *args, **kwargs):
+        """
+        Update the user with the provided data, excluding protected fields.
+        """
+        # Get a copy of the data to avoid modifying the request directly
+        data = request.data.copy()
+        
+        # Remove protected fields from the data if present
+        protected_fields = ['is_active', 'is_supervisor', 'is_staff']
+        for field in protected_fields:
+            if field in data:
+                data.pop(field)
+        
+        # Handle password separately if it's being updated
+        password = data.pop('password', None)
+        
+        # Update the user instance with the filtered data
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        
+        # Update password if provided
+        if password:
+            instance.set_password(password)
+            instance.save()
+        
+        return Response({
+            "message": "User information updated successfully.",
+            "user": serializer.data
+        }, status=status.HTTP_200_OK)
+
+class DeleteUserView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        """Get the user object to be deleted (the authenticated user)."""
+        return self.request.user
+    
+    def delete(self, request, *args, **kwargs):
+        """Handle the user deletion with a confirmation step."""
+        user = self.get_object()
+        
+        # Perform the deletion
+        user.delete()
+        
+        return Response({
+            "message": "Your account has been successfully deleted."
+        }, status=status.HTTP_200_OK)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -476,6 +538,7 @@ class ApproveProposal(generics.UpdateAPIView):
                     )
 
         return Response({"message": "Food change approved successfully."}, status=status.HTTP_200_OK)
+
 
 ### GENERICS - mainly for testing purposes
 

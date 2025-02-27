@@ -9,6 +9,9 @@ import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
 import ApprovableFoods from "./ApprovableFoods";
 import ApproveRemovals from "./ApproveRemovals";
 import ApproveUpdates from "./ApproveUpdates";
+import EditUser from "./EditUser";
+import DeleteUser from "./Deleteuser";
+import AccountDeleted from "./AccountDeleted";
 // import ApproveFood from "./ApproveFood";
 
 // Function to decode JWT token
@@ -64,6 +67,10 @@ const App = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("Updated userData:", userData);
+  }, [userData]);
+
+  useEffect(() => {
     const storedAccessToken = localStorage.getItem("access_token");
     const storedRefreshToken = localStorage.getItem("refresh_token");
 
@@ -72,6 +79,7 @@ const App = () => {
       setRefreshToken(storedRefreshToken);
       const decoded = decodeToken(storedAccessToken);
       if (decoded) {
+        console.log("username: ", decoded.username)
         setUserData({
           user_id: decoded.user_id,
           username: decoded.username,
@@ -107,6 +115,7 @@ const App = () => {
             const newDecoded = decodeToken(newAccessToken);
             console.log("decoded token: ", newDecoded);
             if (newDecoded) {
+              console.log("username: ", newDecoded.username)
               setUserData({
                 user_id: newDecoded.user_id,
                 username: newDecoded.username,
@@ -235,6 +244,8 @@ const App = () => {
           </p>
           <p>
             <strong>Email:</strong> {userData.email}
+            <Link to="/edit-profile">Edit Profile</Link>
+            <Link to="/delete-account">Delete Account</Link>
           </p>
         </div>
       ) : (
@@ -317,10 +328,6 @@ const App = () => {
           path="/approvable-foods"
           element={<ApprovableFoods userId={userData.user_id} ingredients={ingredients} accessToken={accessToken} />}
         />
-        {/* <Route
-          path="/approve-food/:foodId"
-          element={<ApproveFood handleApprove={handleApprove} />}
-        /> */}
         <Route
           path="/approve-removals" // Step 2: Define the new route
           element={<ApproveRemovals accessToken={accessToken} userId={userData.user_id} ingredients={ingredients}/>} // Step 3: Pass accessToken
@@ -329,7 +336,33 @@ const App = () => {
           path="/approve-updates"
           element={<ApproveUpdates accessToken={accessToken} userId={userData.user_id} ingredients={ingredients} />}
         />
+        <Route
+          path="/edit-profile"
+          element={
+            <EditUser 
+              accessToken={accessToken} 
+              userData={userData} 
+              setUserData={setUserData} 
+            />
+          }
+        />
+        <Route
+          path="/delete-account"
+          element={
+            <DeleteUser 
+              accessToken={accessToken}
+              setAccessToken={setAccessToken}
+              setRefreshToken={setRefreshToken}
+              setUserData={setUserData}
+            />
+          }
+        />
+        <Route
+          path="/account-deleted"
+          element={<AccountDeleted />}
+        />
       </Routes>
+      
     </div>
   );
 };

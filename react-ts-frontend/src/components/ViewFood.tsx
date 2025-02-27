@@ -84,7 +84,7 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_
     ingredients: food.ingredients,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
-  console.log("ingredients at viewfood: ", ingredients)
+  // console.log("ingredients at viewfood: ", ingredients)
 
   const handleProposeRemoval = async () => {
     try {
