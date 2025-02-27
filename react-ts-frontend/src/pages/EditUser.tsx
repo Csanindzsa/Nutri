@@ -13,9 +13,11 @@ interface EditUserProps {
     username?: string;
     email?: string;
   }>>;
+  setAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
+  setRefreshToken: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
-const EditUser: React.FC<EditUserProps> = ({ accessToken, userData, setUserData }) => {
+const EditUser: React.FC<EditUserProps> = ({ accessToken, userData, setUserData, setAccessToken, setRefreshToken }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,6 +109,12 @@ const EditUser: React.FC<EditUserProps> = ({ accessToken, userData, setUserData 
             username: data.user.username,
             email: data.user.email
         }));
+        setAccessToken(data.tokens.access);
+        setAccessToken(data.tokens.refresh);
+        localStorage.setItem("access_token", data.tokens.access);
+        localStorage.setItem("refresh_token", data.tokens.refresh);
+        //todo: the view should also return 
+        // a new access and refresh token as well, with the updated userdata.
         
         // Set success message
         setSuccessMessage("Profile updated successfully");

@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import *
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -139,11 +140,19 @@ class EditUserView(generics.UpdateAPIView):
             instance.set_password(password)
             instance.save()
         
+        # Generate new tokens using the custom serializer
+        refresh = CustomTokenObtainPairSerializer.get_token(instance)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
         return Response({
             "message": "User information updated successfully.",
-            "user": serializer.data
+            "user": serializer.data,
+            "tokens": {
+                "access": access_token,
+                "refresh": refresh_token,
+            }
         }, status=status.HTTP_200_OK)
-
 class DeleteUserView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
     
