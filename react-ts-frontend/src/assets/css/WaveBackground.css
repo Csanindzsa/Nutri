@@ -1,0 +1,45 @@
+.wave-container {
+  position: relative;
+  background: #FF8C00;
+  color: #FFF;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.wave svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 62px;
+}
+
+.wave .shape-fill {
+  fill: #FF8C00;
+}
+
+/* For more complex animations */
+.wave-animation {
+  animation: wave-animation 3s ease-in-out infinite alternate;
+}
+
+@keyframes wave-animation {
+  0% {
+    transform: translateX(-25px) translateY(0);
+  }
+  50% {
+    transform: translateX(0) translateY(-5px);
+  }
+  100% {
+    transform: translateX(25px) translateY(0);
+  }
+}

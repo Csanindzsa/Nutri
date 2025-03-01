@@ -1,394 +1,355 @@
-import React, { useState } from "react";
-import { Food, Ingredient, Restaurant, MacroTable } from "../interfaces";
+import React from "react";
+import { Food, Ingredient, MacroTable } from "../interfaces";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Chip,
+  Divider,
+  Card,
+  CardMedia,
+  Container,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import CheckIcon from "@mui/icons-material/Check";
+import CancelIcon from "@mui/icons-material/Cancel";
+import LocalDiningIcon from "@mui/icons-material/LocalDining";
+import EggIcon from "@mui/icons-material/Egg";
+import { styled } from "@mui/material/styles";
 
 interface ViewFoodProps {
   food: Food;
-  restaurants: Restaurant[];
   ingredients: Ingredient[];
-  is_approval: boolean;
 }
 
-const formatNumber = (num: number) => {
-  const decimalPart = (num % 1) * 10;
-  return decimalPart === 0 ? num.toString() : num.toFixed(1);
-};
+// Styled components for nutrition facts table
+const NutritionFactsContainer = styled(Box)(({ theme }) => ({
+  border: "1px solid #000",
+  padding: theme.spacing(2),
+  width: "100%",
+  maxWidth: "100%",
+  margin: "0 auto",
+  fontFamily: '"Helvetica", "Arial", sans-serif',
+  backgroundColor: "white",
+}));
 
-const nutrientLabels: Record<string, string> = {
-  energy_kcal: "Energy (kcal / kJ)",
-  fat: "Fat",
-  saturated_fat: "Saturated Fat",
-  carbohydrates: "Carbohydrates",
-  sugars: "Sugars",
-  protein: "Protein",
-  fiber: "Fiber",
-  salt: "Salt",
-};
+const NutritionFactsHeader = styled(Typography)({
+  fontSize: "2rem",
+  fontWeight: "bold",
+  borderBottom: "10px solid black",
+  paddingBottom: "5px",
+  margin: "0 0 5px 0",
+});
 
-const order = [
-  "energy_kcal",
-  "fat",
-  "saturated_fat",
-  "carbohydrates",
-  "sugars",
-  "protein",
-  "fiber",
-  "salt",
-];
+const NutritionRow = styled(Box)<{
+  bold?: boolean;
+  indent?: boolean;
+  doubleIndent?: boolean;
+  noBorder?: boolean;
+}>(({ bold, indent, doubleIndent, noBorder }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "2px 0",
+  borderBottom: noBorder ? "none" : "1px solid #ddd",
+  fontWeight: bold ? "bold" : "normal",
+  paddingLeft: doubleIndent ? "30px" : indent ? "15px" : "0",
+}));
 
-const renderTable = (data: MacroTable) => {
-  return (
-    <table border={1} style={{ width: "100%", marginTop: "10px" }}>
-      <thead>
-        <tr>
-          <th style={{ padding: "5px" }}>Nutrient</th>
-          <th style={{ padding: "5px" }}>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {order.map((key) => {
-          const value = data[key as keyof MacroTable];
-          if (value !== undefined) {
-            return (
-              <tr key={key}>
-                <td style={{ fontWeight: "bold", padding: "5px" }}>
-                  {nutrientLabels[key] || key}
-                </td>
-                {key === "energy_kcal" ? (
-                  <td style={{ padding: "5px" }}>
-                    {formatNumber(value)} kcal / {formatNumber(value * 4.184)} kJ
-                  </td>
-                ) : (
-                  <td style={{ padding: "5px" }}>{formatNumber(value)}g</td>
-                )}
-              </tr>
-            );
-          }
-          return null;
-        })}
-      </tbody>
-    </table>
-  );
-};
+const ThickDivider = styled(Box)({
+  borderBottom: "5px solid #000",
+  marginTop: "5px",
+  marginBottom: "5px",
+});
 
-const ViewFood: React.FC<ViewFoodProps> = ({ food, restaurants, ingredients, is_approval }) => {
-  const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
-  const [formData, setFormData] = useState<Partial<Food>>({
-    name: food.name,
-    serving_size: food.serving_size,
-    macro_table: food.macro_table,
-    is_organic: food.is_organic,
-    is_gluten_free: food.is_gluten_free,
-    is_alcohol_free: food.is_alcohol_free,
-    is_lactose_free: food.is_lactose_free,
-    image: food.image,
-    ingredients: food.ingredients,
-  });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  // console.log("ingredients at viewfood: ", ingredients)
+const MediumDivider = styled(Box)({
+  borderBottom: "3px solid #000",
+  marginTop: "3px",
+  marginBottom: "3px",
+});
 
-  const handleProposeRemoval = async () => {
-    try {
-      const response = await fetch(`http://localhost:8000/food/${food.id}/propose-removal/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to propose removal.");
-      }
-
-      const data = await response.json();
-      alert(data.message);
-    } catch (error) {
-      console.error("Error proposing removal:", error);
-      alert(error);
-    }
-  };
-
-  const handleProposeChange = async () => {
-    // Validate ingredients
-    if (!formData.ingredients || formData.ingredients.length === 0) {
-      alert("Please select at least one ingredient.");
-      return;
-    }
-  
-    const formDataToSend = new FormData();
-    formDataToSend.append("food_id", food.id.toString());
-    formDataToSend.append("name", formData.name || "");
-    formDataToSend.append("serving_size", formData.serving_size?.toString() || "");
-    formDataToSend.append("is_organic", formData.is_organic?.toString() || "false");
-    formDataToSend.append("is_gluten_free", formData.is_gluten_free?.toString() || "false");
-    formDataToSend.append("is_alcohol_free", formData.is_alcohol_free?.toString() || "false");
-    formDataToSend.append("is_lactose_free", formData.is_lactose_free?.toString() || "false");
-    formDataToSend.append("macro_table", JSON.stringify(formData.macro_table));
-    formDataToSend.append("ingredients", JSON.stringify(formData.ingredients || []));
-    if (imageFile) {
-      formDataToSend.append("new_image", imageFile);
-    }
-  
-    try {
-      console.log("ingredients: ", formData.ingredients);
-      const response = await fetch("http://localhost:8000/food-changes/propose-change/", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: formDataToSend,
-      });
-  
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to propose change.");
-      }
-  
-      const data = await response.json();
-      alert(data.message);
-      setIsFormOpen(false);
-    } catch (error) {
-      console.error("Error proposing change:", error);
-      alert(error);
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-  
-    if (type === "checkbox") {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: (e.target as HTMLInputElement).checked,
-      }));
-    } else if (name === "ingredients") {
-      const selectedIngredients = Array.from(
-        (e.target as HTMLSelectElement).selectedOptions,
-        (option) => parseInt(option.value)  // Ensure this is a number
-      );
-      setFormData((prev) => ({
-        ...prev,
-        ingredients: selectedIngredients,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
-
-  const handleMacroChange = (key: keyof MacroTable, value: string) => {
-    setFormData((prev) => {
-      // Ensure macro_table is defined and initialize it if not
-      const currentMacroTable = prev.macro_table || {
-        energy_kcal: 0,
-        fat: 0,
-        saturated_fat: 0,
-        carbohydrates: 0,
-        sugars: 0,
-        protein: 0,
-        fiber: 0,
-        salt: 0,
-      };
-  
-      // Update the specific nutrient value
-      const updatedMacroTable = {
-        ...currentMacroTable,
-        [key]: parseFloat(value) || 0,
-      };
-  
-      return {
-        ...prev,
-        macro_table: updatedMacroTable,
-      };
+const ViewFood: React.FC<ViewFoodProps> = ({ food, ingredients }) => {
+  // Map ingredient IDs to their names
+  const getIngredientNames = (ingredientIds: number[]): string[] => {
+    return ingredientIds.map((id) => {
+      const ingredient = ingredients.find((ing) => ing.id === id);
+      return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
     });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+  // Function for formatting numbers consistently
+  const formatNutritionValue = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return "0";
+
+    // For values that are close to integers, don't show decimals
+    if (Math.abs(value - Math.round(value)) < 0.01) {
+      return Math.round(value).toString();
     }
+
+    // Otherwise show one decimal place
+    return value.toFixed(1);
   };
 
-  const renderMacroForm = () => {
-    const macroTable = formData.macro_table || {
-      energy_kcal: 0,
-      fat: 0,
-      saturated_fat: 0,
-      carbohydrates: 0,
-      sugars: 0,
-      protein: 0,
-      fiber: 0,
-      salt: 0,
-    };
-  
+  // Function to render the macro table in a more appealing way
+  const renderMacroTable = (
+    macros: MacroTable | undefined,
+    servingSize?: number
+  ) => {
+    if (!macros)
+      return <Typography>No nutritional information available</Typography>;
+
+    // Calculate calories from fat
+    const caloriesFromFat = macros.fat ? macros.fat * 9 : 0;
+
+    // Set serving size with a default value if not provided
+    const servingSizeValue = servingSize || 100;
+
     return (
-      <div>
-        <h4>Edit Macros</h4>
-        {order.map((key) => {
-          const nutrientKey = key as keyof MacroTable;
-          const value = macroTable[nutrientKey];
-  
-          return (
-            <div key={key}>
-              <h5>{nutrientLabels[key] || key}</h5>
-              <div>
-                <label>{key === "energy_kcal" ? "Value (kcal):" : "Value (g):"}</label>
-                <input
-                  type="number"
-                  value={value == null ? "" : value}
-                  onChange={(e) => handleMacroChange(nutrientKey, e.target.value)}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <NutritionFactsContainer>
+        <NutritionFactsHeader>Nutrition Facts</NutritionFactsHeader>
+
+        <NutritionRow>
+          <Typography>Serving Size</Typography>
+          <Typography>{servingSizeValue}g</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <NutritionRow bold>
+          <Typography>Amount Per Serving</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography variant="h6">Calories</Typography>
+          <Typography variant="h6">
+            {formatNutritionValue(macros.energy_kcal)}
+          </Typography>
+        </NutritionRow>
+
+        <NutritionRow>
+          <Typography>Calories from Fat</Typography>
+          <Typography>{Math.round(caloriesFromFat)}</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <NutritionRow noBorder>
+          <Typography align="right" variant="caption">
+            % Daily Value*
+          </Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Total Fat</Typography>
+          <Typography>{formatNutritionValue(macros.fat)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Saturated Fat</Typography>
+          <Typography>{formatNutritionValue(macros.saturated_fat)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Total Carbohydrates</Typography>
+          <Typography>{formatNutritionValue(macros.carbohydrates)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Dietary Fiber</Typography>
+          <Typography>{formatNutritionValue(macros.fiber)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Sugars</Typography>
+          <Typography>{formatNutritionValue(macros.sugars)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Protein</Typography>
+          <Typography>{formatNutritionValue(macros.protein)}g</Typography>
+        </NutritionRow>
+
+        <MediumDivider />
+
+        <NutritionRow>
+          <Typography>Salt</Typography>
+          <Typography>{formatNutritionValue(macros.salt)}g</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <Typography variant="caption">
+          * Percent Daily Values are based on a 2,000 calorie diet. Your daily
+          values may be higher or lower depending on your calorie needs.
+        </Typography>
+      </NutritionFactsContainer>
     );
   };
 
-  const renderForm = () => (
-    <div style={{ marginTop: "10px", border: "1px solid #ddd", padding: "10px", borderRadius: "8px" }}>
-      <h4>Propose Changes</h4>
-      <div>
-        <label>Name:</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name || ""}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Serving Size (grams):</label>
-        <input
-          type="number"
-          name="serving_size"
-          value={formData.serving_size || ""}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Organic:</label>
-        <input
-          type="checkbox"
-          name="is_organic"
-          checked={formData.is_organic || false}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Gluten-Free:</label>
-        <input
-          type="checkbox"
-          name="is_gluten_free"
-          checked={formData.is_gluten_free || false}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Alcohol-Free:</label>
-        <input
-          type="checkbox"
-          name="is_alcohol_free"
-          checked={formData.is_alcohol_free || false}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Lactose-Free:</label>
-        <input
-          type="checkbox"
-          name="is_lactose_free"
-          checked={formData.is_lactose_free || false}
-          onChange={handleInputChange}
-        />
-      </div>
-      <div>
-        <label>Image:</label>
-        <input
-          type="file"
-          name="image"
-          onChange={handleImageChange}
-        />
-      </div>
-      <div>
-        <label>Ingredients:</label>
-        <select
-          name="ingredients"
-          multiple
-          value={formData.ingredients?.map((i) => i.toString()) || []}
-          onChange={handleInputChange}
-        >
-          {ingredients.map((ing) => (
-            <option key={ing.id} value={ing.id}>
-              {ing.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {renderMacroForm()}
-      <button onClick={handleProposeChange}>Submit Changes</button>
-      <button onClick={() => setIsFormOpen(false)} style={{ marginLeft: "10px" }}>
-        Cancel
-      </button>
-    </div>
-  );
-
   return (
-    <div
-      style={{
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        padding: "15px",
-        marginBottom: "15px",
-      }}
-    >
-      <h3>{food.name}</h3>
-      <div style={{ marginBottom: "10px" }}>
-        {food.image ? (
-          <img
-            src={`${food.image}`}
-            alt={food.name}
-            style={{
-              maxWidth: "200px",
-              height: "auto",
-              borderRadius: "4px",
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              const noImageText = document.createElement("span");
-              noImageText.textContent = "No image available";
-              noImageText.style.color = "#666";
-              e.currentTarget.parentNode?.appendChild(noImageText);
-            }}
-          />
-        ) : (
-          <span style={{ color: "#000" }}>No image available</span>
-        )}
-      </div>
-      <p>
-        Restaurant: {restaurants.find((r) => r.id === food.restaurant)?.name}
-      </p>
-      <p>
-        Ingredients: {food.ingredients.map((i) => ingredients.find((ing) => ing.id === i)?.name).join(", ")}
-      </p>
-      <h4>Macros</h4>
-      {renderTable(food.macro_table)}
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      {/* Header with orange background */}
+      <Box
+        sx={{
+          backgroundColor: "#FF8C00",
+          py: 3,
+          px: 4,
+          borderRadius: "10px 10px 0 0",
+          mb: 0,
+          color: "white",
+        }}
+      >
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+          {food.name}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+          <RestaurantIcon sx={{ mr: 1 }} />
+          <Typography variant="subtitle1">
+            {food.restaurant_name || "Unknown Restaurant"}
+          </Typography>
+        </Box>
+      </Box>
 
-      {!is_approval && (
-        <>
-          <button onClick={() => setIsFormOpen(true)}>Propose Change</button>
-          <button onClick={handleProposeRemoval} style={{ marginLeft: "10px" }}>
-            Propose Removal
-          </button>
-        </>
-      )}
+      {/* Main Content */}
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          borderRadius: "0 0 10px 10px",
+          bgcolor: "rgba(255,255,255,0.95)",
+        }}
+      >
+        <Grid container spacing={4}>
+          {/* Food Image */}
+          <Grid item xs={12} md={5}>
+            <Card
+              elevation={2}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                overflow: "hidden",
+                borderRadius: 2,
+              }}
+            >
+              {food.image ? (
+                <CardMedia
+                  component="img"
+                  image={food.image}
+                  alt={food.name}
+                  sx={{
+                    height: 350,
+                    objectFit: "cover",
+                    width: "100%",
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 350,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: "rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <LocalDiningIcon
+                    sx={{ fontSize: 100, color: "rgba(0,0,0,0.2)" }}
+                  />
+                </Box>
+              )}
+            </Card>
+          </Grid>
 
-      {isFormOpen && renderForm()}
-    </div>
+          {/* Food Details */}
+          <Grid item xs={12} md={7}>
+            <Box>
+              {/* Dietary Properties */}
+              <Typography variant="h6" gutterBottom>
+                Dietary Information
+              </Typography>
+              <Box sx={{ mb: 3, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Chip
+                  icon={food.is_organic ? <CheckIcon /> : <CancelIcon />}
+                  label="Organic"
+                  color={food.is_organic ? "success" : "default"}
+                  variant={food.is_organic ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_gluten_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Gluten Free"
+                  color={food.is_gluten_free ? "primary" : "default"}
+                  variant={food.is_gluten_free ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_alcohol_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Alcohol Free"
+                  color={food.is_alcohol_free ? "primary" : "default"}
+                  variant={food.is_alcohol_free ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_lactose_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Lactose Free"
+                  color={food.is_lactose_free ? "primary" : "default"}
+                  variant={food.is_lactose_free ? "filled" : "outlined"}
+                />
+              </Box>
+
+              {/* Serving Size */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Serving Size:
+                </Typography>
+                <Typography variant="body1">
+                  {food.serving_size
+                    ? `${food.serving_size} g`
+                    : "Not specified"}
+                </Typography>
+              </Box>
+
+              {/* Ingredients */}
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                Ingredients
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                {food.ingredients && food.ingredients.length > 0 ? (
+                  <List dense>
+                    {getIngredientNames(food.ingredients).map((name, index) => (
+                      <ListItem key={index}>
+                        <ListItemIcon>
+                          <EggIcon color="action" fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary={name} />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography color="text.secondary">
+                    No ingredients listed
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Nutritional Information Section */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              Nutritional Information
+            </Typography>
+            <Box sx={{ mx: "auto", width: "100%" }}>
+              {renderMacroTable(food.macro_table, food.serving_size)}
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Container>
   );
 };
 

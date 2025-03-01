@@ -1,6 +1,41 @@
 import React, { useState } from "react";
-import { Food, Ingredient } from "../interfaces";
-import { renderTable } from "../utils/utils";
+import { Food, Ingredient, MacroTable } from "../interfaces";
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Chip,
+  Button,
+  Alert,
+  Divider,
+  Card,
+  CardMedia,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
+  Container,
+  Stack,
+  Avatar,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import CheckIcon from "@mui/icons-material/Check";
+import CancelIcon from "@mui/icons-material/Cancel";
+import LocalDiningIcon from "@mui/icons-material/LocalDining";
+import ApprovalIcon from "@mui/icons-material/Approval";
+import PersonIcon from "@mui/icons-material/Person";
+import EggIcon from "@mui/icons-material/Egg";
+import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
+import { styled } from "@mui/material/styles";
 
 interface ApproveFoodProps {
   food: Food;
@@ -8,113 +43,501 @@ interface ApproveFoodProps {
   userId: number | undefined;
   ingredients: Ingredient[];
   onApprove: (updatedFood: Food) => void;
+  showApproveButton?: boolean; // Add this prop
 }
 
-const ApproveFood: React.FC<ApproveFoodProps> = ({ food, accessToken, userId, ingredients, onApprove }) => {
+// Styled components for nutrition facts table
+const NutritionFactsContainer = styled(Box)(({ theme }) => ({
+  border: "1px solid #000",
+  padding: theme.spacing(2),
+  width: "100%",
+  maxWidth: "100%", // Changed from 400px to 100% to fill the container width
+  margin: "0 auto",
+  fontFamily: '"Helvetica", "Arial", sans-serif',
+  backgroundColor: "white",
+}));
+
+const NutritionFactsHeader = styled(Typography)({
+  fontSize: "2rem",
+  fontWeight: "bold",
+  borderBottom: "10px solid black",
+  paddingBottom: "5px",
+  margin: "0 0 5px 0",
+});
+
+const NutritionFactsSubheader = styled(Typography)({
+  fontSize: "1.2rem",
+  fontWeight: "bold",
+  margin: "10px 0",
+});
+
+const NutritionRow = styled(Box)<{
+  bold?: boolean;
+  indent?: boolean;
+  doubleIndent?: boolean;
+  noBorder?: boolean;
+}>(({ bold, indent, doubleIndent, noBorder, theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "2px 0",
+  borderBottom: noBorder ? "none" : "1px solid #ddd",
+  fontWeight: bold ? "bold" : "normal",
+  paddingLeft: doubleIndent ? "30px" : indent ? "15px" : "0",
+}));
+
+const ThickDivider = styled(Box)({
+  borderBottom: "5px solid #000",
+  marginTop: "5px",
+  marginBottom: "5px",
+});
+
+const MediumDivider = styled(Box)({
+  borderBottom: "3px solid #000",
+  marginTop: "3px",
+  marginBottom: "3px",
+});
+
+const ApproveFood: React.FC<ApproveFoodProps> = ({
+  food,
+  accessToken,
+  userId,
+  ingredients,
+  onApprove,
+  showApproveButton = true, // Default to true
+}) => {
   const [isUserApproved, setIsUserApproved] = useState<boolean>(() =>
     food.approved_supervisors != null
       ? food.approved_supervisors.some((supervisor) => supervisor.id === userId)
       : false
   );
-  console.log("approved supervisors: ", food.approved_supervisors);
-  console.log("ingredients: ", food.ingredients);
-  const [approvedCount, setApprovedCount] = useState<number>(food.approved_supervisors_count ?? 0);
+  const [approvedCount, setApprovedCount] = useState<number>(
+    food.approved_supervisors_count ?? 0
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
 
   // Map ingredient IDs to their names
-  const getIngredientNames = (ingredientIds: number[]): string => {
-    return ingredientIds
-      .map((id) => {
-        const ingredient = ingredients.find((ing) => ing.id === id);
-        return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
-      })
-      .join(", ");
+  const getIngredientNames = (ingredientIds: number[]): string[] => {
+    return ingredientIds.map((id) => {
+      const ingredient = ingredients.find((ing) => ing.id === id);
+      return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
+    });
+  };
+
+  // Add this helper function for formatting numbers consistently
+  const formatNutritionValue = (value: number | null | undefined): string => {
+    if (value === null || value === undefined) return "0";
+
+    // For values that are close to integers, don't show decimals
+    if (Math.abs(value - Math.round(value)) < 0.01) {
+      return Math.round(value).toString();
+    }
+
+    // Otherwise show one decimal place
+    return value.toFixed(1);
+  };
+
+  // Function to render the macro table in a more appealing way
+  const renderMacroTable = (
+    macros: MacroTable | undefined,
+    servingSize?: number
+  ) => {
+    if (!macros)
+      return <Typography>No nutritional information available</Typography>;
+
+    // Calculate calories from fat
+    const caloriesFromFat = macros.fat ? macros.fat * 9 : 0;
+
+    // Set serving size with a default value if not provided
+    const servingSizeValue = servingSize || 100;
+
+    return (
+      <NutritionFactsContainer>
+        <NutritionFactsHeader>Nutrition Facts</NutritionFactsHeader>
+
+        <NutritionRow>
+          <Typography>Serving Size</Typography>
+          <Typography>{servingSizeValue}g</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <NutritionRow bold>
+          <Typography>Amount Per Serving</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography variant="h6">Calories</Typography>
+          <Typography variant="h6">
+            {formatNutritionValue(macros.energy_kcal)}
+          </Typography>
+        </NutritionRow>
+
+        <NutritionRow>
+          <Typography>Calories from Fat</Typography>
+          <Typography>{Math.round(caloriesFromFat)}</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <NutritionRow noBorder>
+          <Typography align="right" variant="caption">
+            % Daily Value*
+          </Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Total Fat</Typography>
+          <Typography>{formatNutritionValue(macros.fat)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Saturated Fat</Typography>
+          <Typography>{formatNutritionValue(macros.saturated_fat)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Total Carbohydrates</Typography>
+          <Typography>{formatNutritionValue(macros.carbohydrates)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Dietary Fiber</Typography>
+          <Typography>{formatNutritionValue(macros.fiber)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow indent>
+          <Typography>Sugars</Typography>
+          <Typography>{formatNutritionValue(macros.sugars)}g</Typography>
+        </NutritionRow>
+
+        <NutritionRow bold>
+          <Typography>Protein</Typography>
+          <Typography>{formatNutritionValue(macros.protein)}g</Typography>
+        </NutritionRow>
+
+        <MediumDivider />
+
+        <NutritionRow>
+          <Typography>Salt</Typography>
+          <Typography>{formatNutritionValue(macros.salt)}g</Typography>
+        </NutritionRow>
+
+        <ThickDivider />
+
+        <Typography variant="caption">
+          * Percent Daily Values are based on a 2,000 calorie diet. Your daily
+          values may be higher or lower depending on your calorie needs.
+        </Typography>
+      </NutritionFactsContainer>
+    );
   };
 
   const handleApprove = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      setError("Please log in to approve this food");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch(`http://localhost:8000/food/${food.id}/accept/`, {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_approved: (food.approved_supervisors_count ?? 0) + 1 }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/food/${food.id}/accept/`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            is_approved: (food.approved_supervisors_count ?? 0) + 1,
+          }),
+        }
+      );
 
       if (response.ok) {
         const updatedFood = await response.json();
-        alert("Food approved successfully");
-
-        // After successful approval, update the local state to trigger re-render
+        setSuccess(true);
         setIsUserApproved(true);
         setApprovedCount((prev) => prev + 1);
         onApprove(updatedFood);
       } else {
         const errorData = await response.json();
-        alert(errorData.detail || "Failed to approve food");
+        setError(errorData.detail || "Failed to approve food");
       }
     } catch (error) {
       console.error("Error approving food:", error);
+      setError("An error occurred while approving the food. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const renderApprovalStatus = () => {
-    if (!accessToken) {
-      return <p>Please log in to approve</p>;
-    }
-
-    if (isUserApproved) {
-      return <p>✓ Already approved</p>;
-    }
-
-    return <button onClick={handleApprove}>Approve</button>;
   };
 
   return (
-    <div>
-      <div>
-        <h2>{food.name}</h2>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      {/* Header with orange background */}
+      <Box
+        sx={{
+          backgroundColor: "#FF8C00",
+          py: 3,
+          px: 4,
+          borderRadius: "10px 10px 0 0",
+          mb: 0,
+          color: "white",
+        }}
+      >
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+          {food.name}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+          <RestaurantIcon sx={{ mr: 1 }} />
+          <Typography variant="subtitle1">
+            {food.restaurant_name || "Unknown Restaurant"}
+          </Typography>
+        </Box>
+      </Box>
 
-        <div>
-          <img
-            src={food.image || "/default-image.jpg"}
-            alt={food.name}
-            className="food-image"
-          />
+      {/* Main Content */}
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          borderRadius: "0 0 10px 10px",
+          bgcolor: "rgba(255,255,255,0.95)",
+        }}
+      >
+        {success && (
+          <Alert
+            severity="success"
+            sx={{ mb: 4 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => setSuccess(false)}
+              >
+                DISMISS
+              </Button>
+            }
+          >
+            Food approved successfully! Thank you for your contribution.
+          </Alert>
+        )}
 
-          <div>
-            <p>
-              <strong>Restaurant:</strong> {food.restaurant_name}
-            </p>
-            <p>
-                <strong>Serving size:</strong> {food.serving_size}
-            </p>
+        {error && (
+          <Alert
+            severity="error"
+            sx={{ mb: 4 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => setError(null)}
+              >
+                DISMISS
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
 
-            <div>
-              <span>{food.is_organic ? "✓" : "✗"} Organic</span>
-              <span>{food.is_gluten_free ? "✓" : "✗"} Gluten-Free</span>
-              <span>{food.is_alcohol_free ? "✓" : "✗"} Alcohol-Free</span>
-              <span>{food.is_lactose_free ? "✓" : "✗"} Lactose-Free</span>
-            </div>
+        <Grid container spacing={4}>
+          {/* Food Image */}
+          <Grid item xs={12} md={5}>
+            <Card
+              elevation={2}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                overflow: "hidden",
+                borderRadius: 2,
+              }}
+            >
+              {food.image ? (
+                <CardMedia
+                  component="img"
+                  image={food.image}
+                  alt={food.name}
+                  sx={{
+                    height: 350,
+                    objectFit: "cover",
+                    width: "100%",
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 350,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    bgcolor: "rgba(0,0,0,0.04)",
+                  }}
+                >
+                  <LocalDiningIcon
+                    sx={{ fontSize: 100, color: "rgba(0,0,0,0.2)" }}
+                  />
+                </Box>
+              )}
+            </Card>
+          </Grid>
 
-            <p>
-              <strong>Ingredients:</strong> {getIngredientNames(food.ingredients)}
-            </p>
+          {/* Food Details */}
+          <Grid item xs={12} md={7}>
+            <Box>
+              {/* Dietary Properties */}
+              <Typography variant="h6" gutterBottom>
+                Dietary Information
+              </Typography>
+              <Box sx={{ mb: 3, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Chip
+                  icon={food.is_organic ? <CheckIcon /> : <CancelIcon />}
+                  label="Organic"
+                  color={food.is_organic ? "success" : "default"}
+                  variant={food.is_organic ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_gluten_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Gluten Free"
+                  color={food.is_gluten_free ? "primary" : "default"}
+                  variant={food.is_gluten_free ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_alcohol_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Alcohol Free"
+                  color={food.is_alcohol_free ? "primary" : "default"}
+                  variant={food.is_alcohol_free ? "filled" : "outlined"}
+                />
+                <Chip
+                  icon={food.is_lactose_free ? <CheckIcon /> : <CancelIcon />}
+                  label="Lactose Free"
+                  color={food.is_lactose_free ? "primary" : "default"}
+                  variant={food.is_lactose_free ? "filled" : "outlined"}
+                />
+              </Box>
 
-            <h4>Macros</h4>
-            {renderTable(food.macro_table)}
+              {/* Serving Size */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight={600}>
+                  Serving Size:
+                </Typography>
+                <Typography variant="body1">
+                  {food.serving_size
+                    ? `${food.serving_size} g`
+                    : "Not specified"}
+                </Typography>
+              </Box>
 
-            <p>
-              <strong>Approved by:</strong> {approvedCount} supervisor{approvedCount !== 1 ? "s" : ""}
-            </p>
+              {/* Ingredients */}
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                Ingredients
+              </Typography>
+              <Box sx={{ mb: 3 }}>
+                {food.ingredients && food.ingredients.length > 0 ? (
+                  <List dense>
+                    {getIngredientNames(food.ingredients).map((name, index) => (
+                      <ListItem key={index}>
+                        <ListItemIcon>
+                          <EggIcon color="action" fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText primary={name} />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography color="text.secondary">
+                    No ingredients listed
+                  </Typography>
+                )}
+              </Box>
 
-            <div>{renderApprovalStatus()}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+              {/* Conditionally render approval section */}
+              {showApproveButton && (
+                <>
+                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                    Approval Status
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 2,
+                      bgcolor: "background.default",
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={2}
+                      mb={2}
+                    >
+                      <ApprovalIcon color="action" />
+                      <Typography>
+                        Approved by <strong>{approvedCount}</strong> supervisor
+                        {approvedCount !== 1 ? "s" : ""}
+                      </Typography>
+                    </Stack>
+
+                    {accessToken ? (
+                      isUserApproved ? (
+                        <Alert
+                          icon={<CheckCircleIcon fontSize="inherit" />}
+                          severity="success"
+                        >
+                          You have already approved this food item
+                        </Alert>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="success"
+                          fullWidth
+                          disabled={isLoading}
+                          onClick={handleApprove}
+                          startIcon={
+                            isLoading ? (
+                              <CircularProgress size={20} color="inherit" />
+                            ) : (
+                              <ThumbUpAltIcon />
+                            )
+                          }
+                          sx={{ mt: 1 }}
+                        >
+                          {isLoading ? "Processing..." : "Approve This Food"}
+                        </Button>
+                      )
+                    ) : (
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        Please log in to approve this food item
+                      </Alert>
+                    )}
+                  </Box>
+                </>
+              )}
+            </Box>
+          </Grid>
+
+          {/* Nutritional Information Section */}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              Nutritional Information
+            </Typography>
+            <Box sx={{ mx: "auto", width: "100%" }}>
+              {" "}
+              {/* Added wrapper with full width */}
+              {renderMacroTable(food.macro_table, food.serving_size)}
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+    </Container>
   );
 };
 

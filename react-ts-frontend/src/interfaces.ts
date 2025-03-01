@@ -9,6 +9,15 @@ export interface Restaurant {
     id: number;
     name: string;
     foods_on_menu: number;
+    description?: string | null;
+    image?: string;  // This will now be either a full URL or a local asset name
+    imageIsLocal?: boolean;  // Flag to determine if image should load from assets
+    location?: string;
+    cuisine_type?: string;
+    average_rating?: number;
+    latitude?: number;  // Add latitude for geolocation
+    longitude?: number; // Add longitude for geolocation
+    // ...other existing properties
 }
 
 export interface ExactLocation {
