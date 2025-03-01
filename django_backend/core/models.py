@@ -1,12 +1,14 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
-        user = self.model(email=email, is_active=True, is_supervisor=True, **extra_fields)
+        user = self.model(email=email, is_active=True,
+                          is_supervisor=True, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -17,6 +19,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
 
         return self.create_user(email, password, **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
@@ -34,7 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
-    
+
     class Meta:
         db_table = "Users"
 
@@ -42,32 +45,38 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Restaurant(models.Model):
     name = models.CharField(max_length=255, unique=True)
     foods_on_menu = models.IntegerField(default=0)  # Optional
+    # Default placeholder image
+    image = models.CharField(
+        max_length=255, default="https://via.placeholder.com/150")
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         db_table = "Restaurants"
 
-#unused (for now)
+
 class Location(models.Model):
-    city_name = models.CharField(max_length=255)
-    postal_code = models.CharField(max_length=20)
+    longitude = models.FloatField(default=0.0)  # Default value of 0.0
+    latitude = models.FloatField(default=0.0)   # Default value of 0.0
     restaurants = models.ManyToManyField(Restaurant, related_name="locations")
-    
+
     class Meta:
         db_table = "Locations"
 
-class ExactLocation(models.Model):
-    city_name = models.CharField(max_length=255)
-    postal_code = models.CharField(max_length=20)
-    street_name = models.CharField(max_length=255)
-    street_type = models.CharField(max_length=50)
-    house_number = models.IntegerField()
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="exact_locations")
-    
-    class Meta:
-        db_table = "ExactLocations"
+
+# class ExactLocation(models.Model):
+#     city_name = models.CharField(max_length=255)
+#     postal_code = models.CharField(max_length=20)
+#     street_name = models.CharField(max_length=255)
+#     street_type = models.CharField(max_length=50)
+#     house_number = models.IntegerField()
+#     restaurant = models.ForeignKey(
+#         Restaurant, on_delete=models.CASCADE, related_name="exact_locations")
+
+#     class Meta:
+#         db_table = "ExactLocations"
+
 
 class Ingredient(models.Model):
     HAZARD_LEVEL_CHOICES = [
@@ -76,69 +85,79 @@ class Ingredient(models.Model):
         (2, "Moderate Risk"),
         (3, "High Risk"),
     ]
-    
+
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, null=True)
     hazard_level = models.IntegerField(choices=HAZARD_LEVEL_CHOICES, default=0)
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         db_table = "Ingredients"
 
 
 class Food(models.Model):
-    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="foods")
+    restaurant = models.ForeignKey(
+        Restaurant, on_delete=models.CASCADE, related_name="foods")
     name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
     # calories = models.IntegerField()
-    serving_size = models.IntegerField(default=100) #100 grams
+    serving_size = models.IntegerField(default=100)  # 100 grams
     is_organic = models.BooleanField(default=False)
     is_gluten_free = models.BooleanField(default=False)
     is_alcohol_free = models.BooleanField(default=False)
     is_lactose_free = models.BooleanField(default=False)
-    image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
-    ingredients = models.ManyToManyField(Ingredient, related_name="foods")  # Many-to-Many Relationship
+    image = models.ImageField(upload_to='food_images/', blank=True, null=True)
+    ingredients = models.ManyToManyField(
+        Ingredient, related_name="foods")  # Many-to-Many Relationship
 
-    approved_supervisors = models.ManyToManyField(User, related_name="approved_foods", blank=True)
+    approved_supervisors = models.ManyToManyField(
+        User, related_name="approved_foods", blank=True)
     is_approved = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
-    
+
     class Meta:
         db_table = "Foods"
 
+
 class FoodChange(models.Model):
-    old_version = models.ForeignKey(Food, on_delete=models.SET_NULL, related_name="new_versions", null=True, blank=True)
+    old_version = models.ForeignKey(
+        Food, on_delete=models.SET_NULL, related_name="new_versions", null=True, blank=True)
     is_deletion = models.BooleanField(default=False)
 
-    new_restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
+    new_restaurant = models.ForeignKey(
+        Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
     new_name = models.CharField(max_length=255)
     new_macro_table = models.JSONField(default=dict)  # Stores macros as JSON
     # new_calories = models.IntegerField()
-    new_serving_size = models.IntegerField(default=100) #100 grams
+    new_serving_size = models.IntegerField(default=100)  # 100 grams
     new_is_organic = models.BooleanField(default=False)
     new_is_gluten_free = models.BooleanField(default=False)
     new_is_alcohol_free = models.BooleanField(default=False)
     new_is_lactose_free = models.BooleanField(default=False)
-    new_image = models.ImageField(upload_to='food_images/', blank=True, null=True) 
-    new_ingredients = models.ManyToManyField(Ingredient, related_name="new_food_versions")  # Many-to-Many Relationship
+    new_image = models.ImageField(
+        upload_to='food_images/', blank=True, null=True)
+    new_ingredients = models.ManyToManyField(
+        Ingredient, related_name="new_food_versions")  # Many-to-Many Relationship
 
-    new_approved_supervisors = models.ManyToManyField(User, related_name="approved_food_changes", blank=True)
+    new_approved_supervisors = models.ManyToManyField(
+        User, related_name="approved_food_changes", blank=True)
     new_is_approved = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.new_name} ({self.new_restaurant.name})"
-    
+
     class Meta:
         db_table = "FoodChanges"
 
 
 class ConfirmationToken(models.Model):
     code = models.CharField(max_length=32)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="confirmation_codes")
+    user_id = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="confirmation_codes")
 
     class Meta:
         db_table = "ConfirmationTokens"

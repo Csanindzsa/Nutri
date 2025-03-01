@@ -1,0 +1,12 @@
+/* Additional fix for root elements */
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Fix for focusing on Safari/iOS where focus causes horizontal scrolling */
+*:focus {
+  outline: none;
+}

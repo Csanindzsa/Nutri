@@ -1,76 +1,58 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
-import Box from "@mui/material/Box";
-import Paper from "@mui/material/Paper";
-import Checkbox from "@mui/material/Checkbox";
-import { ThemeProvider, createTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import ViewFood from "../components/ViewFood";
-import "../assets/css/MainPage.css"; // Import the CSS file
+import WelcomeSection from "../components/WelcomeSection";
+import { Box } from "@mui/material"; // Remove Container import
 
+// Fix interface to match all possible props
 interface MainPageProps {
-  accessToken: string | null;
   restaurants: Restaurant[];
-  setRestaurants: React.Dispatch<React.SetStateAction<Restaurant[]>>;
   ingredients: Ingredient[];
-  setIngredients: React.Dispatch<React.SetStateAction<Ingredient[]>>;
   foods: Food[];
-  setFoods: React.Dispatch<React.SetStateAction<Food[]>>;
-  exactLocations: Array<ExactLocation>;
-  setExactLocations: React.Dispatch<React.SetStateAction<Array<ExactLocation>>>;
   selectedRestaurants: number[];
   setSelectedRestaurants: React.Dispatch<React.SetStateAction<number[]>>;
   selectedIngredients: number[];
   setSelectedIngredients: React.Dispatch<React.SetStateAction<number[]>>;
+  // Optional props with defaults
+  accessToken?: string | null;
+  setRestaurants?: React.Dispatch<React.SetStateAction<Restaurant[]>>;
+  setIngredients?: React.Dispatch<React.SetStateAction<Ingredient[]>>;
+  setFoods?: React.Dispatch<React.SetStateAction<Food[]>>;
+  exactLocations?: ExactLocation[];
+  setExactLocations?: React.Dispatch<React.SetStateAction<ExactLocation[]>>;
 }
 
-// Reusable filtering function
-const filterFoods = (
-  foods: Food[],
-  selectedRestaurants: number[],
-  selectedIngredients: number[],
-  isOrganicFilter: boolean,
-  isAlcoholFreeFilter: boolean,
-  isGlutenFreeFilter: boolean,
-  isLactoseFreeFilter: boolean
-): Food[] => {
-  return foods.filter(
-    (food) =>
-      (selectedRestaurants.length === 0 || selectedRestaurants.includes(food.restaurant)) &&
-      (selectedIngredients.length === 0 || food.ingredients.every((ingredientId) => selectedIngredients.includes(ingredientId))) &&
-      (!isOrganicFilter || food.is_organic) &&
-      (!isAlcoholFreeFilter || food.is_alcohol_free) &&
-      (!isGlutenFreeFilter || food.is_gluten_free) &&
-      (!isLactoseFreeFilter || food.is_lactose_free)
-  );
-};
-
 const MainPage: React.FC<MainPageProps> = ({
-  accessToken,
   restaurants,
-  setRestaurants,
   ingredients,
-  setIngredients,
   foods,
-  setFoods,
-  exactLocations,
-  setExactLocations,
   selectedRestaurants,
   setSelectedRestaurants,
   selectedIngredients,
   setSelectedIngredients,
+  // Optional props with defaults
+  accessToken,
+  setRestaurants = () => {},
+  setIngredients = () => {},
+  setFoods = () => {},
+  exactLocations = [],
+  setExactLocations = () => {},
 }) => {
-  const [searchParams] = useSearchParams();
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isOrganicFilter, setIsOrganicFilter] = useState(false);
-  const [isAlcoholFreeFilter, setIsAlcoholFreeFilter] = useState(false);
-  const [isGlutenFreeFilter, setIsGlutenFreeFilter] = useState(false);
-  const [isLactoseFreeFilter, setIsLactoseFreeFilter] = useState(false);
-  const isDataLoaded = React.useRef(false); // Track if data has been loaded
+  const isDataLoaded = React.useRef(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Clean up URL parameters if needed
   useEffect(() => {
-    if (!isDataLoaded.current) {
+    const params = new URLSearchParams(location.search);
+    if (params.has("success")) {
+      navigate("/", { replace: true });
+    }
+  }, [location, navigate]);
+
+  // Fetch data only if needed and the setter functions are provided
+  useEffect(() => {
+    if (!isDataLoaded.current && setRestaurants && setFoods && setIngredients) {
       const fetchData = async () => {
         try {
           const [restaurantsResponse, foodsResponse, ingredientsResponse] =
@@ -93,13 +75,9 @@ const MainPage: React.FC<MainPageProps> = ({
           const ingredientsData = await ingredientsResponse.json();
 
           setRestaurants(restaurantsData);
-          console.log("restaurants: ", restaurantsData);
           setFoods(foodsData);
-          console.log("foods: ", foodsData);
           setIngredients(ingredientsData);
-          console.log("ingredients: ", ingredientsData);
 
-          // Mark data as loaded
           isDataLoaded.current = true;
         } catch (error) {
           console.error("Error fetching data:", error);
@@ -110,165 +88,12 @@ const MainPage: React.FC<MainPageProps> = ({
     }
   }, [setRestaurants, setFoods, setIngredients]);
 
-  useEffect(() => {
-    // Check for success parameter and show message
-    if (searchParams.get("success") === "true") {
-      setShowSuccess(true);
-      // Remove success message after 3 seconds
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-        // Remove the success parameter from URL
-        searchParams.delete("success");
-        window.history.replaceState({}, "", window.location.pathname);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [searchParams]);
-
-  const toggleRestaurantSelection = (id: number) => {
-    setSelectedRestaurants((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((rid) => rid !== id)
-        : [...prevSelected, id]
-    );
-  };
-
-  const toggleIngredientSelection = (id: number) => {
-    setSelectedIngredients(
-      (prevSelected) =>
-        prevSelected.includes(id)
-          ? prevSelected.filter((iid) => iid !== id) // Uncheck the ingredient
-          : [...prevSelected, id] // Check the ingredient
-    );
-  };
-
-  // Use the reusable filter function
-  const filteredFoods = filterFoods(
-    foods,
-    selectedRestaurants,
-    selectedIngredients,
-    isOrganicFilter,
-    isAlcoholFreeFilter,
-    isGlutenFreeFilter,
-    isLactoseFreeFilter
-  );
-
   return (
-    <ThemeProvider theme={createTheme()}>
-      <CssBaseline />
-      <React.Fragment>
-        {showSuccess && (
-          <div
-            style={{
-              backgroundColor: "#e6ffe6",
-              padding: "10px",
-              marginBottom: "20px",
-              borderRadius: "4px",
-            }}
-          >
-            Food successfully created!
-          </div>
-        )}
-
-        <Box
-          sx={{
-            fontFamily: "Roboto, sans-serif",
-            display: "flex",
-            flexWrap: "wrap",
-            "& > :not(style)": {
-              m: 1,
-              width: 512,
-              height: 128,
-            },
-          }}
-        >
-          <Paper elevation={1} sx={{ p: 2, margin: "auto" }}>
-            {/* Filter Controls */}
-            <div className="filters">
-              <ul className="filter-list">
-                <li>
-                  <label>
-                    Organic
-                    <Checkbox
-                      checked={isOrganicFilter}
-                      onChange={() => setIsOrganicFilter(!isOrganicFilter)}
-                    />
-                  </label>
-                </li>
-                <li>
-                  <label>
-                    Alcohol-Free
-                    <Checkbox
-                      checked={isAlcoholFreeFilter}
-                      onChange={() =>
-                        setIsAlcoholFreeFilter(!isAlcoholFreeFilter)
-                      }
-                    />
-                  </label>
-                </li>
-                <li>
-                  <label>
-                    Gluten-Free
-                    <Checkbox
-                      checked={isGlutenFreeFilter}
-                      onChange={() =>
-                        setIsGlutenFreeFilter(!isGlutenFreeFilter)
-                      }
-                    />
-                  </label>
-                </li>
-                <li>
-                  <label>
-                    Lactose-Free
-                    <Checkbox
-                      checked={isLactoseFreeFilter}
-                      onChange={() =>
-                        setIsLactoseFreeFilter(!isLactoseFreeFilter)
-                      }
-                    />
-                  </label>
-                </li>
-              </ul>
-            </div>
-          </Paper>
-        </Box>
-
-        <div className="restaurants-tab">
-          {restaurants.map((r) => (
-            <div
-              key={r.id}
-              style={{ display: "flex", alignItems: "center", gap: "10px" }}
-            >
-              <span>{r.name}</span>
-              <button onClick={() => toggleRestaurantSelection(r.id)}>
-                {selectedRestaurants.includes(r.id) ? "✅" : "❌"}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="ingredients-tab">
-          <h3>Ingredients</h3>
-          {ingredients.map((ingredient) => (
-            <div
-              key={ingredient.id}
-              style={{ display: "flex", alignItems: "center", gap: "10px" }}
-            >
-              <span>{ingredient.name}</span>
-              <button onClick={() => toggleIngredientSelection(ingredient.id)}>
-                {selectedIngredients.includes(ingredient.id) ? "✅" : "❌"}
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="foods-list">
-          {filteredFoods.map((food) => (
-            <ViewFood key={food.id} food={food} restaurants={restaurants} ingredients={ingredients} is_approval={false} />
-          ))}
-        </div>
-      </React.Fragment>
-    </ThemeProvider>
+    // Remove the Container component to allow full width
+    <Box sx={{ width: "100%" }}>
+      {/* WelcomeSection will now have full width */}
+      <WelcomeSection restaurants={restaurants || []} />
+    </Box>
   );
 };
 

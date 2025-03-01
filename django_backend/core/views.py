@@ -1,3 +1,6 @@
+import json
+import os
+import dotenv
 import random
 import string
 
@@ -22,20 +25,20 @@ from rest_framework.exceptions import ValidationError
 import logging
 
 logger = logging.getLogger(__name__)
-import dotenv
-import os
 
 dotenv.load_dotenv()
 # from .tokens import email_confirmation_token
 # Create your views here.
+
+
 class CreateUserView(generics.CreateAPIView):
     serializer_class = UserSerializer
-    
+
     def generate_token(self, length=32):
         """Generate a random 32-character token."""
         characters = string.ascii_letters + string.digits
         return ''.join(random.choice(characters) for _ in range(length))
-    
+
     def post(self, request, *args, **kwargs):
         # Step 1: Validate and create the user
         serializer = self.get_serializer(data=request.data)
@@ -60,7 +63,7 @@ class CreateUserView(generics.CreateAPIView):
             message = f'Click here to confirm your email: http://localhost:5173/confirm-email/{confirmation_token.code}'
             from_email = os.getenv("EMAIL")  # Use the email from your settings
             recipient_list = [user.email]  # The recipient's email address
-            
+
             send_mail(subject, message, from_email, recipient_list)
 
             return Response({
@@ -68,26 +71,26 @@ class CreateUserView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
 class ConfirmEmail(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         # Step 1: Extract token from the request (can be in the body or query parameters)
-        token = request.data.get("token")  # Assuming the token is sent in the body
-        
+        # Assuming the token is sent in the body
+        token = request.data.get("token")
+
         if not token:
             return Response({"detail": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Step 2: Find the token in the ConfirmationToken model
         confirmation_token = get_object_or_404(ConfirmationToken, code=token)
-        
+
         # Step 3: Check if the user is already active (avoid reactivating)
         user = confirmation_token.user_id
-        
+
         if user.is_active:
             return Response({"detail": "User is already active."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Step 4: Activate the user and save changes
         user.is_active = True
         user.save()
@@ -100,51 +103,52 @@ class ConfirmEmail(generics.CreateAPIView):
             "message": "User has been successfully activated."
         }, status=status.HTTP_200_OK)
 
+
 class EditUserView(generics.UpdateAPIView):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_object(self):
         """Get the user object to be updated (the authenticated user)."""
         return self.request.user
-    
+
     def get_serializer(self, *args, **kwargs):
         """Override to use a custom serializer for editing only allowed fields."""
         kwargs['partial'] = True  # Allow partial updates
         return super().get_serializer(*args, **kwargs)
-    
+
     def update(self, request, *args, **kwargs):
         """
         Update the user with the provided data, excluding protected fields.
         """
         # Get a copy of the data to avoid modifying the request directly
         data = request.data.copy()
-        
+
         # Remove protected fields from the data if present
         protected_fields = ['is_active', 'is_supervisor', 'is_staff']
         for field in protected_fields:
             if field in data:
                 data.pop(field)
-        
+
         # Handle password separately if it's being updated
         password = data.pop('password', None)
-        
+
         # Update the user instance with the filtered data
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-        
+
         # Update password if provided
         if password:
             instance.set_password(password)
             instance.save()
-        
+
         # Generate new tokens using the custom serializer
         refresh = CustomTokenObtainPairSerializer.get_token(instance)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
-        
+
         return Response({
             "message": "User information updated successfully.",
             "user": serializer.data,
@@ -153,42 +157,54 @@ class EditUserView(generics.UpdateAPIView):
                 "refresh": refresh_token,
             }
         }, status=status.HTTP_200_OK)
+
+
 class DeleteUserView(generics.DestroyAPIView):
     permission_classes = [IsAuthenticated]
-    
+
     def get_object(self):
         """Get the user object to be deleted (the authenticated user)."""
         return self.request.user
-    
+
     def delete(self, request, *args, **kwargs):
         """Handle the user deletion with a confirmation step."""
         user = self.get_object()
-        
+
         # Perform the deletion
         user.delete()
-        
+
         return Response({
             "message": "Your account has been successfully deleted."
         }, status=status.HTTP_200_OK)
 
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
 
 class RestaurantListView(generics.ListAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
-class ListViewExactLocations(generics.ListAPIView):
-    queryset = ExactLocation.objects.all()
-    serializer_class = ExactLocationSerializer
+
+# class ListViewExactLocations(generics.ListAPIView):
+#     queryset = ExactLocation.objects.all()
+#     serializer_class = ExactLocationSerializer
+
+class ListViewLocations(generics.ListAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
 
 class IngredientListView(generics.ListAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
+
 class FoodListView(generics.ListAPIView):
     queryset = Food.objects.filter(is_approved=True)
     serializer_class = FoodSerializer
+
 
 class FoodCreateView(generics.CreateAPIView):
     queryset = Food.objects.all()
@@ -239,7 +255,8 @@ class FoodCreateView(generics.CreateAPIView):
 
 
 class GetApprovableFoods(generics.ListAPIView):
-    queryset = Food.objects.filter(is_approved=False).select_related('restaurant')  # Optimize query
+    queryset = Food.objects.filter(is_approved=False).select_related(
+        'restaurant')  # Optimize query
     serializer_class = FoodSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -250,12 +267,14 @@ class GetApprovableFoods(generics.ListAPIView):
         data = serializer.data
 
         for i, food in enumerate(queryset):
-            data[i]['approved_supervisors_count'] = food.approved_supervisors.filter(is_supervisor=True).count()
-            data[i]['restaurant_name'] = food.restaurant.name  # Add restaurant name
-            data[i]['approved_supervisors'] = list(food.approved_supervisors.filter(is_supervisor=True).values('id', 'username'))  # Add approved supervisors list
+            data[i]['approved_supervisors_count'] = food.approved_supervisors.filter(
+                is_supervisor=True).count()
+            # Add restaurant name
+            data[i]['restaurant_name'] = food.restaurant.name
+            data[i]['approved_supervisors'] = list(food.approved_supervisors.filter(
+                is_supervisor=True).values('id', 'username'))  # Add approved supervisors list
 
         return Response(data)
-
 
 
 class AcceptFood(generics.UpdateAPIView):
@@ -284,7 +303,7 @@ class AcceptFood(generics.UpdateAPIView):
 
         # Add the user to the approved supervisors
         food.approved_supervisors.add(request.user)
-        
+
         food.save()
 
         approved_count = food.approved_supervisors.count()
@@ -297,13 +316,12 @@ class AcceptFood(generics.UpdateAPIView):
             food.is_approved = True
         food.save()
 
-       
-
         # Return a success response
         return Response(
             {"detail": "Food item approved successfully."},
             status=status.HTTP_200_OK
         )
+
 
 def convert_value(value, target_type):
     """
@@ -328,17 +346,19 @@ def convert_value(value, target_type):
             return 0.0  # Default to 0.0 if conversion fails
     return value  # Return original value if no conversion is needed
 
-import json
+
 def parse_json(value):
     """Ensure the value is properly stored as JSON, not a string."""
-    if isinstance(value, dict):  
+    if isinstance(value, dict):
         return value  # Already a JSON object
     if isinstance(value, str):
         try:
-            return json.loads(value)  # Convert JSON string to actual JSON object
+            # Convert JSON string to actual JSON object
+            return json.loads(value)
         except json.JSONDecodeError:
             return {}  # Return empty JSON if invalid
     return {}  # Default to empty JSON if value is not vali
+
 
 class CreateFoodChange(generics.CreateAPIView):
     queryset = FoodChange.objects.all()
@@ -367,7 +387,8 @@ class CreateFoodChange(generics.CreateAPIView):
             logger.debug("new data: %s", new_data)
 
             # Validate and parse ingredients
-            ingredients = new_data.get("ingredients", "[]")  # Default to an empty JSON array if not provided
+            # Default to an empty JSON array if not provided
+            ingredients = new_data.get("ingredients", "[]")
             try:
                 # Parse the JSON-encoded ingredients string into a Python list
                 ingredient_ids = json.loads(ingredients)
@@ -411,20 +432,28 @@ class CreateFoodChange(generics.CreateAPIView):
             try:
                 food_change = FoodChange.objects.create(
                     old_version=food,
-                    is_deletion=convert_value(new_data.get("is_deletion", False), bool),
+                    is_deletion=convert_value(
+                        new_data.get("is_deletion", False), bool),
                     new_restaurant=food.restaurant,
                     new_name=new_data.get("name", food.name),
-                    new_serving_size=convert_value(new_data.get("serving_size", food.serving_size), float),
-                    new_macro_table=parse_json(new_data.get("macro_table", food.macro_table)),
-                    new_is_organic=convert_value(new_data.get("is_organic", food.is_organic), bool),
-                    new_is_gluten_free=convert_value(new_data.get("is_gluten_free", food.is_gluten_free), bool),
-                    new_is_alcohol_free=convert_value(new_data.get("is_alcohol_free", food.is_alcohol_free), bool),
-                    new_is_lactose_free=convert_value(new_data.get("is_lactose_free", food.is_lactose_free), bool),
+                    new_serving_size=convert_value(new_data.get(
+                        "serving_size", food.serving_size), float),
+                    new_macro_table=parse_json(new_data.get(
+                        "macro_table", food.macro_table)),
+                    new_is_organic=convert_value(new_data.get(
+                        "is_organic", food.is_organic), bool),
+                    new_is_gluten_free=convert_value(new_data.get(
+                        "is_gluten_free", food.is_gluten_free), bool),
+                    new_is_alcohol_free=convert_value(new_data.get(
+                        "is_alcohol_free", food.is_alcohol_free), bool),
+                    new_is_lactose_free=convert_value(new_data.get(
+                        "is_lactose_free", food.is_lactose_free), bool),
                     new_image=new_data.get("image", food.image),
                     new_is_approved=False,
                 )
             except ValidationError as e:
-                logger.error(f"Validation error while creating FoodChange: {e}")
+                logger.error(
+                    f"Validation error while creating FoodChange: {e}")
                 return Response({"error": f"Validation error: {e}"}, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
                 logger.error(f"Error creating FoodChange: {e}")
@@ -445,6 +474,7 @@ class CreateFoodChange(generics.CreateAPIView):
             logger.error(f"Unexpected error in CreateFoodChange: {e}")
             return Response({"error": f"Unexpected error: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 class FoodChangeUpdateListView(generics.ListAPIView):
     # queryset = FoodChange.objects.filter(is_deletion=False, new_is_approved=False)
     serializer_class = FoodChangeSerializer
@@ -458,6 +488,7 @@ class FoodChangeUpdateListView(generics.ListAPIView):
         )
         return queryset
 
+
 class CreateFoodRemoval(generics.CreateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
@@ -469,9 +500,11 @@ class CreateFoodRemoval(generics.CreateAPIView):
 
         try:
             # Check if a removal proposal already exists for this food item
-            existing_proposal = FoodChange.objects.filter(old_version=food, is_deletion=True).first()
+            existing_proposal = FoodChange.objects.filter(
+                old_version=food, is_deletion=True).first()
             if existing_proposal:
-                raise IntegrityError("A removal proposal is already active for this food item.")
+                raise IntegrityError(
+                    "A removal proposal is already active for this food item.")
 
             # Create the new food change record
             food_change = FoodChange.objects.create(
@@ -511,6 +544,7 @@ class FoodChangeDeletionListView(generics.ListAPIView):
         )
         return queryset
 
+
 class ApproveProposal(generics.UpdateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
@@ -537,7 +571,8 @@ class ApproveProposal(generics.UpdateAPIView):
             # Retrieve and delete the original Food object (if old_version is not null)
             if food_change.old_version:
                 try:
-                    original_food = Food.objects.get(id=food_change.old_version.id)
+                    original_food = Food.objects.get(
+                        id=food_change.old_version.id)
                     original_food.delete()  # Delete the original Food object
                 except Food.DoesNotExist:
                     # Handle the case where the original Food object no longer exists
@@ -549,57 +584,222 @@ class ApproveProposal(generics.UpdateAPIView):
         return Response({"message": "Food change approved successfully."}, status=status.HTTP_200_OK)
 
 
-### GENERICS - mainly for testing purposes
+class RestaurantWithLocationView(generics.CreateAPIView):
+    """Create a restaurant with location information in a single request"""
+    serializer_class = RestaurantSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class UpdateRestaurantLocationView(generics.UpdateAPIView):
+    """Update a restaurant's location"""
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data)
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class GetRestaurantLocationView(generics.RetrieveAPIView):
+    """Get location for a specific restaurant"""
+    queryset = Restaurant.objects.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Get the locations for this restaurant
+        locations = Location.objects.filter(restaurants=instance)
+
+        if not locations.exists():
+            return Response({"detail": "No location data found for this restaurant"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Use the first location (most restaurants will have just one)
+        location = locations.first()
+
+        return Response({
+            "restaurant_id": instance.id,
+            "restaurant_name": instance.name,
+            "latitude": location.latitude,
+            "longitude": location.longitude
+        })
+
+
+class GetAllRestaurantLocationsView(generics.ListAPIView):
+    """Get locations for all restaurants"""
+
+    def list(self, request, *args, **kwargs):
+        # Get all restaurants with locations
+        restaurants_with_locations = []
+
+        for restaurant in Restaurant.objects.all():
+            locations = Location.objects.filter(restaurants=restaurant)
+            if locations.exists():
+                location = locations.first()
+                restaurants_with_locations.append({
+                    "restaurant_id": restaurant.id,
+                    "restaurant_name": restaurant.name,
+                    "latitude": location.latitude,
+                    "longitude": location.longitude
+                })
+
+        return Response(restaurants_with_locations)
+
+
+class BatchSaveRestaurantsView(generics.CreateAPIView):
+    """Save multiple restaurants with location in a single request"""
+    serializer_class = RestaurantSerializer
+
+    def create(self, request, *args, **kwargs):
+        restaurants_data = request.data
+
+        if not isinstance(restaurants_data, list):
+            return Response({"error": "Expected a list of restaurants"}, status=status.HTTP_400_BAD_REQUEST)
+
+        saved_restaurants = []
+        errors = []
+
+        for restaurant_data in restaurants_data:
+            try:
+                # Extract location data if provided
+                latitude = restaurant_data.pop('latitude', None)
+                longitude = restaurant_data.pop('longitude', None)
+
+                # First, check if a restaurant with this name already exists
+                existing = Restaurant.objects.filter(
+                    name=restaurant_data.get('name')).first()
+
+                if existing:
+                    # Update existing restaurant
+                    for key, value in restaurant_data.items():
+                        setattr(existing, key, value)
+                    existing.save()
+                    restaurant = existing
+                else:
+                    # Create new restaurant
+                    restaurant = Restaurant.objects.create(**restaurant_data)
+
+                # Handle location data if provided
+                if latitude is not None and longitude is not None:
+                    location, created = Location.objects.get_or_create(
+                        latitude=latitude,
+                        longitude=longitude
+                    )
+                    location.restaurants.add(restaurant)
+
+                # Add to saved restaurants
+                saved_restaurants.append({
+                    "id": restaurant.id,
+                    "name": restaurant.name,
+                    "foods_on_menu": restaurant
+                })
+            except Exception as e:
+                errors.append(
+                    {"restaurant_data": restaurant_data, "error": str(e)})
+
+        if errors:
+            return Response({"saved_restaurants": saved_restaurants, "errors": errors}, status=status.HTTP_207_MULTI_STATUS)
+
+        return Response({"saved_restaurants": saved_restaurants}, status=status.HTTP_201_CREATED)
+
+
+# GENERICS - mainly for testing purposes
 
 # User CRUD
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
 # Restaurant CRUD
+
+
 class RestaurantListCreateView(generics.ListCreateAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+
 
 class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
 
-# ExactLocation CRUD
-class ExactLocationListCreateView(generics.ListCreateAPIView):
-    queryset = ExactLocation.objects.all()
-    serializer_class = ExactLocationSerializer
+# # ExactLocation CRUD
+# class ExactLocationListCreateView(generics.ListCreateAPIView):
+#     queryset = ExactLocation.objects.all()
+#     serializer_class = ExactLocationSerializer
 
-class ExactLocationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ExactLocation.objects.all()
-    serializer_class = ExactLocationSerializer
+# class ExactLocationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = ExactLocation.objects.all()
+#     serializer_class = ExactLocationSerializer
+
+# Location CRUD
+
+
+class LocationListCreateView(generics.ListCreateAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+
+class LocationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
 
 # Ingredient CRUD
+
+
 class IngredientListCreateView(generics.ListCreateAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+
 
 class IngredientRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
 # Food CRUD
+
+
 class FoodListCreateView(generics.ListCreateAPIView):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
+
 
 class FoodRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
 
 # FoodChange CRUD
+
+
 class FoodChangeListCreateView(generics.ListCreateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
+
 
 class FoodChangeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = FoodChange.objects.all()

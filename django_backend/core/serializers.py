@@ -2,8 +2,10 @@ from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)  # Password should be write-only
+    # Password should be write-only
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
@@ -16,8 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(password)  # Hash the password
         user.save()
         return user
-    
-    
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -29,6 +30,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['is_supervisor'] = self.user.is_supervisor
 
         return data
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -42,24 +44,87 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
+    # Add fields for latitude and longitude to directly handle location data
+    latitude = serializers.FloatField(required=False, write_only=True)
+    longitude = serializers.FloatField(required=False, write_only=True)
+
     class Meta:
         model = Restaurant
         fields = '__all__'
 
-class ExactLocationSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        # Extract location data if provided
+        latitude = validated_data.pop('latitude', None)
+        longitude = validated_data.pop('longitude', None)
+
+        # Create the restaurant
+        restaurant = Restaurant.objects.create(**validated_data)
+
+        # If location data is provided, create or get a Location object and link it
+        if latitude is not None and longitude is not None:
+            location, created = Location.objects.get_or_create(
+                latitude=latitude,
+                longitude=longitude
+            )
+            location.restaurants.add(restaurant)
+
+        return restaurant
+
+    def update(self, instance, validated_data):
+        # Extract location data if provided
+        latitude = validated_data.pop('latitude', None)
+        longitude = validated_data.pop('longitude', None)
+
+        # Update restaurant fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # If location data is provided, update the location
+        if latitude is not None and longitude is not None:
+            # First check if there's an existing location for this restaurant
+            existing_locations = Location.objects.filter(restaurants=instance)
+
+            if existing_locations.exists():
+                # Update existing location if exists
+                location = existing_locations.first()
+                location.latitude = latitude
+                location.longitude = longitude
+                location.save()
+            else:
+                # Create new location if doesn't exist
+                location, created = Location.objects.get_or_create(
+                    latitude=latitude,
+                    longitude=longitude
+                )
+                location.restaurants.add(instance)
+
+        return instance
+
+
+class LocationSerializer(serializers.ModelSerializer):
+    restaurants = serializers.PrimaryKeyRelatedField(
+        queryset=Restaurant.objects.all(),
+        many=True,
+        required=False
+    )
+
     class Meta:
-        model = ExactLocation
-        fields = ['city_name', 'postal_code', 'street_name', 'street_type', 'house_number', 'restaurant_id']
+        model = Location
+        fields = ['id', 'latitude', 'longitude', 'restaurants']
+
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
 
+
 class FoodSerializer(serializers.ModelSerializer):
     # id = serializers.IntegerField()
     # restaurant = serializers.StringRelatedField()
-    restaurant_name = serializers.CharField(source="restaurant.name", read_only=True)
+    restaurant_name = serializers.CharField(
+        source="restaurant.name", read_only=True)
     name = serializers.CharField(max_length=255)
     macro_table = serializers.JSONField()
     is_organic = serializers.BooleanField()
@@ -70,7 +135,7 @@ class FoodSerializer(serializers.ModelSerializer):
     # ingredients = serializers.StringRelatedField(many=True)
     # approved_supervisors = serializers.StringRelatedField(many=True)
     is_approved = serializers.BooleanField()
-    
+
     class Meta:
         model = Food
         fields = [
@@ -81,9 +146,11 @@ class FoodSerializer(serializers.ModelSerializer):
             'is_approved',
         ]
 
+
 class FoodChangeSerializer(serializers.ModelSerializer):
     new_approved_supervisors_count = serializers.IntegerField(read_only=True)
-    new_restaurant_name = serializers.CharField(source="new_restaurant.name", read_only=True)
+    new_restaurant_name = serializers.CharField(
+        source="new_restaurant.name", read_only=True)
 
     class Meta:
         model = FoodChange
