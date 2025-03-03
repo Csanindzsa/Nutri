@@ -47,6 +47,8 @@ class RestaurantSerializer(serializers.ModelSerializer):
     # Add fields for latitude and longitude to directly handle location data
     latitude = serializers.FloatField(required=False, write_only=True)
     longitude = serializers.FloatField(required=False, write_only=True)
+    cuisine = serializers.CharField(max_length=255)
+    description = serializers.CharField()
 
     class Meta:
         model = Restaurant
@@ -132,6 +134,7 @@ class FoodSerializer(serializers.ModelSerializer):
     is_alcohol_free = serializers.BooleanField()
     is_lactose_free = serializers.BooleanField()
     image = serializers.ImageField()
+    hazard_level = serializers.FloatField()
     # ingredients = serializers.StringRelatedField(many=True)
     # approved_supervisors = serializers.StringRelatedField(many=True)
     is_approved = serializers.BooleanField()
@@ -170,5 +173,6 @@ class FoodChangeSerializer(serializers.ModelSerializer):
             'new_ingredients',
             'new_image',
             'new_approved_supervisors',
-            'new_approved_supervisors_count',  # Include the annotated field
+            'new_approved_supervisors_count',
+            'new_hazard_level'  # Include the annotated field
         ]

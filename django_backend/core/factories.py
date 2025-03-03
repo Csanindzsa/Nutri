@@ -27,6 +27,8 @@ class RestaurantFactory(factory.django.DjangoModelFactory):
     name = Faker('company')
     foods_on_menu = Faker('random_int', min=0, max=100)
     image = Faker('image_url')  # Generate a random image URL
+    cuisine = Faker('word')
+    description = Faker('paragraph')
 
 # Factory for Ingredient model
 
@@ -93,6 +95,7 @@ class FoodFactory(factory.django.DjangoModelFactory):
     approved_supervisors = factory.RelatedFactoryList(
         UserFactory, 'approved_foods', size=2)  # Related approved supervisors, 2 by default
     is_approved = Faker('boolean')
+    hazard_level = Faker('random', min=0, max=5)
 
 
 class FoodChangeFactory(factory.django.DjangoModelFactory):
@@ -119,3 +122,4 @@ class FoodChangeFactory(factory.django.DjangoModelFactory):
     new_approved_supervisors = factory.LazyFunction(lambda: [UserFactory(
         is_supervisor=True)])  # Assuming UserFactory is defined elsewhere
     new_is_approved = Faker('boolean')
+    new_hazard_level = Faker('random', min=0, max=5)

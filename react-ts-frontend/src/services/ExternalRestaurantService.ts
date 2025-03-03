@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Restaurant } from '../interfaces';
 import locationService from './LocationService';
 

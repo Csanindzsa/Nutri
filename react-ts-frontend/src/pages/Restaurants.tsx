@@ -890,7 +890,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         onClose={() => setNotification(null)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
-        {notification && (
+        {notification ? (
           <Alert
             onClose={() => setNotification(null)}
             severity={notification.type}
@@ -898,7 +898,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
           >
             {notification.message}
           </Alert>
-        )}
+        ) : undefined}
       </Snackbar>
 
       {/* Display debug info in development mode */}
