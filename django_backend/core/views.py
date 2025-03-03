@@ -180,12 +180,13 @@ class DeleteUserView(generics.DestroyAPIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-    authentication_classes = []
+    authentication_classes = [] #must have this line
 
 
 class RestaurantListView(generics.ListAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+    authentication_classes = []
 
 
 # class ListViewExactLocations(generics.ListAPIView):
@@ -195,16 +196,19 @@ class RestaurantListView(generics.ListAPIView):
 class ListViewLocations(generics.ListAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
+    authentication_classes = []
 
 
 class IngredientListView(generics.ListAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    authentication_classes = []
 
 
 class FoodListView(generics.ListAPIView):
     queryset = Food.objects.filter(is_approved=True)
     serializer_class = FoodSerializer
+    authentication_classes = []
 
 
 class FoodCreateView(generics.CreateAPIView):
