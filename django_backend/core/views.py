@@ -180,6 +180,7 @@ class DeleteUserView(generics.DestroyAPIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    authentication_classes = []
 
 
 class RestaurantListView(generics.ListAPIView):
