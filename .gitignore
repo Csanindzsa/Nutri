@@ -6,3 +6,5 @@
 *.pyc
 node_modules
 venv
+django_backend/django_backend/env
+django_backend/env

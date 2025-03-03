@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.db.models import Avg
 
 
 class CustomUserManager(BaseUserManager):
@@ -122,6 +123,19 @@ class Food(models.Model):
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
 
+    def calculate_hazard_level(self):
+        """Calculate and set the hazard level based on the average of ingredients' hazard levels"""
+        ingredients_list = self.ingredients.all()
+        if ingredients_list.exists():
+            avg_hazard = ingredients_list.aggregate(
+                avg=Avg('hazard_level'))['avg'] or 0
+            self.hazard_level = round(avg_hazard, 1)
+            self.save(update_fields=['hazard_level'])
+        else:
+            self.hazard_level = 0
+            self.save(update_fields=['hazard_level'])
+        return self.hazard_level
+
     class Meta:
         db_table = "Foods"
 
@@ -152,6 +166,19 @@ class FoodChange(models.Model):
 
     def __str__(self):
         return f"{self.new_name} ({self.new_restaurant.name})"
+
+    def calculate_new_hazard_level(self):
+        """Calculate the new hazard level based on the new ingredients"""
+        ingredients = self.new_ingredients.all()
+        if ingredients.exists():
+            avg_hazard = ingredients.aggregate(
+                avg=Avg('hazard_level'))['avg'] or 0
+            self.new_hazard_level = round(avg_hazard, 1)
+            self.save(update_fields=['new_hazard_level'])
+        else:
+            self.new_hazard_level = 0
+            self.save(update_fields=['new_hazard_level'])
+        return self.new_hazard_level
 
     class Meta:
         db_table = "FoodChanges"
