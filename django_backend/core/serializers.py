@@ -178,3 +178,9 @@ class FoodChangeSerializer(serializers.ModelSerializer):
             'new_approved_supervisors_count',
             'new_hazard_level'
         ]
+
+
+class ConfirmationTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfirmationToken
+        fields = ["code"]

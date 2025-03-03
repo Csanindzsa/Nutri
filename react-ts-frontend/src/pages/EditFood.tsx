@@ -148,9 +148,30 @@ const EditFood: React.FC<EditFoodProps> = ({
         }
       );
 
+      // Check if response is OK
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update food");
+        // Check content type to handle HTML error pages
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          // For HTML responses, just get the status text
+          throw new Error(
+            `Server error: ${response.status} ${response.statusText}`
+          );
+        }
+
+        // Try to parse as JSON but be prepared for parsing failure
+        try {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.detail ||
+              `Error ${response.status}: ${response.statusText}`
+          );
+        } catch (jsonError) {
+          // If JSON parsing fails, return the status
+          throw new Error(
+            `Request failed with status: ${response.status} ${response.statusText}`
+          );
+        }
       }
 
       const updatedFoodData = await response.json();
@@ -364,7 +385,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     onChange={(e) =>
                       handleMacroChange("energy_kcal", e.target.value)
                     }
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -376,7 +397,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     type="number"
                     value={macroTable.fat}
                     onChange={(e) => handleMacroChange("fat", e.target.value)}
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -390,7 +411,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     onChange={(e) =>
                       handleMacroChange("saturated_fat", e.target.value)
                     }
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -404,7 +425,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     onChange={(e) =>
                       handleMacroChange("carbohydrates", e.target.value)
                     }
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -418,7 +439,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     onChange={(e) =>
                       handleMacroChange("sugars", e.target.value)
                     }
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -430,7 +451,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     type="number"
                     value={macroTable.fiber}
                     onChange={(e) => handleMacroChange("fiber", e.target.value)}
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -444,7 +465,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     onChange={(e) =>
                       handleMacroChange("protein", e.target.value)
                     }
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>
@@ -456,7 +477,7 @@ const EditFood: React.FC<EditFoodProps> = ({
                     type="number"
                     value={macroTable.salt}
                     onChange={(e) => handleMacroChange("salt", e.target.value)}
-                    InputProps={{ inputProps: { min: 0, step: "0.1" } }}
+                    InputProps={{ inputProps: { min: 0, step: "0.01" } }}
                     variant="outlined"
                   />
                 </Grid>

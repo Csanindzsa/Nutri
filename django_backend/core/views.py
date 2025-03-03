@@ -76,6 +76,8 @@ class CreateUserView(generics.CreateAPIView):
 
 
 class ConfirmEmail(generics.CreateAPIView):
+    serializer_class = ConfirmationTokenSerializer
+
     def post(self, request, *args, **kwargs):
         # Step 1: Extract token from the request (can be in the body or query parameters)
         # Assuming the token is sent in the body
