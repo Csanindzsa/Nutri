@@ -48,6 +48,8 @@ class Restaurant(models.Model):
     # Default placeholder image
     image = models.CharField(
         max_length=255, default="https://via.placeholder.com/150")
+    cuisine = models.CharField(max_length=255, default="Unknown")
+    description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -111,6 +113,7 @@ class Food(models.Model):
     image = models.ImageField(upload_to='food_images/', blank=True, null=True)
     ingredients = models.ManyToManyField(
         Ingredient, related_name="foods")  # Many-to-Many Relationship
+    hazard_level = models.FloatField(default=0)
 
     approved_supervisors = models.ManyToManyField(
         User, related_name="approved_foods", blank=True)

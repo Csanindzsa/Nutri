@@ -69,6 +69,7 @@ export interface Food {
     image?: string;
     approved_supervisors_count?: number;
     approved_supervisors?: Supervisor[];
+    hazard_level?: number;  // Add this field
 }
 
 export interface FoodChange {
