@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FoodChange, Ingredient, Food } from "../interfaces";
+import { FoodChange, Ingredient, Food, MacroTable } from "../interfaces";
 import {
   Box,
   Typography,
@@ -47,6 +47,14 @@ interface ApproveUpdatesProps {
   ingredients: Ingredient[];
 }
 
+// This interface extends FoodChange to include the original food data we'll fetch
+interface ExtendedFoodChange extends FoodChange {
+  original_food?: Food;
+  created_at: string;
+  user_name?: string;
+  reason?: string;
+}
+
 // Function for transition effect
 function SlideTransition(props: SlideProps) {
   return <Slide {...props} direction="up" />;
@@ -59,7 +67,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [updates, setUpdates] = useState<FoodChange[]>([]);
+  const [updates, setUpdates] = useState<ExtendedFoodChange[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -86,7 +94,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 
     // Then check authentication - redirect to forbidden
     if (!accessToken || !userId) {
-      navigate("/forbidden"); // Changed from setting error to redirect
+      navigate("/forbidden");
       return;
     }
 
@@ -112,6 +120,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 
       if (response.ok) {
         const data = await response.json();
+        // Assuming the backend returns food changes with original_food included
         setUpdates(data);
       } else if (response.status === 401) {
         setError("Your session has expired. Please log in again.");
@@ -225,42 +234,83 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
   };
 
   // Function to identify and display changes between original and updated food data
-  const renderChanges = (change: FoodChange) => {
-    if (!change.original_food || !change.updated_food) {
-      return <Typography>Change details not available</Typography>;
+  const renderChanges = (change: ExtendedFoodChange) => {
+    if (!change.original_food) {
+      return <Typography>Original food details not available</Typography>;
     }
 
-    const original = change.original_food as Food;
-    const updated = change.updated_food as Food;
+    const original = change.original_food;
     const changedFields: { field: string; original: any; updated: any }[] = [];
 
     // Compare basic fields
-    [
-      "name",
-      "restaurant",
-      "serving_size",
-      "is_organic",
-      "is_gluten_free",
-      "is_alcohol_free",
-      "is_lactose_free",
-    ].forEach((field) => {
-      if (original[field] !== updated[field]) {
-        changedFields.push({
-          field,
-          original: original[field],
-          updated: updated[field],
-        });
-      }
-    });
+    if (original.name !== change.new_name) {
+      changedFields.push({
+        field: "name",
+        original: original.name,
+        updated: change.new_name,
+      });
+    }
+
+    if (original.restaurant !== change.new_restaurant) {
+      changedFields.push({
+        field: "restaurant",
+        original: original.restaurant_name,
+        updated: change.new_restaurant_name,
+      });
+    }
+
+    if (original.serving_size !== change.new_serving_size) {
+      changedFields.push({
+        field: "serving_size",
+        original: original.serving_size,
+        updated: change.new_serving_size,
+      });
+    }
+
+    // Compare boolean flags
+    if (original.is_organic !== change.new_is_organic) {
+      changedFields.push({
+        field: "is_organic",
+        original: original.is_organic ? "Yes" : "No",
+        updated: change.new_is_organic ? "Yes" : "No",
+      });
+    }
+
+    if (original.is_gluten_free !== change.new_is_gluten_free) {
+      changedFields.push({
+        field: "is_gluten_free",
+        original: original.is_gluten_free ? "Yes" : "No",
+        updated: change.new_is_gluten_free ? "Yes" : "No",
+      });
+    }
+
+    if (original.is_alcohol_free !== change.new_is_alcohol_free) {
+      changedFields.push({
+        field: "is_alcohol_free",
+        original: original.is_alcohol_free ? "Yes" : "No",
+        updated: change.new_is_alcohol_free ? "Yes" : "No",
+      });
+    }
+
+    if (original.is_lactose_free !== change.new_is_lactose_free) {
+      changedFields.push({
+        field: "is_lactose_free",
+        original: original.is_lactose_free ? "Yes" : "No",
+        updated: change.new_is_lactose_free ? "Yes" : "No",
+      });
+    }
 
     // Compare macro_table
-    if (original.macro_table && updated.macro_table) {
+    if (original.macro_table && change.new_macro_table) {
       Object.keys(original.macro_table).forEach((key) => {
-        if (original.macro_table[key] !== updated.macro_table[key]) {
+        const typedKey = key as keyof MacroTable;
+        if (
+          original.macro_table[typedKey] !== change.new_macro_table[typedKey]
+        ) {
           changedFields.push({
             field: `macro_table.${key}`,
-            original: original.macro_table[key],
-            updated: updated.macro_table[key],
+            original: original.macro_table[typedKey],
+            updated: change.new_macro_table[typedKey],
           });
         }
       });
@@ -269,12 +319,12 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     // Compare ingredients (more complex as they are arrays)
     if (
       JSON.stringify(original.ingredients) !==
-      JSON.stringify(updated.ingredients)
+      JSON.stringify(change.new_ingredients)
     ) {
       changedFields.push({
         field: "ingredients",
         original: original.ingredients,
-        updated: updated.ingredients,
+        updated: change.new_ingredients,
       });
     }
 
@@ -357,176 +407,174 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {updates.map((change) => {
-              const originalFood = change.original_food as Food;
-              const updatedFood = change.updated_food as Food;
-              return (
-                <Grid item xs={12} key={change.id}>
-                  <Card
-                    sx={{
-                      width: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      transition: "transform 0.2s",
-                      "&:hover": {
-                        boxShadow: 6,
-                      },
-                    }}
-                  >
-                    <CardContent>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", mb: 2 }}
-                      >
-                        <Box sx={{ position: "relative", mr: 2 }}>
-                          <CardMedia
-                            component="img"
-                            sx={{ width: 80, height: 80, borderRadius: 1 }}
-                            image={
-                              originalFood?.image ||
-                              "https://via.placeholder.com/80x80?text=No+Image"
-                            }
-                            alt={originalFood?.name}
-                          />
-                          <Chip
-                            label="Update"
-                            color="primary"
-                            size="small"
+            {updates.map((change) => (
+              <Grid item xs={12} key={change.id}>
+                <Card
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    transition: "transform 0.2s",
+                    "&:hover": {
+                      boxShadow: 6,
+                    },
+                  }}
+                >
+                  <CardContent>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                      <Box sx={{ position: "relative", mr: 2 }}>
+                        <CardMedia
+                          component="img"
+                          sx={{ width: 80, height: 80, borderRadius: 1 }}
+                          image={
+                            change.original_food?.image ||
+                            change.new_image ||
+                            "https://via.placeholder.com/80x80?text=No+Image"
+                          }
+                          alt={change.new_name}
+                        />
+                        <Chip
+                          label="Update"
+                          color="primary"
+                          size="small"
+                          sx={{
+                            position: "absolute",
+                            top: -8,
+                            right: -8,
+                            fontWeight: "bold",
+                          }}
+                        />
+                      </Box>
+                      <Box>
+                        <Typography variant="h6" component="h2">
+                          {change.new_name}
+                        </Typography>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <RestaurantIcon
                             sx={{
-                              position: "absolute",
-                              top: -8,
-                              right: -8,
-                              fontWeight: "bold",
+                              color: "text.secondary",
+                              mr: 1,
+                              fontSize: 18,
                             }}
                           />
-                        </Box>
-                        <Box>
-                          <Typography variant="h6" component="h2">
-                            {updatedFood?.name || originalFood?.name}
+                          <Typography variant="body2" color="text.secondary">
+                            {change.new_restaurant_name}
                           </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <RestaurantIcon
-                              sx={{
-                                color: "text.secondary",
-                                mr: 1,
-                                fontSize: 18,
-                              }}
-                            />
-                            <Typography variant="body2" color="text.secondary">
-                              {updatedFood?.restaurant_name ||
-                                originalFood?.restaurant_name}
-                            </Typography>
-                          </Box>
                         </Box>
                       </Box>
+                    </Box>
 
-                      <Divider sx={{ my: 2 }} />
+                    <Divider sx={{ my: 2 }} />
 
-                      {/* Changes summary */}
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: 600, mb: 1 }}
-                      >
-                        Proposed Changes:
-                      </Typography>
-                      <Box sx={{ mb: 2 }}>{renderChanges(change)}</Box>
+                    {/* Changes summary */}
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      Proposed Changes:
+                    </Typography>
+                    <Box sx={{ mb: 2 }}>{renderChanges(change)}</Box>
 
-                      <Accordion sx={{ mb: 2 }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography>View More Details</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6}>
-                              <Typography variant="subtitle2" gutterBottom>
-                                Original Ingredients:
-                              </Typography>
-                              <List dense>
-                                {originalFood?.ingredients?.map((id, index) => (
+                    <Accordion sx={{ mb: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography>View More Details</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              Original Ingredients:
+                            </Typography>
+                            <List dense>
+                              {change.original_food?.ingredients?.map(
+                                (id, index) => (
                                   <ListItem key={index} dense>
                                     <Typography variant="body2">
                                       • {getIngredientNames([id])}
                                     </Typography>
                                   </ListItem>
-                                ))}
-                              </List>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Typography variant="subtitle2" gutterBottom>
-                                Updated Ingredients:
-                              </Typography>
-                              <List dense>
-                                {updatedFood?.ingredients?.map((id, index) => (
-                                  <ListItem key={index} dense>
-                                    <Typography variant="body2">
-                                      • {getIngredientNames([id])}
-                                    </Typography>
-                                  </ListItem>
-                                ))}
-                              </List>
-                            </Grid>
+                                )
+                              )}
+                            </List>
                           </Grid>
-                        </AccordionDetails>
-                      </Accordion>
+                          <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              Updated Ingredients:
+                            </Typography>
+                            <List dense>
+                              {change.new_ingredients?.map((id, index) => (
+                                <ListItem key={index} dense>
+                                  <Typography variant="body2">
+                                    • {getIngredientNames([id])}
+                                  </Typography>
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
 
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" display="block">
-                          Requested by: {change.user_name || "Unknown User"}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          display="block"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          Request date:{" "}
-                          {new Date(change.created_at).toLocaleDateString()}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          display="block"
-                          sx={{ mt: 0.5 }}
-                        >
-                          Reason: {change.reason || "No reason provided"}
-                        </Typography>
-                      </Box>
-                    </CardContent>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" display="block">
+                        Requested by: {change.user_name || "Unknown User"}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ color: "text.secondary" }}
+                      >
+                        Request date:{" "}
+                        {new Date(change.created_at).toLocaleDateString()}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ mt: 0.5 }}
+                      >
+                        Reason: {change.reason || "No reason provided"}
+                      </Typography>
+                    </Box>
+                  </CardContent>
 
-                    <CardActions>
+                  <CardActions>
+                    {change.original_food && (
                       <Button
                         size="small"
                         color="primary"
                         startIcon={<VisibilityIcon />}
-                        href={`/food/${originalFood?.id}`}
+                        href={`/food/${change.original_food.id}`}
                         target="_blank"
                         rel="noopener"
                       >
                         View Original Food
                       </Button>
+                    )}
 
-                      <Box sx={{ flexGrow: 1 }} />
+                    <Box sx={{ flexGrow: 1 }} />
 
-                      <Button
-                        size="small"
-                        color="primary"
-                        startIcon={<UpdateIcon />}
-                        onClick={() => handleOpenConfirm(change.id, "approve")}
-                      >
-                        Approve Update
-                      </Button>
+                    <Button
+                      size="small"
+                      color="primary"
+                      startIcon={<UpdateIcon />}
+                      onClick={() => handleOpenConfirm(change.id, "approve")}
+                    >
+                      Approve Update
+                    </Button>
 
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        startIcon={<CancelOutlinedIcon />}
-                        onClick={() => handleOpenConfirm(change.id, "reject")}
-                      >
-                        Reject
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              );
-            })}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      startIcon={<CancelOutlinedIcon />}
+                      onClick={() => handleOpenConfirm(change.id, "reject")}
+                    >
+                      Reject
+                    </Button>
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
         )}
       </Paper>
@@ -572,18 +620,20 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
         TransitionComponent={SlideTransition}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <MuiAlert
-          elevation={6}
-          variant="filled"
-          severity="success"
-          onClose={handleCloseSnackbar}
-          sx={{ width: "100%", alignItems: "center" }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <CheckCircleOutlineIcon sx={{ mr: 1 }} />
-            <Typography>{successMessage}</Typography>
-          </Box>
-        </MuiAlert>
+        {successMessage ? (
+          <MuiAlert
+            elevation={6}
+            variant="filled"
+            severity="success"
+            onClose={handleCloseSnackbar}
+            sx={{ width: "100%", alignItems: "center" }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <CheckCircleOutlineIcon sx={{ mr: 1 }} />
+              <Typography>{successMessage}</Typography>
+            </Box>
+          </MuiAlert>
+        ) : undefined}
       </Snackbar>
 
       <Snackbar
@@ -593,14 +643,16 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
         TransitionComponent={SlideTransition}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <MuiAlert
-          elevation={6}
-          variant="filled"
-          severity="error"
-          onClose={handleCloseSnackbar}
-        >
-          {errorMessage}
-        </MuiAlert>
+        {errorMessage ? (
+          <MuiAlert
+            elevation={6}
+            variant="filled"
+            severity="error"
+            onClose={handleCloseSnackbar}
+          >
+            {errorMessage}
+          </MuiAlert>
+        ) : undefined}
       </Snackbar>
     </Container>
   );

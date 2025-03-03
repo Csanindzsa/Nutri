@@ -62,6 +62,7 @@ import { BackgroundProvider } from "../contexts/BackgroundContext";
 // Remove this line:
 // import BackgroundSettings from "../components/BackgroundSettings";
 import Restaurants from "./Restaurants"; // Add this import
+import EditFood from "./EditFood"; // Add this import
 
 // Transparent logo container
 const LogoContainer = styled("div")({
@@ -762,7 +763,31 @@ const App = () => {
           />
           <Route
             path="/food/:foodId"
-            element={<ViewFoodPage ingredients={ingredients} foods={foods} />}
+            element={
+              <ViewFoodPage
+                ingredients={ingredients}
+                foods={foods}
+                accessToken={accessToken} // Pass accessToken
+              />
+            }
+          />
+          <Route
+            path="/food/:foodId/edit"
+            element={
+              <EditFood
+                accessToken={accessToken}
+                restaurants={restaurants}
+                ingredients={ingredients}
+                onUpdateFood={(updatedFood) => {
+                  // Update the foods state with the edited food
+                  setFoods((prevFoods) =>
+                    prevFoods.map((food) =>
+                      food.id === updatedFood.id ? updatedFood : food
+                    )
+                  );
+                }}
+              />
+            }
           />
           <Route
             path="/approvals"
@@ -902,7 +927,8 @@ const ApproveFoodPage: React.FC<{
 const ViewFoodPage: React.FC<{
   ingredients: Ingredient[];
   foods: Food[];
-}> = ({ ingredients, foods }) => {
+  accessToken?: string | null; // Add accessToken prop
+}> = ({ ingredients, foods, accessToken }) => {
   const { foodId } = useParams<{ foodId: string }>();
   const [food, setFood] = useState<Food | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -957,7 +983,9 @@ const ViewFoodPage: React.FC<{
     );
   }
 
-  return <ViewFood food={food} ingredients={ingredients} />;
+  return (
+    <ViewFood food={food} ingredients={ingredients} accessToken={accessToken} />
+  ); // Pass accessToken to ViewFood
 };
 
 export default App;
