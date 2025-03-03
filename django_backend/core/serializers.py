@@ -134,7 +134,8 @@ class FoodSerializer(serializers.ModelSerializer):
     is_alcohol_free = serializers.BooleanField()
     is_lactose_free = serializers.BooleanField()
     image = serializers.ImageField()
-    hazard_level = serializers.FloatField()
+    # Make this read-only as it's calculated
+    hazard_level = serializers.FloatField(read_only=True)
     # ingredients = serializers.StringRelatedField(many=True)
     # approved_supervisors = serializers.StringRelatedField(many=True)
     is_approved = serializers.BooleanField()
@@ -144,8 +145,7 @@ class FoodSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'restaurant', 'restaurant_name', 'name', 'macro_table', 'serving_size', 'is_organic',
             'is_gluten_free', 'is_alcohol_free', 'is_lactose_free', 'image',
-            'ingredients',
-            # 'approved_supervisors',
+            'ingredients', 'hazard_level',
             'is_approved',
         ]
 
@@ -154,6 +154,8 @@ class FoodChangeSerializer(serializers.ModelSerializer):
     new_approved_supervisors_count = serializers.IntegerField(read_only=True)
     new_restaurant_name = serializers.CharField(
         source="new_restaurant.name", read_only=True)
+    # Make this read-only as it's calculated
+    new_hazard_level = serializers.FloatField(read_only=True)
 
     class Meta:
         model = FoodChange
@@ -174,5 +176,5 @@ class FoodChangeSerializer(serializers.ModelSerializer):
             'new_image',
             'new_approved_supervisors',
             'new_approved_supervisors_count',
-            'new_hazard_level'  # Include the annotated field
+            'new_hazard_level'
         ]

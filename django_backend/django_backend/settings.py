@@ -10,6 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
+import dotenv
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -134,45 +137,48 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',  # Enable JWT
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',  #IsAuthenticated
+        'rest_framework.permissions.AllowAny',  # IsAuthenticated
     ),
 }
 
-from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),  # Token expires in 60 minutes
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),     # Refresh token expires in 7 days
+    # Token expires in 60 minutes
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    # Refresh token expires in 7 days
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,  # Issue a new refresh token on every refresh
     'BLACKLIST_AFTER_ROTATION': True,  # Blacklist old refresh tokens
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': "", #SECRET_KEY,  # Uses Django's secret key for signing
+    'SIGNING_KEY': "",  # SECRET_KEY,  # Uses Django's secret key for signing
     'AUTH_HEADER_TYPES': ('Bearer',),  # Authorization: Bearer <token>
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
-    "http://127.0.0.1:5174",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:8000",
+#     "http://127.0.0.1:5173",
+#     "http://localhost:5173",
+#     "http://127.0.0.1:5174",
+# ]
+CORS_ALLOW_ALL_ORIGINS = True
 
-import dotenv
-import os
 
 dotenv.load_dotenv()
 # Email settings for Django
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'  # Use your email provider's SMTP server
-EMAIL_PORT = 465 #587  # Port for Gmail, may vary based on provider
+EMAIL_PORT = 465  # 587  # Port for Gmail, may vary based on provider
 EMAIL_USE_TLS = False  # Enable TLS for secure connection
 EMAIL_USE_SSL = True
 # print(os.getenv("EMAIL"))
 # print( os.getenv("PASSWORD") )
 EMAIL_HOST_USER = os.getenv("EMAIL")  # Your email address
-EMAIL_HOST_PASSWORD = os.getenv("PASSWORD")  # Your email password (consider using environment variables for security)
+# Your email password (consider using environment variables for security)
+EMAIL_HOST_PASSWORD = os.getenv("PASSWORD")
 
 MEDIA_URL = '/media/'
 
 # Directory where media files are stored
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+ALLOWED_HOSTS = ["*"]

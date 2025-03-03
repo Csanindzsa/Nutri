@@ -7,6 +7,7 @@ import string
 from django.db import IntegrityError
 from django.db.models import Count
 from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 
 from .serializers import *
 from rest_framework import generics
@@ -17,12 +18,13 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import *
-from django.core.mail import send_mail
+from django.core.mail import send_mail, BadHeaderError
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 import logging
+import smtplib
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,7 @@ class CreateUserView(generics.CreateAPIView):
     def generate_token(self, length=32):
         """Generate a random 32-character token."""
         characters = string.ascii_letters + string.digits
-        return ''.join(random.choice(characters) for _ in range(length))
+        return ''.join(random.choice(characters) for skibidi in range(length))
 
     def post(self, request, *args, **kwargs):
         # Step 1: Validate and create the user
@@ -60,7 +62,7 @@ class CreateUserView(generics.CreateAPIView):
             # You can send an email to the user with this token if needed.
             # Email sending logic would be here (omitted for brevity).
             subject = 'Please confirm your email address'
-            message = f'Click here to confirm your email: http://localhost:5173/confirm-email/{confirmation_token.code}'
+            message = f'Click here to confirm your email: http://localhost:5173/confirm-email/%7Bconfirmation_token.code%7D'
             from_email = os.getenv("EMAIL")  # Use the email from your settings
             recipient_list = [user.email]  # The recipient's email address
 
@@ -180,7 +182,7 @@ class DeleteUserView(generics.DestroyAPIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-    authentication_classes = [] #must have this line
+    authentication_classes = []  # must have this line
 
 
 class RestaurantListView(generics.ListAPIView):
@@ -225,7 +227,10 @@ class FoodCreateView(generics.CreateAPIView):
             # Perform the default create logic
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
+            food = self.perform_create(serializer)
+
+            # Calculate the hazard level based on the ingredients
+            food.calculate_hazard_level()
 
             # Log the successful creation
             logger.info(f"Food created successfully: {serializer.data}")
@@ -257,6 +262,9 @@ class FoodCreateView(generics.CreateAPIView):
 
         # Save the updated Food instance
         food.save()
+
+        # Return the food instance for further processing
+        return food
 
 
 class GetApprovableFoods(generics.ListAPIView):
@@ -468,6 +476,8 @@ class CreateFoodChange(generics.CreateAPIView):
             if valid_ingredient_ids:
                 try:
                     food_change.new_ingredients.set(valid_ingredient_ids)
+                    # Calculate the hazard level based on the new ingredients
+                    food_change.calculate_new_hazard_level()
                 except Exception as e:
                     logger.error(f"Error setting new_ingredients: {e}")
                     return Response({"error": f"Error setting new_ingredients: {e}"}, status=status.HTTP_400_BAD_REQUEST)
@@ -567,7 +577,7 @@ class ApproveProposal(generics.UpdateAPIView):
         food_change.new_approved_supervisors.add(request.user)
 
         # Check if the FoodChange has enough approvals to be marked as approved
-        required_approvals = 20  # Example: require 5 supervisor approvals
+        required_approvals = 20  # Example: require 20 supervisor approvals
         if food_change.new_approved_supervisors.count() >= required_approvals:
             # Mark the FoodChange as approved
             food_change.new_is_approved = True
@@ -578,7 +588,33 @@ class ApproveProposal(generics.UpdateAPIView):
                 try:
                     original_food = Food.objects.get(
                         id=food_change.old_version.id)
-                    original_food.delete()  # Delete the original Food object
+
+                    if not food_change.is_deletion:
+                        # Update the food with new values if this is not a deletion request
+                        original_food.name = food_change.new_name
+                        original_food.restaurant = food_change.new_restaurant
+                        original_food.macro_table = food_change.new_macro_table
+                        original_food.serving_size = food_change.new_serving_size
+                        original_food.is_organic = food_change.new_is_organic
+                        original_food.is_gluten_free = food_change.new_is_gluten_free
+                        original_food.is_alcohol_free = food_change.new_is_alcohol_free
+                        original_food.is_lactose_free = food_change.new_is_lactose_free
+
+                        if food_change.new_image:
+                            original_food.image = food_change.new_image
+
+                        # Update ingredients
+                        original_food.ingredients.set(
+                            food_change.new_ingredients.all())
+
+                        # Calculate the hazard level based on the new ingredients
+                        original_food.calculate_hazard_level()
+
+                        original_food.save()
+                    else:
+                        # Delete the original Food object if this is a deletion request
+                        original_food.delete()
+
                 except Food.DoesNotExist:
                     # Handle the case where the original Food object no longer exists
                     return Response(

@@ -1,6 +1,7 @@
 # factories.py
 import factory
 from factory import Faker, SubFactory, LazyAttribute
+from django.db.models import Avg
 from .models import *
 
 # Factory for User model
@@ -95,7 +96,21 @@ class FoodFactory(factory.django.DjangoModelFactory):
     approved_supervisors = factory.RelatedFactoryList(
         UserFactory, 'approved_foods', size=2)  # Related approved supervisors, 2 by default
     is_approved = Faker('boolean')
-    hazard_level = Faker('random', min=0, max=5)
+
+    @factory.post_generation
+    def calculate_hazard_level(self, create, extracted, **kwargs):
+        """Calculate the hazard_level as the average of ingredients' hazard levels."""
+        if create:
+            # Get all ingredients for this food
+            ingredient_list = self.ingredients.all()
+            if ingredient_list.exists():
+                avg_hazard = ingredient_list.aggregate(
+                    avg=Avg('hazard_level'))['avg'] or 0
+                self.hazard_level = round(avg_hazard)
+                self.save()
+            else:
+                self.hazard_level = 0
+                self.save()
 
 
 class FoodChangeFactory(factory.django.DjangoModelFactory):
@@ -103,9 +118,7 @@ class FoodChangeFactory(factory.django.DjangoModelFactory):
         model = FoodChange
 
     # Generate fields
-    # Assuming FoodFactory is defined elsewhere
     old_version = factory.SubFactory(FoodFactory)
-    # Assuming RestaurantFactory is defined elsewhere
     new_restaurant = factory.SubFactory(RestaurantFactory)
     new_name = Faker('word')
     new_macro_table = factory.LazyFunction(
@@ -115,11 +128,16 @@ class FoodChangeFactory(factory.django.DjangoModelFactory):
     new_is_gluten_free = Faker('boolean')
     new_is_alcohol_free = Faker('boolean')
     new_is_lactose_free = Faker('boolean')
-    # You can modify to create a real image if needed (e.g. using FileFactory)
     new_image = None
     # Assuming IngredientFactory is defined elsewhere
     new_ingredients = factory.SubFactory(IngredientFactory)
     new_approved_supervisors = factory.LazyFunction(lambda: [UserFactory(
         is_supervisor=True)])  # Assuming UserFactory is defined elsewhere
     new_is_approved = Faker('boolean')
-    new_hazard_level = Faker('random', min=0, max=5)
+
+    @factory.lazy_attribute
+    def new_hazard_level(self):
+        # For FoodChange, it seems new_ingredients is a single Ingredient, not a collection
+        if hasattr(self, 'new_ingredients'):
+            return self.new_ingredients.hazard_level
+        return 0
