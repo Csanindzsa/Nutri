@@ -1,5 +1,6 @@
 import React from "react";
 import { Food, Ingredient, MacroTable } from "../interfaces";
+import { useNavigate } from "react-router-dom"; // Add this import
 import {
   Box,
   Typography,
@@ -14,17 +15,20 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Button, // Add this import
 } from "@mui/material";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CheckIcon from "@mui/icons-material/Check";
 import CancelIcon from "@mui/icons-material/Cancel";
 import LocalDiningIcon from "@mui/icons-material/LocalDining";
 import EggIcon from "@mui/icons-material/Egg";
+import EditIcon from "@mui/icons-material/Edit"; // Add this import
 import { styled } from "@mui/material/styles";
 
 interface ViewFoodProps {
   food: Food;
   ingredients: Ingredient[];
+  accessToken?: string | null; // Add this prop
 }
 
 // Styled components for nutrition facts table
@@ -72,7 +76,18 @@ const MediumDivider = styled(Box)({
   marginBottom: "3px",
 });
 
-const ViewFood: React.FC<ViewFoodProps> = ({ food, ingredients }) => {
+const ViewFood: React.FC<ViewFoodProps> = ({
+  food,
+  ingredients,
+  accessToken,
+}) => {
+  const navigate = useNavigate(); // Add this
+
+  // Add handler function for edit button
+  const handleEditFood = () => {
+    navigate(`/food/${food.id}/edit`);
+  };
+
   // Map ingredient IDs to their names
   const getIngredientNames = (ingredientIds: number[]): string[] => {
     return ingredientIds.map((id) => {
@@ -201,17 +216,41 @@ const ViewFood: React.FC<ViewFoodProps> = ({ food, ingredients }) => {
           borderRadius: "10px 10px 0 0",
           mb: 0,
           color: "white",
+          display: "flex",
+          justifyContent: "space-between", // Add this for button alignment
+          alignItems: "center", // Add this for vertical alignment
         }}
       >
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
-          {food.name}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-          <RestaurantIcon sx={{ mr: 1 }} />
-          <Typography variant="subtitle1">
-            {food.restaurant_name || "Unknown Restaurant"}
+        <div>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            {food.name}
           </Typography>
-        </Box>
+          <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+            <RestaurantIcon sx={{ mr: 1 }} />
+            <Typography variant="subtitle1">
+              {food.restaurant_name || "Unknown Restaurant"}
+            </Typography>
+          </Box>
+        </div>
+
+        {/* Add Edit Button - only shown when accessToken is available */}
+        {accessToken && (
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<EditIcon />}
+            onClick={handleEditFood}
+            sx={{
+              bgcolor: "white",
+              color: "#FF8C00",
+              "&:hover": {
+                bgcolor: "rgba(255, 255, 255, 0.9)",
+              },
+            }}
+          >
+            Edit Food
+          </Button>
+        )}
       </Box>
 
       {/* Main Content */}
