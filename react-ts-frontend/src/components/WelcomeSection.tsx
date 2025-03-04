@@ -251,7 +251,7 @@ const WelcomeSection: React.FC<WelcomeSectionProps> = ({ restaurants }) => {
                       {restaurant.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {restaurant.cuisine_type || "Various cuisines"}
+                      {restaurant.cuisine || "Various cuisines"}
                     </Typography>
                   </CardContent>
                 </Card>

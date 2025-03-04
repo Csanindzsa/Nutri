@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^6.4.6",
     "react-helmet": "^6.1.0",
     "sharp": "^0.32.6"
   },

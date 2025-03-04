@@ -22,6 +22,8 @@ import {
 import { Restaurant, Ingredient, Food, MacroTable } from "../interfaces";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import { tryUpdateFood } from "../utils/foodEditHelper";
+import { API_ENDPOINTS } from "../config/environment";
 
 interface EditFoodProps {
   accessToken: string | null;
@@ -73,7 +75,7 @@ const EditFood: React.FC<EditFoodProps> = ({
     const fetchFood = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8000/foods/${foodId}/`);
+        const response = await fetch(`${API_ENDPOINTS.foods}${foodId}/`);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch food: ${response.statusText}`);
@@ -135,46 +137,17 @@ const EditFood: React.FC<EditFoodProps> = ({
       reason: "Updated food information", // Reason for the update
     };
 
+    // Log the request for debugging
+    console.log(`Attempting to update food with ID: ${foodId}`);
+    console.log("Request data:", foodData);
+
     try {
-      const response = await fetch(
-        `http://localhost:8000/food-changes/update/${foodId}/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(foodData),
-        }
+      // Use the helper function to try multiple endpoints
+      const updatedFoodData = await tryUpdateFood(
+        foodId,
+        foodData,
+        accessToken
       );
-
-      // Check if response is OK
-      if (!response.ok) {
-        // Check content type to handle HTML error pages
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("text/html")) {
-          // For HTML responses, just get the status text
-          throw new Error(
-            `Server error: ${response.status} ${response.statusText}`
-          );
-        }
-
-        // Try to parse as JSON but be prepared for parsing failure
-        try {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.detail ||
-              `Error ${response.status}: ${response.statusText}`
-          );
-        } catch (jsonError) {
-          // If JSON parsing fails, return the status
-          throw new Error(
-            `Request failed with status: ${response.status} ${response.statusText}`
-          );
-        }
-      }
-
-      const updatedFoodData = await response.json();
       onUpdateFood(updatedFoodData);
 
       // Redirect to the food detail page

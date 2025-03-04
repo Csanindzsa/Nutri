@@ -36,6 +36,14 @@ import PersonIcon from "@mui/icons-material/Person";
 import EggIcon from "@mui/icons-material/Egg";
 import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt";
 import { styled } from "@mui/material/styles";
+import { API_ENDPOINTS } from "../config/environment";
+import {
+  APPROVAL_CONFIG,
+  calculateApprovalPercentage,
+  getApprovalStatusText,
+  getApprovalProgressColor,
+} from "../config/approvalConfig";
+import LinearProgress from "@mui/material/LinearProgress";
 
 interface ApproveFoodProps {
   food: Food;
@@ -116,6 +124,10 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+
+  // Calculate approval percentage for progress bar
+  const approvalPercentage = calculateApprovalPercentage(approvedCount);
+  const approvalColor = getApprovalProgressColor(approvedCount);
 
   // Map ingredient IDs to their names
   const getIngredientNames = (ingredientIds: number[]): string[] => {
@@ -244,19 +256,16 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
     setError(null);
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/food/${food.id}/accept/`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            is_approved: (food.approved_supervisors_count ?? 0) + 1,
-          }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.acceptFood(food.id), {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          is_approved: (food.approved_supervisors_count ?? 0) + 1,
+        }),
+      });
 
       if (response.ok) {
         const updatedFood = await response.json();
@@ -472,17 +481,41 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
                       borderColor: "divider",
                     }}
                   >
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={2}
-                      mb={2}
-                    >
-                      <ApprovalIcon color="action" />
-                      <Typography>
-                        Approved by <strong>{approvedCount}</strong> supervisor
-                        {approvedCount !== 1 ? "s" : ""}
-                      </Typography>
+                    <Stack direction="column" spacing={1.5} mb={2}>
+                      {/* Add approval progress bar */}
+                      <Box sx={{ width: "100%" }}>
+                        <Typography variant="body2" gutterBottom>
+                          {getApprovalStatusText(approvedCount)}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={approvalPercentage}
+                          sx={{
+                            height: 10,
+                            borderRadius: 5,
+                            bgcolor: "rgba(0,0,0,0.1)",
+                            "& .MuiLinearProgress-bar": {
+                              bgcolor: approvalColor,
+                            },
+                          }}
+                        />
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <ApprovalIcon color="action" sx={{ mr: 1 }} />
+                        <Typography>
+                          <strong>{approvedCount}</strong> of{" "}
+                          {APPROVAL_CONFIG.REQUIRED_APPROVALS} required
+                          approvals
+                        </Typography>
+                      </Box>
+
+                      {approvedCount >= APPROVAL_CONFIG.REQUIRED_APPROVALS && (
+                        <Alert severity="success">
+                          This food has been fully approved and is now in the
+                          database
+                        </Alert>
+                      )}
                     </Stack>
 
                     {accessToken ? (
@@ -491,7 +524,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
                           icon={<CheckCircleIcon fontSize="inherit" />}
                           severity="success"
                         >
-                          You have already approved this food item
+                          You have approved this food item
                         </Alert>
                       ) : (
                         <Button
