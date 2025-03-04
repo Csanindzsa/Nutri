@@ -72,7 +72,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
 
   // Extract unique cuisine types
   const cuisineTypes = Array.from(
-    new Set(restaurants.map((r) => r.cuisine_type).filter(Boolean))
+    new Set(restaurants.map((r) => r.cuisine).filter(Boolean))
   );
 
   // Haversine formula to calculate distance between two coordinates
@@ -275,8 +275,8 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
 
         // Use our location service to get restaurants near the user
         const nearbyResults = await locationService.findNearbyRestaurants({
-          lat: location.lat,
-          lng: location.lng,
+          latitude: location.lat,
+          longitude: location.lng,
           radius: searchRadius,
           limit: 50, // Get up to 50 results
         });
@@ -522,7 +522,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesCuisine =
-      !selectedCuisineType || restaurant.cuisine_type === selectedCuisineType;
+      !selectedCuisineType || restaurant.cuisine === selectedCuisineType;
     return matchesSearch && matchesCuisine;
   });
 
@@ -755,13 +755,13 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                     {restaurant.name}
                   </Typography>
 
-                  {restaurant.cuisine_type && (
+                  {restaurant.cuisine && (
                     <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                       <RestaurantIcon
                         sx={{ color: "text.secondary", mr: 1, fontSize: 18 }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {restaurant.cuisine_type}
+                        {restaurant.cuisine}
                       </Typography>
                     </Box>
                   )}

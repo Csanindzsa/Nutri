@@ -51,6 +51,9 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Helmet } from "react-helmet";
 import MuiAlert from "@mui/material/Alert";
 
+// Add this missing import
+import { API_ENDPOINTS } from "../config/environment";
+
 // Import ButtonProps for the type definition
 import { ButtonProps } from "@mui/material/Button";
 
@@ -63,6 +66,8 @@ import { BackgroundProvider } from "../contexts/BackgroundContext";
 // import BackgroundSettings from "../components/BackgroundSettings";
 import Restaurants from "./Restaurants"; // Add this import
 import EditFood from "./EditFood"; // Add this import
+import Support from "./Support"; // Add this import
+import SupportIcon from "@mui/icons-material/Support"; // Add this import
 
 // Transparent logo container
 const LogoContainer = styled("div")({
@@ -255,6 +260,16 @@ const Navbar = ({
                 {userData.username ? (
                   [
                     <MenuItem
+                      key="support"
+                      onClick={() => {
+                        handleMainMenuClose();
+                        navigate("/support");
+                      }}
+                    >
+                      <SupportIcon fontSize="small" sx={{ mr: 1 }} />
+                      Support
+                    </MenuItem>,
+                    <MenuItem
                       key="profile"
                       onClick={() => {
                         handleMainMenuClose();
@@ -362,6 +377,15 @@ const Navbar = ({
                       <MenuItem
                         onClick={() => {
                           handleUserMenuClose();
+                          navigate("/support");
+                        }}
+                      >
+                        <SupportIcon fontSize="small" sx={{ mr: 1 }} />
+                        Support
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          handleUserMenuClose();
                           navigate("/edit-user");
                         }}
                       >
@@ -409,6 +433,8 @@ const Navbar = ({
 };
 
 // Main App component
+import ProtectedRoute from "../components/ProtectedRoute";
+
 const App = () => {
   // ... existing state declarations and useEffects ...
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -430,6 +456,7 @@ const App = () => {
     text: string;
     type: "success" | "error" | "info" | "warning";
   } | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState<boolean>(true);
 
   // ... existing useEffects, token refresh logic and data fetching ...
 
@@ -438,36 +465,78 @@ const App = () => {
   }, [userData]);
 
   useEffect(() => {
-    const storedAccessToken = localStorage.getItem("access_token");
-    const storedRefreshToken = localStorage.getItem("refresh_token");
+    const validateAndRefreshToken = async () => {
+      setCheckingAuth(true);
+      const storedAccessToken = localStorage.getItem("access_token");
+      const storedRefreshToken = localStorage.getItem("refresh_token");
 
-    if (storedAccessToken && storedRefreshToken) {
-      setAccessToken(storedAccessToken);
-      setRefreshToken(storedRefreshToken);
-      const decoded = decodeToken(storedAccessToken);
-      if (decoded) {
-        setUserData({
-          user_id: decoded.user_id,
-          username: decoded.username,
-          email: decoded.email,
-        });
-      }
-      refreshAccessToken(storedRefreshToken).then((newAccessToken) => {
-        if (newAccessToken) {
-          setAccessToken(newAccessToken);
-          localStorage.setItem("access_token", newAccessToken);
-          const newDecoded = decodeToken(newAccessToken);
-          if (newDecoded) {
-            setUserData({
-              user_id: newDecoded.user_id,
-              username: newDecoded.username,
-              email: newDecoded.email,
-            });
+      if (storedAccessToken && storedRefreshToken) {
+        // Set tokens in state first
+        setAccessToken(storedAccessToken);
+        setRefreshToken(storedRefreshToken);
+
+        try {
+          // Try to verify the access token
+          const verifyResponse = await fetch(API_ENDPOINTS.tokenVerify, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: storedAccessToken }),
+          });
+
+          if (verifyResponse.ok) {
+            // Token is valid, decode and set user data
+            const decoded = decodeToken(storedAccessToken);
+            if (decoded) {
+              setUserData({
+                user_id: decoded.user_id,
+                username: decoded.username,
+                email: decoded.email,
+              });
+            }
+          } else {
+            // Token invalid, try to refresh
+            console.log("Access token invalid, attempting refresh...");
+            const newAccessToken = await refreshAccessToken(storedRefreshToken);
+
+            if (newAccessToken) {
+              // Got new token, update state and localStorage
+              setAccessToken(newAccessToken);
+              localStorage.setItem("access_token", newAccessToken);
+
+              const newDecoded = decodeToken(newAccessToken);
+              if (newDecoded) {
+                setUserData({
+                  user_id: newDecoded.user_id,
+                  username: newDecoded.username,
+                  email: newDecoded.email,
+                });
+              }
+            } else {
+              // Refresh failed, clear tokens
+              console.log("Token refresh failed, logging out");
+              localStorage.removeItem("access_token");
+              localStorage.removeItem("refresh_token");
+              setAccessToken(null);
+              setRefreshToken(null);
+              setUserData({});
+            }
           }
+        } catch (error) {
+          console.error("Error validating token:", error);
+          // Clear tokens on error
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          setAccessToken(null);
+          setRefreshToken(null);
+          setUserData({});
         }
-      });
-    }
-  }, [navigate]);
+      }
+
+      setCheckingAuth(false);
+    };
+
+    validateAndRefreshToken();
+  }, []);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -498,9 +567,9 @@ const App = () => {
         try {
           const [restaurantsResponse, foodsResponse, ingredientsResponse] =
             await Promise.all([
-              fetch("http://localhost:8000/restaurants/"),
-              fetch("http://localhost:8000/foods/"),
-              fetch("http://localhost:8000/ingredients/"),
+              fetch(API_ENDPOINTS.restaurants),
+              fetch(API_ENDPOINTS.foods),
+              fetch(API_ENDPOINTS.ingredients),
             ]);
 
           if (
@@ -553,17 +622,14 @@ const App = () => {
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/food/${foodId}/accept/`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ is_approved: 1 }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.acceptFood(foodId), {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ is_approved: 1 }),
+      });
 
       if (response.ok) {
         // Update foods state
@@ -630,7 +696,7 @@ const App = () => {
         <Navbar userData={userData} handleLogout={handleLogout} />
 
         <Routes>
-          {/* ... existing routes ... */}
+          {/* Public routes */}
           <Route
             path="/"
             element={
@@ -651,13 +717,10 @@ const App = () => {
               />
             }
           />
-
-          {/* Add Restaurants route */}
           <Route
             path="/restaurants"
             element={<Restaurants restaurants={restaurants} />}
           />
-
           <Route
             path="/foods"
             element={
@@ -685,118 +748,194 @@ const App = () => {
             }
           />
           <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
-          <Route
-            path="/create-food"
-            element={
-              <CreateFood
-                accessToken={accessToken}
-                restaurants={restaurants}
-                ingredients={ingredients}
-                onCreateFood={(newFood) =>
-                  setFoods((prevFoods) => [...prevFoods, newFood])
-                }
-              />
-            }
-          />
-          <Route
-            path="/approvable-foods"
-            element={
-              <ApprovableFoods
-                accessToken={accessToken}
-                foods={foods}
-                handleApprove={handleApprove}
-              />
-            }
-          />
-          <Route
-            path="/approve-removals"
-            element={
-              <ApproveRemovals
-                accessToken={accessToken}
-                userId={userData.user_id}
-                ingredients={ingredients}
-              />
-            }
-          />
-          <Route
-            path="/approve-updates"
-            element={
-              <ApproveUpdates
-                accessToken={accessToken}
-                userId={userData.user_id}
-                ingredients={ingredients}
-              />
-            }
-          />
+          <Route path="/account-deleted" element={<AccountDeleted />} />
+          <Route path="/forbidden" element={<Forbidden />} />
+          <Route path="*" element={<NotFound />} />
+
+          {/* Protected routes with authentication check */}
+          {/* Edit-user route */}
           <Route
             path="/edit-user"
             element={
-              <EditUser
+              <ProtectedRoute
                 accessToken={accessToken}
-                userData={userData}
-                setUserData={setUserData}
-              />
+                checkingAuth={checkingAuth}
+              >
+                <EditUser
+                  accessToken={accessToken}
+                  userData={userData}
+                  setUserData={setUserData}
+                />
+              </ProtectedRoute>
             }
           />
+
+          {/* Delete user route */}
           <Route
             path="/delete-user"
             element={
-              <DeleteUser
+              <ProtectedRoute
                 accessToken={accessToken}
-                handleLogout={handleLogout}
-              />
+                checkingAuth={checkingAuth}
+              >
+                <DeleteUser
+                  accessToken={accessToken}
+                  handleLogout={handleLogout}
+                />
+              </ProtectedRoute>
             }
           />
-          <Route path="/account-deleted" element={<AccountDeleted />} />
+
+          {/* Create food route */}
+          <Route
+            path="/create-food"
+            element={
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <CreateFood
+                  accessToken={accessToken}
+                  restaurants={restaurants}
+                  ingredients={ingredients}
+                  onCreateFood={(newFood) =>
+                    setFoods((prevFoods) => [...prevFoods, newFood])
+                  }
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Food approval routes */}
+          <Route
+            path="/approvals"
+            element={
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <Approvals
+                  accessToken={accessToken}
+                  userId={userData.user_id}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/approvable-foods"
+            element={
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <ApprovableFoods
+                  accessToken={accessToken}
+                  foods={foods}
+                  handleApprove={handleApprove}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/approve-removals"
+            element={
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <ApproveRemovals
+                  accessToken={accessToken}
+                  userId={userData.user_id}
+                  ingredients={ingredients}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/approve-updates"
+            element={
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <ApproveUpdates
+                  accessToken={accessToken}
+                  userId={userData.user_id}
+                  ingredients={ingredients}
+                />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Food view/edit routes */}
           <Route
             path="/approve-food/:foodId"
             element={
-              <ApproveFoodPage
+              <ProtectedRoute
                 accessToken={accessToken}
-                userId={userData.user_id}
-                ingredients={ingredients}
-                foods={foods}
-                handleApprove={handleApprove}
-                showApproveButton={true}
-              />
+                checkingAuth={checkingAuth}
+              >
+                <ApproveFoodPage
+                  accessToken={accessToken}
+                  userId={userData.user_id}
+                  ingredients={ingredients}
+                  foods={foods}
+                  handleApprove={handleApprove}
+                  showApproveButton={true}
+                />
+              </ProtectedRoute>
             }
           />
+
           <Route
             path="/food/:foodId"
             element={
               <ViewFoodPage
                 ingredients={ingredients}
                 foods={foods}
-                accessToken={accessToken} // Pass accessToken
+                accessToken={accessToken}
               />
             }
           />
+
           <Route
             path="/food/:foodId/edit"
             element={
-              <EditFood
+              <ProtectedRoute
                 accessToken={accessToken}
-                restaurants={restaurants}
-                ingredients={ingredients}
-                onUpdateFood={(updatedFood) => {
-                  // Update the foods state with the edited food
-                  setFoods((prevFoods) =>
-                    prevFoods.map((food) =>
-                      food.id === updatedFood.id ? updatedFood : food
-                    )
-                  );
-                }}
-              />
+                checkingAuth={checkingAuth}
+              >
+                <EditFood
+                  accessToken={accessToken}
+                  restaurants={restaurants}
+                  ingredients={ingredients}
+                  onUpdateFood={(updatedFood) => {
+                    setFoods((prevFoods) =>
+                      prevFoods.map((food) =>
+                        food.id === updatedFood.id ? updatedFood : food
+                      )
+                    );
+                  }}
+                />
+              </ProtectedRoute>
             }
           />
+
+          {/* Add Support route */}
           <Route
-            path="/approvals"
+            path="/support"
             element={
-              <Approvals accessToken={accessToken} userId={userData.user_id} />
+              <ProtectedRoute
+                accessToken={accessToken}
+                checkingAuth={checkingAuth}
+              >
+                <Support accessToken={accessToken} userData={userData} />
+              </ProtectedRoute>
             }
           />
-          <Route path="/forbidden" element={<Forbidden />} />
-          <Route path="*" element={<NotFound />} />
         </Routes>
 
         {/* Global notification system */}
@@ -816,9 +955,6 @@ const App = () => {
             {notificationMessage?.text}
           </MuiAlert>
         </Snackbar>
-
-        {/* Remove the BackgroundSettings control below */}
-        {/* <BackgroundSettings /> */}
       </div>
     </BackgroundProvider>
   );

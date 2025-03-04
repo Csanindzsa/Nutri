@@ -13,7 +13,7 @@ export interface Restaurant {
     image?: string;  // This will now be either a full URL or a local asset name
     imageIsLocal?: boolean;  // Flag to determine if image should load from assets
     location?: string;
-    cuisine_type?: string;
+    cuisine: string;
     average_rating?: number;
     latitude?: number;  // Add latitude for geolocation
     longitude?: number; // Add longitude for geolocation

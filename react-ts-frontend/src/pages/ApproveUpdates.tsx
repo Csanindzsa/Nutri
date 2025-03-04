@@ -40,6 +40,15 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Slide, { SlideProps } from "@mui/material/Slide";
+import { API_ENDPOINTS, API_BASE_URL } from "../config/environment";
+import {
+  APPROVAL_CONFIG,
+  calculateApprovalPercentage,
+  getApprovalStatusText,
+  getApprovalProgressColor,
+} from "../config/approvalConfig";
+import LinearProgress from "@mui/material/LinearProgress";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Add this missing import
 
 interface ApproveUpdatesProps {
   accessToken: string | null;
@@ -53,6 +62,8 @@ interface ExtendedFoodChange extends FoodChange {
   created_at: string;
   user_name?: string;
   reason?: string;
+  new_approved_supervisors_count?: number;
+  new_approved_supervisors?: number[];
 }
 
 // Function for transition effect
@@ -83,24 +94,15 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
   });
 
   useEffect(() => {
-    // First check proper navigation flow
-    const fromApprovals =
-      location.state && location.state.fromApprovals === true;
-
-    if (!fromApprovals) {
+    // Check authentication
+    if (!accessToken) {
       navigate("/forbidden");
       return;
     }
 
-    // Then check authentication - redirect to forbidden
-    if (!accessToken || !userId) {
-      navigate("/forbidden");
-      return;
-    }
-
-    // Original fetch logic
+    // Fetch the update requests
     fetchUpdates();
-  }, [accessToken, userId, location, navigate]);
+  }, [accessToken, userId, navigate]);
 
   const fetchUpdates = async () => {
     if (!accessToken || !userId) {
@@ -111,19 +113,16 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 
     try {
       setLoading(true);
-      const response = await fetch(
-        "http://localhost:8000/food-changes/updates/",
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.foodChangeUpdates, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (response.ok) {
         const data = await response.json();
-        // Assuming the backend returns food changes with original_food included
         setUpdates(data);
       } else if (response.status === 401) {
         setError("Your session has expired. Please log in again.");
+        navigate("/login", { state: { from: "/approve-updates" } });
       } else {
         setError("Failed to fetch food update requests");
       }
@@ -160,19 +159,16 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     }
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/food-changes/${changeId}/approve/`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ is_approved: true }),
-        }
-      );
+      const response = await fetch(API_ENDPOINTS.approveChange(changeId), {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.ok) {
+        // Update the UI by removing the approved item
         setUpdates((prev) => prev.filter((change) => change.id !== changeId));
         setSuccessMessage("Food update approved successfully");
       } else {
@@ -185,6 +181,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     }
   };
 
+  // Note: The backend might not support rejections, consider checking
   const handleRejectUpdate = async (changeId: number) => {
     if (!accessToken) {
       setErrorMessage("You need to be logged in to reject updates");
@@ -192,8 +189,9 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     }
 
     try {
+      // This endpoint might need to be implemented on the backend
       const response = await fetch(
-        `http://localhost:8000/food-changes/${changeId}/reject/`,
+        `${API_BASE_URL}/food-changes/${changeId}/reject/`,
         {
           method: "POST",
           headers: {
@@ -231,6 +229,11 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
       }
       handleCloseConfirm();
     }
+  };
+
+  // Check if the user has already approved this change
+  const hasUserApproved = (change: ExtendedFoodChange): boolean => {
+    return change.new_approved_supervisors?.includes(userId as number) || false;
   };
 
   // Function to identify and display changes between original and updated food data
@@ -535,6 +538,65 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
                         Reason: {change.reason || "No reason provided"}
                       </Typography>
                     </Box>
+
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2">
+                        Approval Status:
+                      </Typography>
+
+                      {/* Add progress tracking */}
+                      <Box sx={{ mt: 1, mb: 2 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            mb: 0.5,
+                          }}
+                        >
+                          <Typography variant="body2">
+                            {change.new_approved_supervisors_count || 0}/
+                            {APPROVAL_CONFIG.REQUIRED_APPROVALS} approvals
+                          </Typography>
+                          <Typography variant="body2">
+                            {APPROVAL_CONFIG.REQUIRED_APPROVALS -
+                              (change.new_approved_supervisors_count || 0)}{" "}
+                            more needed
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={calculateApprovalPercentage(
+                            change.new_approved_supervisors_count || 0
+                          )}
+                          sx={{
+                            height: 8,
+                            borderRadius: 5,
+                            bgcolor: "rgba(0,0,0,0.1)",
+                            "& .MuiLinearProgress-bar": {
+                              bgcolor: getApprovalProgressColor(
+                                change.new_approved_supervisors_count || 0
+                              ),
+                            },
+                          }}
+                        />
+                      </Box>
+
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mt: 1 }}
+                      >
+                        <UpdateIcon sx={{ mr: 1, color: "#FF8C00" }} />
+                        <Typography>
+                          {(change.new_approved_supervisors_count || 0) >=
+                          APPROVAL_CONFIG.REQUIRED_APPROVALS
+                            ? "Fully approved"
+                            : `${
+                                change.new_approved_supervisors_count || 0
+                              } of ${
+                                APPROVAL_CONFIG.REQUIRED_APPROVALS
+                              } required approvals`}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </CardContent>
 
                   <CardActions>
@@ -558,20 +620,48 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
                       color="primary"
                       startIcon={<UpdateIcon />}
                       onClick={() => handleOpenConfirm(change.id, "approve")}
+                      disabled={hasUserApproved(change)}
+                      sx={{
+                        bgcolor: hasUserApproved(change)
+                          ? "rgba(255,140,0,0.3)"
+                          : "#FF8C00",
+                        "&:hover": {
+                          bgcolor: hasUserApproved(change)
+                            ? "rgba(255,140,0,0.3)"
+                            : "#e67e00",
+                        },
+                        color: "white",
+                      }}
                     >
-                      Approve Update
-                    </Button>
-
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color="error"
-                      startIcon={<CancelOutlinedIcon />}
-                      onClick={() => handleOpenConfirm(change.id, "reject")}
-                    >
-                      Reject
+                      {hasUserApproved(change)
+                        ? "Already Approved"
+                        : (change.new_approved_supervisors_count || 0) >=
+                          APPROVAL_CONFIG.REQUIRED_APPROVALS
+                        ? "Approval Complete"
+                        : "Approve Update"}
                     </Button>
                   </CardActions>
+
+                  {/* Show completion indicator if fully approved */}
+                  {(change.new_approved_supervisors_count || 0) >=
+                    APPROVAL_CONFIG.REQUIRED_APPROVALS && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        bgcolor: "rgba(76, 175, 80, 0.1)",
+                        borderTop: "1px solid rgba(76, 175, 80, 0.3)",
+                      }}
+                    >
+                      <Alert
+                        icon={<CheckCircleIcon />}
+                        severity="success"
+                        sx={{ mb: 0 }}
+                      >
+                        This update has received all required approvals and will
+                        be processed
+                      </Alert>
+                    </Box>
+                  )}
                 </Card>
               </Grid>
             ))}
