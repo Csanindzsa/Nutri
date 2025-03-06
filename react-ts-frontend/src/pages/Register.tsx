@@ -22,6 +22,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import LoginIcon from "@mui/icons-material/Login";
+import {API_BASE_URL} from "../config/environment";
 
 const Register = () => {
   const [email, setEmail] = useState("");
@@ -50,7 +51,7 @@ const Register = () => {
     const payload = { email, password, username };
 
     try {
-      const response = await fetch("http://localhost:8000/create-user/", {
+      const response = await fetch(`${API_BASE_URL}/create-user/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

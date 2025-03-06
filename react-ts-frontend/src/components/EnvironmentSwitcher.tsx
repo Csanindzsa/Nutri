@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import {
   Box,
   Select,
@@ -13,7 +14,7 @@ import {
 import { updateApiBaseUrl, API_BASE_URL } from "../config/environment";
 
 const predefinedEnvironments = [
-  { name: "Development", url: "http://localhost:8000" },
+  { name: "Development", url: "${API_BASE_URL}" },
   { name: "Testing", url: "http://test-api.example.com" },
   { name: "Production", url: "https://api.production.com" },
   // Add more environments as needed
