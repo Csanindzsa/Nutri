@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Food } from "./interfaces";
 import { Ingredient } from "./interfaces";
+import {API_BASE_URL} from "../config/environment";
 
 interface ApproveFoodProps {
   handleApprove: (id: number) => void;
@@ -29,7 +30,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
     const fetchFood = async () => {
       try {
         console.log(`Fetching food details for ID: ${id}`);
-        const response = await fetch(`http://localhost:8000/foods/${id}/`);
+        const response = await fetch(`${API_BASE_URL}/foods/${id}/`);
         if (response.ok) {
           const data = await response.json();
           setFood(data);
@@ -43,7 +44,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
 
     const fetchIngredients = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/ingredients/`);
+        const response = await fetch(`${API_BASE_URL}/ingredients/`);
         if (response.ok) {
           const data = await response.json();
           setIngredients(data);
@@ -71,7 +72,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({ handleApprove }) => {
   const handleApproveAndRedirect = async (id: number) => {
     try {
       const response = await fetch(
-        `http://localhost:8000/foods/${id}/accept/`,
+        `${API_BASE_URL}/foods/${id}/accept/`,
         {
           method: "PATCH",
           headers: {

@@ -16,6 +16,7 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import HomeIcon from "@mui/icons-material/Home";
 import LoginIcon from "@mui/icons-material/Login";
+import {API_BASE_URL} from "../config/environment";
 
 const ConfirmEmail = () => {
   const { token } = useParams<{ token: string }>();
@@ -30,7 +31,7 @@ const ConfirmEmail = () => {
   const confirmEmail = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch("http://localhost:8000/confirm-email/", {
+      const response = await fetch(`${API_BASE_URL}/confirm-email/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
