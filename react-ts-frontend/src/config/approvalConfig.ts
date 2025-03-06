@@ -32,10 +32,10 @@ export const getApprovalStatusText = (currentApprovals: number): string => {
   
   if (currentApprovals >= APPROVAL_CONFIG.REQUIRED_APPROVALS) {
     return "Fully approved";
-  } else if (currentApprovals > 0) {
-    return `${currentApprovals}/${APPROVAL_CONFIG.REQUIRED_APPROVALS} approvals (${remaining} more needed)`;
+  } else if (currentApprovals === 0) {
+    return `Waiting for ${APPROVAL_CONFIG.REQUIRED_APPROVALS} approvals`;
   } else {
-    return `0/${APPROVAL_CONFIG.REQUIRED_APPROVALS} approvals - Needs review`;
+    return `${currentApprovals} approved, ${remaining} more needed`;
   }
 };
 
@@ -45,9 +45,15 @@ export const getApprovalStatusText = (currentApprovals: number): string => {
 export const getApprovalProgressColor = (currentApprovals: number): string => {
   const percentage = calculateApprovalPercentage(currentApprovals);
   
-  if (percentage >= 70) return APPROVAL_CONFIG.PROGRESS_COLORS.high;
-  if (percentage >= 30) return APPROVAL_CONFIG.PROGRESS_COLORS.medium;
-  return APPROVAL_CONFIG.PROGRESS_COLORS.low;
+  if (percentage >= 100) {
+    return "#4CAF50"; // Green for complete
+  } else if (percentage >= 70) {
+    return "#8BC34A"; // Light green for nearly complete
+  } else if (percentage >= 40) {
+    return "#FFC107"; // Amber for halfway
+  } else {
+    return "#FF8C00"; // Orange for early stages
+  }
 };
 
 /**
