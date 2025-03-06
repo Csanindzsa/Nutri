@@ -22,6 +22,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import {API_BASE_URL} from "../config/environment";
 
 interface EditUserProps {
   accessToken: string | null;
@@ -122,7 +123,7 @@ const EditUser: React.FC<EditUserProps> = ({
         updateData.password = password;
       }
 
-      const response = await fetch("http://localhost:8000/users/edit/", {
+      const response = await fetch(`${API_BASE_URL}/users/edit/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

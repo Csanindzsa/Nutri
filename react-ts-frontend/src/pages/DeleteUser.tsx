@@ -22,6 +22,7 @@ import WarningIcon from "@mui/icons-material/Warning";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LockIcon from "@mui/icons-material/Lock";
+import {API_BASE_URL} from "../config/environment";
 
 interface DeleteUserProps {
   accessToken: string | null;
@@ -51,7 +52,7 @@ const DeleteUser: React.FC<DeleteUserProps> = ({
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/users/delete/", {
+      const response = await fetch(`${API_BASE_URL}/users/delete/`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,

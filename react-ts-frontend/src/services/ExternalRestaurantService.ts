@@ -1,5 +1,6 @@
 import { Restaurant } from '../interfaces';
 import locationService from './LocationService';
+import {API_BASE_URL} from "../config/environment";
 
 // This API key should be stored in an environment variable in a real app
 // const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
@@ -11,7 +12,7 @@ interface NearbyRestaurantsResponse {
 }
 
 class ExternalRestaurantService {
-  private backendUrl = 'http://localhost:8000';
+  private backendUrl = `${API_BASE_URL}`;
 
   /**
    * Fetch nearby restaurants from Google Places API or similar

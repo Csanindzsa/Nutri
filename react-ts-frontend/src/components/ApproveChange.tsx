@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { FoodChange, Ingredient } from "../interfaces";
 import { renderTable } from "../utils/utils";
+import {API_BASE_URL} from "../config/environment";
 
 interface ApproveChangeProps {
   change: FoodChange;
   accessToken: string | null;
   userId: number | undefined;
   ingredients: Ingredient[];
-  onApprove: (updatedChange: FoodChange) => void;
+onApprove: (updatedChange: FoodChange) => void;
   is_removal: boolean;
 }
 
@@ -39,8 +40,8 @@ const ApproveChange: React.FC<ApproveChangeProps> = ({ change, accessToken, user
 
     // Determine the endpoint based on is_removal
     const endpoint = is_removal
-      ? `http://localhost:8000/food-changes/${change.id}/approve-removal/`
-      : `http://localhost:8000/food-changes/${change.id}/approve-change/`;
+      ? `${API_BASE_URL}/food-changes/${change.id}/approve-removal/`
+      : `${API_BASE_URL}/food-changes/${change.id}/approve-change/`;
 
     try {
       const response = await fetch(endpoint, {

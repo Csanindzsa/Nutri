@@ -20,6 +20,7 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 import UpdateIcon from "@mui/icons-material/Update";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import {API_BASE_URL} from "../config/environment";
 
 interface ApprovalsProps {
   accessToken: string | null;
@@ -59,7 +60,7 @@ const Approvals: React.FC<ApprovalsProps> = ({ accessToken, userId }) => {
       try {
         // Fetch pending food approvals
         const foodsResponse = await fetch(
-          "http://localhost:8000/foods/approvable/",
+          `${API_BASE_URL}/foods/approvable/`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
@@ -67,7 +68,7 @@ const Approvals: React.FC<ApprovalsProps> = ({ accessToken, userId }) => {
 
         // Fetch pending updates
         const updatesResponse = await fetch(
-          "http://localhost:8000/food-changes/updates/",
+          `${API_BASE_URL}/food-changes/updates/`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
@@ -75,7 +76,7 @@ const Approvals: React.FC<ApprovalsProps> = ({ accessToken, userId }) => {
 
         // Fetch pending removals
         const removalsResponse = await fetch(
-          "http://localhost:8000/food-changes/deletions/",
+          `${API_BASE_URL}/food-changes/deletions/`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
