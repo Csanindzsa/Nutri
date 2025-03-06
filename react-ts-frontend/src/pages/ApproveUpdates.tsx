@@ -59,11 +59,12 @@ interface ApproveUpdatesProps {
 // This interface extends FoodChange to include the original food data we'll fetch
 interface ExtendedFoodChange extends FoodChange {
   original_food?: Food;
-  created_at: string;
-  user_name?: string;
+  date: string; // Use 'date' instead of 'created_at'
+  updated_by?: string; // Use 'updated_by' instead of 'user_name'
   reason?: string;
   new_approved_supervisors_count?: number;
   new_approved_supervisors?: number[];
+  updated_date?: string; // Add this field from the backend
 }
 
 // Function for transition effect
@@ -520,7 +521,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 
                     <Box sx={{ mt: 2 }}>
                       <Typography variant="caption" display="block">
-                        Requested by: {change.user_name || "Unknown User"}
+                        Requested by: {change.updated_by || "Unknown User"}
                       </Typography>
                       <Typography
                         variant="caption"
@@ -528,7 +529,11 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
                         sx={{ color: "text.secondary" }}
                       >
                         Request date:{" "}
-                        {new Date(change.created_at).toLocaleDateString()}
+                        {change.date
+                          ? new Date(change.date).toLocaleDateString()
+                          : change.updated_date
+                          ? new Date(change.updated_date).toLocaleDateString()
+                          : "Unknown date"}
                       </Typography>
                       <Typography
                         variant="caption"
