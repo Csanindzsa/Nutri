@@ -97,6 +97,10 @@ class FoodFactory(factory.django.DjangoModelFactory):
         UserFactory, 'approved_foods', size=2)  # Related approved supervisors, 2 by default
     is_approved = Faker('boolean')
 
+    # Add the new fields
+    created_by = SubFactory(UserFactory)
+    created_date = Faker('date_time_this_decade')
+
     @factory.post_generation
     def calculate_hazard_level(self, create, extracted, **kwargs):
         """Calculate the hazard_level as the average of ingredients' hazard levels."""
@@ -134,6 +138,12 @@ class FoodChangeFactory(factory.django.DjangoModelFactory):
     new_approved_supervisors = factory.LazyFunction(lambda: [UserFactory(
         is_supervisor=True)])  # Assuming UserFactory is defined elsewhere
     new_is_approved = Faker('boolean')
+
+    # Add the new fields
+    reason = Faker('paragraph')
+    date = Faker('date_this_decade')
+    updated_by = SubFactory(UserFactory)
+    updated_date = Faker('date_time_this_decade')
 
     @factory.lazy_attribute
     def new_hazard_level(self):

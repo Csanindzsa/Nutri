@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Avg
+from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager):
@@ -68,19 +69,6 @@ class Location(models.Model):
         db_table = "Locations"
 
 
-# class ExactLocation(models.Model):
-#     city_name = models.CharField(max_length=255)
-#     postal_code = models.CharField(max_length=20)
-#     street_name = models.CharField(max_length=255)
-#     street_type = models.CharField(max_length=50)
-#     house_number = models.IntegerField()
-#     restaurant = models.ForeignKey(
-#         Restaurant, on_delete=models.CASCADE, related_name="exact_locations")
-
-#     class Meta:
-#         db_table = "ExactLocations"
-
-
 class Ingredient(models.Model):
     HAZARD_LEVEL_CHOICES = [
         (0, "Safe"),
@@ -105,7 +93,6 @@ class Food(models.Model):
         Restaurant, on_delete=models.CASCADE, related_name="foods")
     name = models.CharField(max_length=255, unique=True)
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
-    # calories = models.IntegerField()
     serving_size = models.IntegerField(default=100)  # 100 grams
     is_organic = models.BooleanField(default=False)
     is_gluten_free = models.BooleanField(default=False)
@@ -119,6 +106,14 @@ class Food(models.Model):
     approved_supervisors = models.ManyToManyField(
         User, related_name="approved_foods", blank=True)
     is_approved = models.BooleanField(default=True)
+
+    # Add creation tracking
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        related_name="created_foods",
+        null=True, blank=True
+    )
+    created_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.restaurant.name})"
@@ -136,6 +131,12 @@ class Food(models.Model):
             self.save(update_fields=['hazard_level'])
         return self.hazard_level
 
+    def save(self, *args, **kwargs):
+        # Set created_date for new records only
+        if not self.pk and not self.created_date:
+            self.created_date = timezone.now()
+        super().save(*args, **kwargs)
+
     class Meta:
         db_table = "Foods"
 
@@ -149,7 +150,6 @@ class FoodChange(models.Model):
         Restaurant, on_delete=models.CASCADE, related_name="new_food_versions")
     new_name = models.CharField(max_length=255)
     new_macro_table = models.JSONField(default=dict)  # Stores macros as JSON
-    # new_calories = models.IntegerField()
     new_serving_size = models.IntegerField(default=100)  # 100 grams
     new_is_organic = models.BooleanField(default=False)
     new_is_gluten_free = models.BooleanField(default=False)
@@ -163,6 +163,21 @@ class FoodChange(models.Model):
     new_approved_supervisors = models.ManyToManyField(
         User, related_name="approved_food_changes", blank=True)
     new_is_approved = models.BooleanField(default=True)
+
+    # Add reason and date fields
+    reason = models.TextField(blank=True, null=True)
+    date = models.DateField(null=True, blank=True)
+
+    # Add update tracking
+    updated_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        related_name="updated_foods",
+        null=True, blank=True
+    )
+    updated_date = models.DateTimeField(null=True, blank=True)
+
+    # Calculate hazard level
+    new_hazard_level = models.FloatField(default=0)
 
     def __str__(self):
         return f"{self.new_name} ({self.new_restaurant.name})"
@@ -179,6 +194,15 @@ class FoodChange(models.Model):
             self.new_hazard_level = 0
             self.save(update_fields=['new_hazard_level'])
         return self.new_hazard_level
+
+    def save(self, *args, **kwargs):
+        # Set updated_date for new records only
+        if not self.pk and not self.updated_date:
+            self.updated_date = timezone.now()
+        # Set date if not provided
+        if not self.date:
+            self.date = timezone.now().date()
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = "FoodChanges"
