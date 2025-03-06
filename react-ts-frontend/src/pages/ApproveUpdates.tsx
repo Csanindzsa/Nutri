@@ -120,7 +120,35 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        setUpdates(data);
+
+        // Fetch original food data for each update
+        const updatesWithOriginalFood = await Promise.all(
+          data.map(async (update: ExtendedFoodChange) => {
+            try {
+              // Fetch the original food using the old_version field
+              const foodResponse = await fetch(
+                `${API_BASE_URL}/foods/${update.old_version}/`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                }
+              );
+
+              if (foodResponse.ok) {
+                const originalFood = await foodResponse.json();
+                return { ...update, original_food: originalFood };
+              }
+              return update;
+            } catch (err) {
+              console.error(
+                `Failed to fetch original food for update ${update.id}:`,
+                err
+              );
+              return update;
+            }
+          })
+        );
+
+        setUpdates(updatesWithOriginalFood);
       } else if (response.status === 401) {
         setError("Your session has expired. Please log in again.");
         navigate("/login", { state: { from: "/approve-updates" } });
@@ -237,10 +265,14 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     return change.new_approved_supervisors?.includes(userId as number) || false;
   };
 
-  // Function to identify and display changes between original and updated food data
+  // Improved renderChanges function to handle missing original food data
   const renderChanges = (change: ExtendedFoodChange) => {
     if (!change.original_food) {
-      return <Typography>Original food details not available</Typography>;
+      return (
+        <Typography color="error">
+          Original food details not available. ID: {change.old_version}
+        </Typography>
+      );
     }
 
     const original = change.original_food;
@@ -330,6 +362,11 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
         original: original.ingredients,
         updated: change.new_ingredients,
       });
+    }
+
+    // Return a message if no changes detected
+    if (changedFields.length === 0) {
+      return <Typography>No changes detected</Typography>;
     }
 
     return (
