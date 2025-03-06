@@ -35,6 +35,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import MuiAlert from "@mui/material/Alert";
+import {API_BASE_URL} from "../config/environment";
 
 interface CreateFoodProps {
   accessToken: string | null;
@@ -217,7 +218,7 @@ const CreateFood: React.FC<CreateFoodProps> = ({
     }
 
     try {
-      const response = await fetch("http://localhost:8000/foods/create/", {
+      const response = await fetch(`${API_BASE_URL}/foods/create/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,

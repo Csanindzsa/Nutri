@@ -23,6 +23,7 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import Slide, { SlideProps } from "@mui/material/Slide";
+import {API_BASE_URL} from "../config/environment";
 
 interface ApprovableFoodsProps {
   accessToken: string | null;
@@ -74,7 +75,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
 
       try {
         const response = await fetch(
-          "http://localhost:8000/foods/approvable/",
+          `${API_BASE_URL}/foods/approvable/`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,

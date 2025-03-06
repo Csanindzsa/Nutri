@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
 import WelcomeSection from "../components/WelcomeSection";
 import { Box } from "@mui/material"; // Remove Container import
+import {API_BASE_URL} from "../config/environment";
 
 // Fix interface to match all possible props
 interface MainPageProps {
@@ -57,9 +58,9 @@ const MainPage: React.FC<MainPageProps> = ({
         try {
           const [restaurantsResponse, foodsResponse, ingredientsResponse] =
             await Promise.all([
-              fetch("http://localhost:8000/restaurants/"),
-              fetch("http://localhost:8000/foods/"),
-              fetch("http://localhost:8000/ingredients/"),
+              fetch(`${API_BASE_URL}/restaurants/`),
+              fetch(`${API_BASE_URL}/foods/`),
+              fetch(`${API_BASE_URL}/ingredients/`),
             ]);
 
           if (

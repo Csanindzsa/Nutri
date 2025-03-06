@@ -1,5 +1,6 @@
 import { Restaurant } from '../interfaces';
 import externalRestaurantService from './ExternalRestaurantService';
+import {API_BASE_URL} from "../config/environment";
 
 // Types
 export interface UserLocation {
@@ -199,7 +200,7 @@ class LocationService {
   async fetchDatabaseRestaurants(): Promise<LocationEnhancedRestaurant[]> {
     try {
       // Get all restaurants from our API
-      const response = await fetch('http://localhost:8000/restaurants/');
+      const response = await fetch(`${API_BASE_URL}/restaurants/`);
       if (!response.ok) {
         throw new Error('Failed to fetch restaurants from database');
       }
@@ -294,7 +295,7 @@ class LocationService {
       
       // The backend doesn't need to know if the image is local
       // We can send just the relevant data
-      const response = await fetch('http://localhost:8000/restaurants/with-location/', {
+      const response = await fetch(`${API_BASE_URL}/restaurants/with-location/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +330,7 @@ class LocationService {
     longitude: number
   ): Promise<Restaurant> {
     try {
-      const response = await fetch(`http://localhost:8000/restaurants/${restaurantId}/location/`, {
+      const response = await fetch(`${API_BASE_URL}/restaurants/${restaurantId}/location/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

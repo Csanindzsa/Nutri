@@ -52,7 +52,7 @@ import { Helmet, HelmetProvider } from "react-helmet-async"; // Updated import
 import MuiAlert from "@mui/material/Alert";
 
 // Add this missing import
-import { API_ENDPOINTS } from "../config/environment";
+import { API_ENDPOINTS , API_BASE_URL} from "../config/environment";
 
 // Import ButtonProps for the type definition
 import { ButtonProps } from "@mui/material/Button";
@@ -125,7 +125,7 @@ const refreshAccessToken = async (refreshToken: string | null) => {
   if (!refreshToken) return null;
 
   try {
-    const response = await fetch("http://localhost:8000/token/refresh/", {
+    const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1013,7 +1013,7 @@ const ApproveFoodPage: React.FC<{
 
       // If not found, fetch it from the API
       try {
-        const response = await fetch(`http://localhost:8000/foods/${foodId}/`);
+        const response = await fetch(`${API_BASE_URL}/foods/${foodId}/`);
         if (response.ok) {
           const foodData = await response.json();
           setFood(foodData);
@@ -1089,7 +1089,7 @@ const ViewFoodPage: React.FC<{
 
       // If not found, fetch it from the API
       try {
-        const response = await fetch(`http://localhost:8000/foods/${foodId}/`);
+        const response = await fetch(`${API_BASE_URL}/foods/${foodId}/`);
         if (response.ok) {
           const foodData = await response.json();
           setFood(foodData);
