@@ -29,6 +29,9 @@ import logging
 import smtplib
 from rest_framework.decorators import api_view, permission_classes
 
+# Add this import at the top of your file
+from .utils.image_fetcher import fetch_food_image
+
 logger = logging.getLogger(__name__)
 
 dotenv.load_dotenv()
@@ -229,10 +232,36 @@ class FoodCreateView(generics.CreateAPIView):
             # Log the incoming request data for debugging
             logger.debug(f"Incoming request data: {request.data}")
 
+            # Check if an image was uploaded
+            has_image = request.FILES.get('image') is not None
+            food_name = request.data.get('name', '')
+
             # Perform the default create logic
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            food = self.perform_create(serializer)
+            food = serializer.save()
+
+            # If no image was uploaded, try to fetch one
+            if not has_image and food_name:
+                restaurant_name = None
+                try:
+                    if food.restaurant:
+                        restaurant_name = food.restaurant.name
+                except Exception:
+                    pass
+
+                success, image_content_or_error = fetch_food_image(
+                    food_name, restaurant_name)
+                if success:
+                    # Generate a filename
+                    image_name = f"auto_generated_{food.id}_{food_name.replace(' ', '_')}.jpg"
+
+                    # Save the image to the food object
+                    food.image.save(
+                        image_name, image_content_or_error, save=True)
+
+                    # Update the serializer data to include the new image
+                    serializer = self.get_serializer(food)
 
             # Calculate the hazard level based on the ingredients
             food.calculate_hazard_level()
@@ -257,6 +286,7 @@ class FoodCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         # Set is_approved to False upon creation
         serializer.validated_data['is_approved'] = False
+        serializer.validated_data['created_by'] = self.request.user
 
         # Save the Food instance
         food = serializer.save()
