@@ -37,6 +37,8 @@ def fetch_food_image(food_name, restaurant_name=None):
 
     logger.info(f"Trying to fetch image for food: {food_name}")
 
+    # fix query
+
     # Try each search query with Unsplash until we get a result
     if UNSPLASH_API_KEY:
         for query in search_queries:
