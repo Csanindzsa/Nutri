@@ -3,6 +3,8 @@ import os
 import dotenv
 import random
 import string
+from datetime import datetime
+from django.utils import timezone  # Add this import
 
 from django.db import IntegrityError
 from django.db.models import Count
@@ -383,7 +385,7 @@ class CreateFoodChange(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        print(f"ingredients: {request.data.get('ingredients')}")
+        logger.debug(f"Received data: {request.data}")
         try:
             # Validate food_id
             food_id = request.data.get("food_id")
@@ -403,21 +405,25 @@ class CreateFoodChange(generics.CreateAPIView):
             logger.debug("new data: %s", new_data)
 
             # Validate and parse ingredients
-            # Default to an empty JSON array if not provided
-            ingredients = new_data.get("ingredients", "[]")
-            try:
-                # Parse the JSON-encoded ingredients string into a Python list
-                ingredient_ids = json.loads(ingredients)
-                if not isinstance(ingredient_ids, list):
+            ingredients = new_data.get("new_ingredients", [])
+
+            # Handle ingredients if it's already a list (common when sent from frontend)
+            if isinstance(ingredients, list):
+                ingredient_ids = ingredients
+            else:
+                try:
+                    # Parse the JSON-encoded ingredients string into a Python list
+                    ingredient_ids = json.loads(ingredients)
+                    if not isinstance(ingredient_ids, list):
+                        return Response(
+                            {"error": "ingredients must be a JSON-encoded array."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                except json.JSONDecodeError:
                     return Response(
-                        {"error": "ingredients must be a JSON-encoded array."},
+                        {"error": "ingredients must be a valid JSON-encoded array."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-            except json.JSONDecodeError:
-                return Response(
-                    {"error": "ingredients must be a valid JSON-encoded array."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
 
             # Convert ingredient IDs to integers and validate
             valid_ingredient_ids = []
@@ -444,6 +450,16 @@ class CreateFoodChange(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            # Get date from request or use today's date
+            try:
+                date_str = new_data.get("date")
+                if date_str:
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                else:
+                    date_obj = timezone.now().date()
+            except ValueError:
+                date_obj = timezone.now().date()
+
             # Create the FoodChange object
             try:
                 food_change = FoodChange.objects.create(
@@ -451,21 +467,24 @@ class CreateFoodChange(generics.CreateAPIView):
                     is_deletion=convert_value(
                         new_data.get("is_deletion", False), bool),
                     new_restaurant=food.restaurant,
-                    new_name=new_data.get("name", food.name),
+                    new_name=new_data.get("new_name", food.name),
                     new_serving_size=convert_value(new_data.get(
-                        "serving_size", food.serving_size), float),
+                        "new_serving_size", food.serving_size), float),
                     new_macro_table=parse_json(new_data.get(
-                        "macro_table", food.macro_table)),
+                        "new_macro_table", food.macro_table)),
                     new_is_organic=convert_value(new_data.get(
-                        "is_organic", food.is_organic), bool),
+                        "new_is_organic", food.is_organic), bool),
                     new_is_gluten_free=convert_value(new_data.get(
-                        "is_gluten_free", food.is_gluten_free), bool),
+                        "new_is_gluten_free", food.is_gluten_free), bool),
                     new_is_alcohol_free=convert_value(new_data.get(
-                        "is_alcohol_free", food.is_alcohol_free), bool),
+                        "new_is_alcohol_free", food.is_alcohol_free), bool),
                     new_is_lactose_free=convert_value(new_data.get(
-                        "is_lactose_free", food.is_lactose_free), bool),
-                    new_image=new_data.get("image", food.image),
+                        "new_is_lactose_free", food.is_lactose_free), bool),
+                    new_image=new_data.get("new_image", food.image),
                     new_is_approved=False,
+                    date=date_obj,
+                    reason=new_data.get("reason", ""),
+                    updated_by=request.user,  # Set the authenticated user
                 )
             except ValidationError as e:
                 logger.error(
@@ -494,7 +513,6 @@ class CreateFoodChange(generics.CreateAPIView):
 
 
 class FoodChangeUpdateListView(generics.ListAPIView):
-    # queryset = FoodChange.objects.filter(is_deletion=False, new_is_approved=False)
     serializer_class = FoodChangeSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -546,7 +564,7 @@ class CreateFoodRemoval(generics.CreateAPIView):
 
             return Response({"message": "Food deletion request created successfully."}, status=status.HTTP_201_CREATED)
 
-        except IntegrityError as e:
+        except IntegrityError:
             # Handle the integrity error by sending a specific error message
             return Response({"error": "A removal proposal is already active for this food item."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -621,7 +639,7 @@ class ApproveProposal(generics.UpdateAPIView):
                 except Food.DoesNotExist:
                     # Handle the case where the original Food object no longer exists
                     return Response(
-                        {"error": "The original Food object does not even exist."},
+                        {"error": "The original Food object does not exist."},
                         status=status.HTTP_404_NOT_FOUND,
                     )
 
@@ -634,7 +652,6 @@ class RestaurantWithLocationView(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
@@ -656,7 +673,6 @@ class UpdateRestaurantLocationView(generics.UpdateAPIView):
         instance = self.get_object()
         serializer = self.get_serializer(
             instance, data=request.data, partial=partial)
-
         try:
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
@@ -696,7 +712,6 @@ class GetAllRestaurantLocationsView(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         # Get all restaurants with locations
         restaurants_with_locations = []
-
         for restaurant in Restaurant.objects.all():
             locations = Location.objects.filter(restaurants=restaurant)
             if locations.exists():
@@ -725,6 +740,7 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
         errors = []
 
         for restaurant_data in restaurants_data:
+
             try:
                 # Extract location data if provided
                 latitude = restaurant_data.pop('latitude', None)
@@ -756,7 +772,7 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
                 saved_restaurants.append({
                     "id": restaurant.id,
                     "name": restaurant.name,
-                    "foods_on_menu": restaurant
+                    "foods_on_menu": restaurant.foods_on_menu
                 })
             except Exception as e:
                 errors.append(
@@ -769,7 +785,6 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
 
 
 # GENERICS - mainly for testing purposes
-
 # User CRUD
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = User.objects.all()
@@ -780,9 +795,8 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
+
 # Restaurant CRUD
-
-
 class RestaurantListCreateView(generics.ListCreateAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
@@ -791,6 +805,7 @@ class RestaurantListCreateView(generics.ListCreateAPIView):
 class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+
 
 # # ExactLocation CRUD
 # class ExactLocationListCreateView(generics.ListCreateAPIView):
@@ -802,8 +817,6 @@ class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView)
 #     serializer_class = ExactLocationSerializer
 
 # Location CRUD
-
-
 class LocationListCreateView(generics.ListCreateAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
@@ -813,9 +826,8 @@ class LocationRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
+
 # Ingredient CRUD
-
-
 class IngredientListCreateView(generics.ListCreateAPIView):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
@@ -825,9 +837,8 @@ class IngredientRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
 
+
 # Food CRUD
-
-
 class FoodListCreateView(generics.ListCreateAPIView):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
@@ -837,9 +848,8 @@ class FoodRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Food.objects.all()
     serializer_class = FoodSerializer
 
+
 # FoodChange CRUD
-
-
 class FoodChangeListCreateView(generics.ListCreateAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
