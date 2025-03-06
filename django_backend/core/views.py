@@ -542,6 +542,9 @@ class CreateFoodRemoval(generics.CreateAPIView):
                 raise IntegrityError(
                     "A removal proposal is already active for this food item.")
 
+            # Extract reason from request
+            reason = request.data.get('reason', 'No reason provided')
+
             # Create the new food change record
             food_change = FoodChange.objects.create(
                 old_version=food,
@@ -555,6 +558,8 @@ class CreateFoodRemoval(generics.CreateAPIView):
                 new_is_lactose_free=food.is_lactose_free,
                 new_image=food.image,
                 new_is_approved=False,
+                reason=reason,  # Add reason field
+                updated_by=request.user,  # Set the user who requested the deletion
             )
 
             food_change.new_ingredients.set(food.ingredients.all())

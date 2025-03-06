@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Food, Ingredient, MacroTable } from "../interfaces";
 import { useNavigate } from "react-router-dom"; // Add this import
 import {
@@ -16,6 +16,14 @@ import {
   ListItemIcon,
   ListItemText,
   Button, // Add this import
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CheckIcon from "@mui/icons-material/Check";
@@ -23,7 +31,9 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import LocalDiningIcon from "@mui/icons-material/LocalDining";
 import EggIcon from "@mui/icons-material/Egg";
 import EditIcon from "@mui/icons-material/Edit"; // Add this import
+import DeleteIcon from "@mui/icons-material/Delete"; // Add this import
 import { styled } from "@mui/material/styles";
+import { API_ENDPOINTS } from "../config/environment"; // Add this import
 
 interface ViewFoodProps {
   food: Food;
@@ -81,11 +91,75 @@ const ViewFood: React.FC<ViewFoodProps> = ({
   ingredients,
   accessToken,
 }) => {
-  const navigate = useNavigate(); // Add this
+  const navigate = useNavigate();
+  // Add state for deletion dialog and feedback
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{
+    message: string;
+    severity: "success" | "error";
+  } | null>(null);
 
   // Add handler function for edit button
   const handleEditFood = () => {
     navigate(`/food/${food.id}/edit`);
+  };
+
+  // Add handlers for deletion
+  const handleOpenDeleteDialog = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setDeleteReason("");
+  };
+
+  const handleRequestDeletion = async () => {
+    if (!accessToken) return;
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(API_ENDPOINTS.proposeRemoval(food.id), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ reason: deleteReason }),
+      });
+
+      if (response.ok) {
+        setNotification({
+          message:
+            "Deletion request submitted successfully. It will be reviewed by supervisors.",
+          severity: "success",
+        });
+        handleCloseDeleteDialog();
+      } else {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.detail || "Failed to submit deletion request"
+        );
+      }
+    } catch (error) {
+      console.error("Error requesting food deletion:", error);
+      setNotification({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to submit deletion request",
+        severity: "error",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification(null);
   };
 
   // Map ingredient IDs to their names
@@ -233,23 +307,41 @@ const ViewFood: React.FC<ViewFoodProps> = ({
           </Box>
         </div>
 
-        {/* Add Edit Button - only shown when accessToken is available */}
+        {/* Action buttons - only shown when accessToken is available */}
         {accessToken && (
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<EditIcon />}
-            onClick={handleEditFood}
-            sx={{
-              bgcolor: "white",
-              color: "#FF8C00",
-              "&:hover": {
-                bgcolor: "rgba(255, 255, 255, 0.9)",
-              },
-            }}
-          >
-            Edit Food
-          </Button>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleOpenDeleteDialog}
+              sx={{
+                bgcolor: "rgba(211, 47, 47, 0.9)",
+                color: "white",
+                "&:hover": {
+                  bgcolor: "rgb(211, 47, 47)",
+                },
+              }}
+            >
+              Request Deletion
+            </Button>
+
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<EditIcon />}
+              onClick={handleEditFood}
+              sx={{
+                bgcolor: "white",
+                color: "#FF8C00",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                },
+              }}
+            >
+              Edit Food
+            </Button>
+          </Box>
         )}
       </Box>
 
@@ -388,6 +480,68 @@ const ViewFood: React.FC<ViewFoodProps> = ({
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Request Food Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to request deletion of "{food.name}"? Please
+            provide a reason for this request. This will need to be approved by
+            supervisors before the food is removed.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="reason"
+            label="Reason for deletion"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={deleteReason}
+            onChange={(e) => setDeleteReason(e.target.value)}
+            required
+            multiline
+            rows={3}
+            sx={{ mt: 2 }}
+            disabled={submitting}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} disabled={submitting}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRequestDeletion}
+            color="error"
+            disabled={!deleteReason.trim() || submitting}
+          >
+            {submitting ? "Submitting..." : "Request Deletion"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={!!notification}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseNotification}
+          severity={notification?.severity}
+          sx={{ width: "100%" }}
+        >
+          {notification?.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
