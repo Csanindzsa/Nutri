@@ -136,7 +136,8 @@ class FoodSerializer(serializers.ModelSerializer):
     is_gluten_free = serializers.BooleanField()
     is_alcohol_free = serializers.BooleanField()
     is_lactose_free = serializers.BooleanField()
-    image = serializers.ImageField()
+    # Modify this line to make image optional
+    image = serializers.ImageField(required=False)
     # Make this read-only as it's calculated
     hazard_level = serializers.FloatField(read_only=True)
     # ingredients = serializers.StringRelatedField(many=True)

@@ -91,7 +91,7 @@ class Ingredient(models.Model):
 class Food(models.Model):
     restaurant = models.ForeignKey(
         Restaurant, on_delete=models.CASCADE, related_name="foods")
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)  # No unique constraint
     macro_table = models.JSONField(default=dict)  # Stores macros as JSON
     serving_size = models.IntegerField(default=100)  # 100 grams
     is_organic = models.BooleanField(default=False)
