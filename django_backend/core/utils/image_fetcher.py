@@ -49,7 +49,7 @@ def fetch_food_image(food_name, restaurant_name=None):
                     "per_page": 10,
                     "orientation": "landscape",
                     "content_filter": "high",
-                    "order_by": "relevant"
+                    "order_by": "relevance"
                 }
 
                 response = requests.get(
@@ -115,7 +115,7 @@ def fetch_food_image(food_name, restaurant_name=None):
                 logger.error(
                     f"Error fetching image from Pexels with query '{query}': {str(e)}")
 
-    # Use unsplash source as last fallback - more likely to get relevant results
+    # Use unsplash source as last fallback - more likely to get relevance results
     try:
         # Use the most specific query for the fallback
         encoded_query = quote_plus(search_queries[0])
