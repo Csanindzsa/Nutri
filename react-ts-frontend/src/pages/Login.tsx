@@ -69,7 +69,7 @@ const Login: React.FC<LoginProps> = ({
     setError(null);
 
     try {
-      const response = await fetch(API_ENDPOINTS.token, {
+      const response = await fetch(API_ENDPOINTS.login, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

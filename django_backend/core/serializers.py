@@ -162,6 +162,8 @@ class FoodChangeSerializer(serializers.ModelSerializer):
         source="updated_by.email", read_only=True)  # Use email for updated_by
     reason = serializers.CharField(required=False, allow_blank=True)
     date = serializers.DateField()
+    updated_date = serializers.DateTimeField(
+        read_only=True)  # Add this field explicitly
 
     class Meta:
         model = FoodChange
@@ -186,6 +188,7 @@ class FoodChangeSerializer(serializers.ModelSerializer):
             'reason',
             'date',
             'updated_by',
+            'updated_date',  # Include this field in the serialized output
         ]
 
 

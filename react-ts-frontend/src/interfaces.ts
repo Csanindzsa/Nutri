@@ -89,4 +89,10 @@ export interface FoodChange {
     new_image?: string;
     new_approved_supervisors_count?: number;
     new_approved_supervisors?: number[];
+    // Add these fields to match the backend structure
+    date?: string;
+    reason?: string;
+    updated_by?: string;
+    updated_date?: string;
+    new_hazard_level?: number;
 }

@@ -6,7 +6,7 @@
  */
 
 // Base URLs
-export const API_BASE_URL = "${API_BASE_URL}";
+export const API_BASE_URL = "http://localhost:8000";
 export const FRONTEND_BASE_URL = "http://localhost:5173";
 
 // API Endpoints - built using the base URL
