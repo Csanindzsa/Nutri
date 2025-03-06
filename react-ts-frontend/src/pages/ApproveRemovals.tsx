@@ -41,6 +41,9 @@ interface FoodChange {
   new_ingredients: number[];
   new_approved_supervisors_count?: number;
   new_approved_supervisors?: number[];
+  reason?: string; // Add reason field
+  date?: string; // Add date field
+  updated_by?: string; // Add who requested the deletion
 }
 
 interface ApproveFoodRemovalsProps {
@@ -216,6 +219,37 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
                   subheader={`Restaurant: ${change.new_restaurant_name}`}
                 />
                 <CardContent>
+                  {/* Display the deletion reason */}
+                  <Box
+                    sx={{
+                      mb: 2,
+                      p: 1.5,
+                      bgcolor: "rgba(0,0,0,0.03)",
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Reason for deletion:
+                    </Typography>
+                    <Typography variant="body2">
+                      {change.reason || "No reason provided"}
+                    </Typography>
+                  </Box>
+
+                  {/* Display requester info if available */}
+                  {change.updated_by && (
+                    <Typography
+                      variant="caption"
+                      display="block"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      Requested by: {change.updated_by}
+                      {change.date &&
+                        ` on ${new Date(change.date).toLocaleDateString()}`}
+                    </Typography>
+                  )}
+
                   <Typography variant="body2" color="text.secondary">
                     This food has been requested for removal.
                   </Typography>
