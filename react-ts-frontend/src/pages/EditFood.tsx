@@ -18,18 +18,30 @@ import {
   Alert,
   Chip,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import { Restaurant, Ingredient, Food, MacroTable } from "../interfaces";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { tryUpdateFood } from "../utils/foodEditHelper";
 import { API_ENDPOINTS } from "../config/environment";
 
+// Update the EditFoodProps interface to accept user data
 interface EditFoodProps {
   accessToken: string | null;
   restaurants: Restaurant[];
   ingredients: Ingredient[];
   onUpdateFood: (food: Food) => void;
+  userData?: { email?: string; username?: string; user_id?: number }; // Add userData prop
+  setNotificationMessage?: (message: {
+    text: string;
+    type: "success" | "error" | "info" | "warning";
+  }) => void;
 }
 
 const EditFood: React.FC<EditFoodProps> = ({
@@ -37,6 +49,8 @@ const EditFood: React.FC<EditFoodProps> = ({
   restaurants,
   ingredients,
   onUpdateFood,
+  userData, // Include userData in the props
+  setNotificationMessage,
 }) => {
   const { foodId } = useParams<{ foodId: string }>();
   const navigate = useNavigate();
@@ -44,6 +58,7 @@ const EditFood: React.FC<EditFoodProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [successDialogOpen, setSuccessDialogOpen] = useState<boolean>(false);
 
   // Form state
   const [name, setName] = useState<string>("");
@@ -64,6 +79,9 @@ const EditFood: React.FC<EditFoodProps> = ({
     protein: 0,
     salt: 0,
   });
+
+  // Add a state to store reason for update
+  const [reason, setReason] = useState<string>("");
 
   // Fetch the food data
   useEffect(() => {
@@ -121,43 +139,106 @@ const EditFood: React.FC<EditFoodProps> = ({
       return;
     }
 
+    if (!reason.trim()) {
+      setSubmitError("Please provide a reason for the update");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
 
-    const foodData = {
-      name,
-      restaurant: restaurantId,
-      serving_size: servingSize,
-      ingredients: selectedIngredients,
-      is_organic: isOrganic,
-      is_gluten_free: isGlutenFree,
-      is_alcohol_free: isAlcoholFree,
-      is_lactose_free: isLactoseFree,
-      macro_table: macroTable,
-      reason: "Updated food information", // Reason for the update
-    };
-
-    // Log the request for debugging
-    console.log(`Attempting to update food with ID: ${foodId}`);
-    console.log("Request data:", foodData);
-
     try {
-      // Use the helper function to try multiple endpoints
-      const updatedFoodData = await tryUpdateFood(
-        foodId,
-        foodData,
-        accessToken
-      );
-      onUpdateFood(updatedFoodData);
+      // Get user email from props or use a fallback
+      const userEmail = userData?.email || "Unknown User";
 
-      // Redirect to the food detail page
-      navigate(`/food/${foodId}`);
+      // Try different date formats to solve the NOT NULL constraint issue
+      const now = new Date();
+      const dateOptions = {
+        isoString: now.toISOString(),
+        formattedDate: now.toISOString().split("T")[0],
+        localDate:
+          now.getFullYear() +
+          "-" +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(now.getDate()).padStart(2, "0"),
+      };
+
+      console.log("Trying date formats:", dateOptions);
+
+      // Create food change request
+      const changeRequest = {
+        food_id: parseInt(foodId || "0"), // Original food ID
+        new_name: name,
+        new_restaurant: restaurantId,
+        new_serving_size: servingSize,
+        new_ingredients: selectedIngredients || [], // Ensure not null
+        new_is_organic: isOrganic,
+        new_is_gluten_free: isGlutenFree,
+        new_is_alcohol_free: isAlcoholFree,
+        new_is_lactose_free: isLactoseFree,
+        new_macro_table: macroTable,
+        is_deletion: false, // This is an update, not a deletion
+        reason: reason, // Use the reason entered by user
+
+        // Try multiple date formats - the server should accept at least one
+        date: dateOptions.localDate,
+
+        // Include these as fallbacks in case the backend looks for them
+        created_at: dateOptions.isoString,
+        updated_at: dateOptions.isoString,
+
+        updated_by: userEmail, // Use email address instead of username
+      };
+
+      console.log(
+        "Sending update request:",
+        JSON.stringify(changeRequest, null, 2)
+      );
+
+      // Send the change request to the food-changes endpoint
+      const response = await fetch(API_ENDPOINTS.proposeChange, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(changeRequest),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({
+          detail: `Server returned ${response.status}: ${response.statusText}`,
+        }));
+        throw new Error(errorData.detail || "Failed to submit update request");
+      }
+
+      // Show success dialog or notification
+      setSuccessDialogOpen(true);
     } catch (err: any) {
-      console.error("Error updating food:", err);
-      setSubmitError(err.message || "Failed to update food. Please try again.");
+      console.error("Error proposing food update:", err);
+      setSubmitError(
+        err.message || "Failed to submit update request. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handle dialog close and navigation
+  const handleSuccessDialogClose = () => {
+    setSuccessDialogOpen(false);
+
+    // If global notification function is provided, use it
+    if (setNotificationMessage) {
+      setNotificationMessage({
+        text: "Food update request submitted successfully!",
+        type: "success",
+      });
+    }
+
+    // Navigate back to food page
+    navigate(`/food/${foodId}`);
   };
 
   // Handle ingredient selection
@@ -284,6 +365,23 @@ const EditFood: React.FC<EditFoodProps> = ({
                 onChange={(e) => setServingSize(Number(e.target.value))}
                 InputProps={{ inputProps: { min: 0, step: "1" } }}
                 variant="outlined"
+              />
+            </Grid>
+
+            {/* Add Reason for update field */}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                required
+                id="update-reason"
+                label="Reason for Update"
+                multiline
+                rows={2}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                variant="outlined"
+                placeholder="Please explain why you're updating this food information"
+                helperText="This helps reviewers understand the purpose of your changes"
               />
             </Grid>
 
@@ -521,6 +619,40 @@ const EditFood: React.FC<EditFoodProps> = ({
           </Grid>
         </form>
       </Paper>
+
+      {/* Add Success Dialog */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={handleSuccessDialogClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Update Request Submitted Successfully"}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <CheckCircleOutlineIcon
+              color="success"
+              sx={{ fontSize: 40, mr: 2 }}
+            />
+            <DialogContentText id="alert-dialog-description">
+              Your food update request has been submitted for approval.
+              Supervisors will review the changes before they are applied.
+            </DialogContentText>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleSuccessDialogClose}
+            color="primary"
+            variant="contained"
+            autoFocus
+          >
+            Return to Food Page
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

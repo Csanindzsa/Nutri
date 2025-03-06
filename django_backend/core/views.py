@@ -25,6 +25,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 import logging
 import smtplib
+from rest_framework.decorators import api_view, permission_classes
 
 logger = logging.getLogger(__name__)
 
@@ -847,3 +848,25 @@ class FoodChangeListCreateView(generics.ListCreateAPIView):
 class FoodChangeRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = FoodChange.objects.all()
     serializer_class = FoodChangeSerializer
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def propose_food_change(request):
+    serializer = FoodChangeSerializer(data=request.data)
+    if serializer.is_valid():
+        # Set the updated_by to the current user
+        food_change = serializer.save(updated_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_food(request):
+    serializer = FoodSerializer(data=request.data)
+    if serializer.is_valid():
+        # Set the created_by to the current user
+        food = serializer.save(created_by=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

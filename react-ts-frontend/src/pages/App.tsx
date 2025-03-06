@@ -48,7 +48,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import EditIcon from "@mui/icons-material/Edit";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { Helmet } from "react-helmet";
+import { Helmet, HelmetProvider } from "react-helmet-async"; // Updated import
 import MuiAlert from "@mui/material/Alert";
 
 // Add this missing import
@@ -681,282 +681,286 @@ const App = () => {
   };
 
   return (
-    <BackgroundProvider>
-      <div className="App">
-        <Helmet>
-          <title>Nutri - Your Dietary Aid</title>
-          <link rel="icon" href={logoImage} />
-          <meta
-            name="description"
-            content="Nutri - Your Dietary Aid Application"
-          />
-          <meta property="og:image" content={logoImage} />
-        </Helmet>
+    <HelmetProvider>
+      <BackgroundProvider>
+        <div className="App">
+          <Helmet>
+            <title>Nutri - Your Dietary Aid</title>
+            <link rel="icon" href={logoImage} />
+            <meta
+              name="description"
+              content="Nutri - Your Dietary Aid Application"
+            />
+            <meta property="og:image" content={logoImage} />
+          </Helmet>
 
-        <Navbar userData={userData} handleLogout={handleLogout} />
+          <Navbar userData={userData} handleLogout={handleLogout} />
 
-        <Routes>
-          {/* Public routes */}
-          <Route
-            path="/"
-            element={
-              <MainPage
-                foods={foods}
-                restaurants={restaurants}
-                ingredients={ingredients}
-                selectedRestaurants={selectedRestaurants}
-                setSelectedRestaurants={setSelectedRestaurants}
-                selectedIngredients={selectedIngredients}
-                setSelectedIngredients={setSelectedIngredients}
-                accessToken={accessToken}
-                setRestaurants={setRestaurants}
-                setIngredients={setIngredients}
-                setFoods={setFoods}
-                exactLocations={exactLocations || []}
-                setExactLocations={setExactLocations}
-              />
-            }
-          />
-          <Route
-            path="/restaurants"
-            element={<Restaurants restaurants={restaurants} />}
-          />
-          <Route
-            path="/foods"
-            element={
-              <FoodList
-                accessToken={accessToken}
-                restaurants={restaurants}
-                ingredients={ingredients}
-                foods={foods}
-                selectedRestaurants={selectedRestaurants}
-                setSelectedRestaurants={setSelectedRestaurants}
-                selectedIngredients={selectedIngredients}
-                setSelectedIngredients={setSelectedIngredients}
-              />
-            }
-          />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/login"
-            element={
-              <Login
-                setAccessToken={setAccessToken}
-                setRefreshToken={setRefreshToken}
-                setUserData={setUserData}
-              />
-            }
-          />
-          <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
-          <Route path="/account-deleted" element={<AccountDeleted />} />
-          <Route path="/forbidden" element={<Forbidden />} />
-          <Route path="*" element={<NotFound />} />
-
-          {/* Protected routes with authentication check */}
-          {/* Edit-user route */}
-          <Route
-            path="/edit-user"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <EditUser
+          <Routes>
+            {/* Public routes */}
+            <Route
+              path="/"
+              element={
+                <MainPage
+                  foods={foods}
+                  restaurants={restaurants}
+                  ingredients={ingredients}
+                  selectedRestaurants={selectedRestaurants}
+                  setSelectedRestaurants={setSelectedRestaurants}
+                  selectedIngredients={selectedIngredients}
+                  setSelectedIngredients={setSelectedIngredients}
                   accessToken={accessToken}
-                  userData={userData}
+                  setRestaurants={setRestaurants}
+                  setIngredients={setIngredients}
+                  setFoods={setFoods}
+                  exactLocations={exactLocations || []}
+                  setExactLocations={setExactLocations}
+                />
+              }
+            />
+            <Route
+              path="/restaurants"
+              element={<Restaurants restaurants={restaurants} />}
+            />
+            <Route
+              path="/foods"
+              element={
+                <FoodList
+                  accessToken={accessToken}
+                  restaurants={restaurants}
+                  ingredients={ingredients}
+                  foods={foods}
+                  selectedRestaurants={selectedRestaurants}
+                  setSelectedRestaurants={setSelectedRestaurants}
+                  selectedIngredients={selectedIngredients}
+                  setSelectedIngredients={setSelectedIngredients}
+                />
+              }
+            />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/login"
+              element={
+                <Login
+                  setAccessToken={setAccessToken}
+                  setRefreshToken={setRefreshToken}
                   setUserData={setUserData}
                 />
-              </ProtectedRoute>
-            }
-          />
+              }
+            />
+            <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
+            <Route path="/account-deleted" element={<AccountDeleted />} />
+            <Route path="/forbidden" element={<Forbidden />} />
+            <Route path="*" element={<NotFound />} />
 
-          {/* Delete user route */}
-          <Route
-            path="/delete-user"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <DeleteUser
+            {/* Protected routes with authentication check */}
+            {/* Edit-user route */}
+            <Route
+              path="/edit-user"
+              element={
+                <ProtectedRoute
                   accessToken={accessToken}
-                  handleLogout={handleLogout}
-                />
-              </ProtectedRoute>
-            }
-          />
+                  checkingAuth={checkingAuth}
+                >
+                  <EditUser
+                    accessToken={accessToken}
+                    userData={userData}
+                    setUserData={setUserData}
+                  />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Create food route */}
-          <Route
-            path="/create-food"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <CreateFood
+            {/* Delete user route */}
+            <Route
+              path="/delete-user"
+              element={
+                <ProtectedRoute
                   accessToken={accessToken}
-                  restaurants={restaurants}
+                  checkingAuth={checkingAuth}
+                >
+                  <DeleteUser
+                    accessToken={accessToken}
+                    handleLogout={handleLogout}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Create food route */}
+            <Route
+              path="/create-food"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <CreateFood
+                    accessToken={accessToken}
+                    restaurants={restaurants}
+                    ingredients={ingredients}
+                    onCreateFood={(newFood) =>
+                      setFoods((prevFoods) => [...prevFoods, newFood])
+                    }
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Food approval routes */}
+            <Route
+              path="/approvals"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <Approvals
+                    accessToken={accessToken}
+                    userId={userData.user_id}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/approvable-foods"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <ApprovableFoods
+                    accessToken={accessToken}
+                    foods={foods}
+                    handleApprove={handleApprove}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/approve-removals"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <ApproveRemovals
+                    accessToken={accessToken}
+                    userId={userData.user_id}
+                    ingredients={ingredients}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/approve-updates"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <ApproveUpdates
+                    accessToken={accessToken}
+                    userId={userData.user_id}
+                    ingredients={ingredients}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Food view/edit routes */}
+            <Route
+              path="/approve-food/:foodId"
+              element={
+                <ProtectedRoute
+                  accessToken={accessToken}
+                  checkingAuth={checkingAuth}
+                >
+                  <ApproveFoodPage
+                    accessToken={accessToken}
+                    userId={userData.user_id}
+                    ingredients={ingredients}
+                    foods={foods}
+                    handleApprove={handleApprove}
+                    showApproveButton={true}
+                  />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/food/:foodId"
+              element={
+                <ViewFoodPage
                   ingredients={ingredients}
-                  onCreateFood={(newFood) =>
-                    setFoods((prevFoods) => [...prevFoods, newFood])
-                  }
-                />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Food approval routes */}
-          <Route
-            path="/approvals"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <Approvals
-                  accessToken={accessToken}
-                  userId={userData.user_id}
-                />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/approvable-foods"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <ApprovableFoods
-                  accessToken={accessToken}
                   foods={foods}
-                  handleApprove={handleApprove}
-                />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/approve-removals"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <ApproveRemovals
                   accessToken={accessToken}
-                  userId={userData.user_id}
-                  ingredients={ingredients}
                 />
-              </ProtectedRoute>
-            }
-          />
+              }
+            />
 
-          <Route
-            path="/approve-updates"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <ApproveUpdates
+            <Route
+              path="/food/:foodId/edit"
+              element={
+                <ProtectedRoute
                   accessToken={accessToken}
-                  userId={userData.user_id}
-                  ingredients={ingredients}
-                />
-              </ProtectedRoute>
-            }
-          />
+                  checkingAuth={checkingAuth}
+                >
+                  <EditFood
+                    accessToken={accessToken}
+                    restaurants={restaurants}
+                    ingredients={ingredients}
+                    userData={userData} // Pass userData to EditFood component
+                    setNotificationMessage={setNotificationMessage} // Pass the notification function
+                    onUpdateFood={(updatedFood) => {
+                      setFoods((prevFoods) =>
+                        prevFoods.map((food) =>
+                          food.id === updatedFood.id ? updatedFood : food
+                        )
+                      );
+                    }}
+                  />
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Food view/edit routes */}
-          <Route
-            path="/approve-food/:foodId"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <ApproveFoodPage
+            {/* Add Support route */}
+            <Route
+              path="/support"
+              element={
+                <ProtectedRoute
                   accessToken={accessToken}
-                  userId={userData.user_id}
-                  ingredients={ingredients}
-                  foods={foods}
-                  handleApprove={handleApprove}
-                  showApproveButton={true}
-                />
-              </ProtectedRoute>
-            }
-          />
+                  checkingAuth={checkingAuth}
+                >
+                  <Support accessToken={accessToken} userData={userData} />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
 
-          <Route
-            path="/food/:foodId"
-            element={
-              <ViewFoodPage
-                ingredients={ingredients}
-                foods={foods}
-                accessToken={accessToken}
-              />
-            }
-          />
-
-          <Route
-            path="/food/:foodId/edit"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <EditFood
-                  accessToken={accessToken}
-                  restaurants={restaurants}
-                  ingredients={ingredients}
-                  onUpdateFood={(updatedFood) => {
-                    setFoods((prevFoods) =>
-                      prevFoods.map((food) =>
-                        food.id === updatedFood.id ? updatedFood : food
-                      )
-                    );
-                  }}
-                />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Add Support route */}
-          <Route
-            path="/support"
-            element={
-              <ProtectedRoute
-                accessToken={accessToken}
-                checkingAuth={checkingAuth}
-              >
-                <Support accessToken={accessToken} userData={userData} />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-
-        {/* Global notification system */}
-        <Snackbar
-          open={!!notificationMessage}
-          autoHideDuration={6000}
-          onClose={handleCloseNotification}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <MuiAlert
-            elevation={6}
-            variant="filled"
+          {/* Global notification system */}
+          <Snackbar
+            open={!!notificationMessage}
+            autoHideDuration={6000}
             onClose={handleCloseNotification}
-            severity={notificationMessage?.type || "info"}
-            sx={{ width: "100%" }}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            {notificationMessage?.text}
-          </MuiAlert>
-        </Snackbar>
-      </div>
-    </BackgroundProvider>
+            <MuiAlert
+              elevation={6}
+              variant="filled"
+              onClose={handleCloseNotification}
+              severity={notificationMessage?.type || "info"}
+              sx={{ width: "100%" }}
+            >
+              {notificationMessage?.text}
+            </MuiAlert>
+          </Snackbar>
+        </div>
+      </BackgroundProvider>
+    </HelmetProvider>
   );
 };
 

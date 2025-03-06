@@ -127,6 +127,9 @@ class FoodSerializer(serializers.ModelSerializer):
     # restaurant = serializers.StringRelatedField()
     restaurant_name = serializers.CharField(
         source="restaurant.name", read_only=True)
+    created_by = serializers.CharField(
+        source="created_by.username", read_only=True)
+    created_date = serializers.DateTimeField(read_only=True)
     name = serializers.CharField(max_length=255)
     macro_table = serializers.JSONField()
     is_organic = serializers.BooleanField()
@@ -145,8 +148,8 @@ class FoodSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'restaurant', 'restaurant_name', 'name', 'macro_table', 'serving_size', 'is_organic',
             'is_gluten_free', 'is_alcohol_free', 'is_lactose_free', 'image',
-            'ingredients', 'hazard_level',
-            'is_approved',
+            'ingredients', 'hazard_level', 'is_approved',
+            'created_by', 'created_date',
         ]
 
 
@@ -154,8 +157,11 @@ class FoodChangeSerializer(serializers.ModelSerializer):
     new_approved_supervisors_count = serializers.IntegerField(read_only=True)
     new_restaurant_name = serializers.CharField(
         source="new_restaurant.name", read_only=True)
-    # Make this read-only as it's calculated
     new_hazard_level = serializers.FloatField(read_only=True)
+    updated_by = serializers.CharField(
+        source="updated_by.email", read_only=True)  # Use email for updated_by
+    reason = serializers.CharField(required=False, allow_blank=True)
+    date = serializers.DateField()
 
     class Meta:
         model = FoodChange
@@ -176,7 +182,10 @@ class FoodChangeSerializer(serializers.ModelSerializer):
             'new_image',
             'new_approved_supervisors',
             'new_approved_supervisors_count',
-            'new_hazard_level'
+            'new_hazard_level',
+            'reason',
+            'date',
+            'updated_by',
         ]
 
 
