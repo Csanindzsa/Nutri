@@ -28,9 +28,10 @@ from rest_framework.exceptions import ValidationError
 import logging
 import smtplib
 from rest_framework.decorators import api_view, permission_classes
+from django.core.files.storage import default_storage
 
 # Add this import at the top of your file
-from .utils.image_fetcher import fetch_food_image
+from .utils.image_fetcher import fetch_food_image, fetch_restaurant_image
 
 logger = logging.getLogger(__name__)
 
@@ -781,6 +782,14 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
                 latitude = restaurant_data.pop('latitude', None)
                 longitude = restaurant_data.pop('longitude', None)
 
+                # Extract restaurant name and cuisine for image search
+                restaurant_name = restaurant_data.get('name', '')
+                cuisine = restaurant_data.get('cuisine', '')
+
+                # Check if restaurant has an image already
+                has_image = restaurant_data.get('image') not in [
+                    None, '', 'https://via.placeholder.com/150']
+
                 # First, check if a restaurant with this name already exists
                 existing = Restaurant.objects.filter(
                     name=restaurant_data.get('name')).first()
@@ -795,6 +804,22 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
                     # Create new restaurant
                     restaurant = Restaurant.objects.create(**restaurant_data)
 
+                # Try to fetch an image if one isn't provided
+                if not has_image and restaurant_name:
+                    success, image_content_or_error = fetch_restaurant_image(
+                        restaurant_name, cuisine)
+                    if success:
+                        # Generate image name
+                        image_name = f"restaurant_{restaurant.id}_{restaurant_name.replace(' ', '_')}.jpg"
+
+                        # Save to storage
+                        filepath = default_storage.save(
+                            f'restaurant_images/{image_name}', image_content_or_error)
+
+                        # For simplicity, construct a relative URL path
+                        restaurant.image = f"/media/restaurant_images/{image_name}"
+                        restaurant.save()
+
                 # Handle location data if provided
                 if latitude is not None and longitude is not None:
                     location, created = Location.objects.get_or_create(
@@ -807,7 +832,8 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
                 saved_restaurants.append({
                     "id": restaurant.id,
                     "name": restaurant.name,
-                    "foods_on_menu": restaurant.foods_on_menu
+                    "foods_on_menu": restaurant.foods_on_menu,
+                    "image": restaurant.image
                 })
             except Exception as e:
                 errors.append(
@@ -835,6 +861,54 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class RestaurantListCreateView(generics.ListCreateAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            # Extract restaurant data
+            restaurant_name = request.data.get('name', '')
+            cuisine = request.data.get('cuisine', '')
+
+            # Check if an image is provided
+            has_image = request.data.get('image') not in [
+                None, '', 'https://via.placeholder.com/150']
+
+            # Proceed with default creation
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            restaurant = serializer.save()
+
+            # If no image provided, try to fetch one
+            if not has_image and restaurant_name:
+                success, image_content_or_error = fetch_restaurant_image(
+                    restaurant_name, cuisine)
+                if success:
+                    # Generate a file name for the image
+                    image_name = f"restaurant_{restaurant.id}_{restaurant_name.replace(' ', '_')}.jpg"
+
+                    # In this case we're dealing with a URL field, not a FileField
+                    # So we need to save the image to media storage and update the URL
+                    from django.core.files.storage import default_storage
+                    from django.core.files.base import ContentFile
+
+                    # Save the image to storage
+                    filepath = default_storage.save(
+                        f'restaurant_images/{image_name}', image_content_or_error)
+
+                    # Update the restaurant's image field with the URL to the saved image
+                    full_url = request.build_absolute_uri(
+                        settings.MEDIA_URL + filepath)
+                    restaurant.image = full_url
+                    restaurant.save()
+
+                    # Update serializer data to include the new image
+                    serializer = self.get_serializer(restaurant)
+
+            # Return the created object
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        except Exception as e:
+            logger.error(f"Error creating restaurant: {str(e)}")
+            return Response({"error": f"Error creating restaurant: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

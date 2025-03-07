@@ -47,9 +47,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Restaurant(models.Model):
     name = models.CharField(max_length=255, unique=True)
     foods_on_menu = models.IntegerField(default=0)  # Optional
-    # Default placeholder image
-    image = models.CharField(
-        max_length=255, default="https://via.placeholder.com/150")
+    # Use ImageField instead of CharField for better handling
+    image = models.ImageField(upload_to='restaurant_images/',
+                              null=True,
+                              blank=True,
+                              default="https://via.placeholder.com/150")
     cuisine = models.CharField(max_length=255, default="Unknown")
     description = models.TextField(blank=True, null=True)
 
@@ -58,6 +60,23 @@ class Restaurant(models.Model):
 
     class Meta:
         db_table = "Restaurants"
+
+    def save(self, *args, **kwargs):
+        # If no image is set, try to fetch one automatically
+        if (not self.image or str(self.image) == "https://via.placeholder.com/150") and self.name:
+            # This will run during migrations even if fetch_restaurant_image isn't defined yet
+            # So we need to handle the import error case
+            try:
+                from .utils.image_fetcher import fetch_restaurant_image
+                success, image_content = fetch_restaurant_image(
+                    self.name, self.cuisine)
+                if success:
+                    image_name = f"restaurant_{self.name.replace(' ', '_')}.jpg"
+                    self.image.save(image_name, image_content, save=False)
+            except (ImportError, Exception) as e:
+                pass  # Silently continue if image fetcher isn't available
+
+        super().save(*args, **kwargs)
 
 
 class Location(models.Model):
