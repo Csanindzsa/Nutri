@@ -1,1 +1,105 @@
 2025-03-07 09:03:29,680 - core.utils.image_fetcher - INFO - Log file located at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 10:36:09,426 - core.utils.image_fetcher - INFO - Log file located at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Searching for restaurant image: 'Pizza Hut', cuisine: 'Unknown'
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Is well-known chain: True
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Restaurant search queries (in order): ['Pizza Hut restaurant logo -flag -iran -emblem -symbol -map', 'Pizza Hut storefront -flag -iran -emblem -symbol -map', 'Pizza Hut restaurant exterior -flag -iran -emblem -symbol -map', 'Pizza Hut restaurant building -flag -iran -emblem -symbol -map', 'Pizza Hut store -flag -iran -emblem -symbol -map']
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Trying Pexels with restaurant query: 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:29,028 - core.utils.image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 10:36:29,663 - core.utils.image_fetcher - INFO - Pexels returned 15 results for query: 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:29,663 - core.utils.image_fetcher - INFO - Selected Pexels image: ID: 31036070, URL: https://images.pexels.com/photos/31036070/pexels-photo-31036070.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 10:36:29,663 - core.utils.image_fetcher - INFO - Image description: Free stock photo of artisan pizza, book, greek salad
+2025-03-07 10:36:29,663 - core.utils.image_fetcher - INFO - Photographer: Eddie Ortiz
+2025-03-07 10:36:30,001 - core.utils.image_fetcher - INFO - Successfully found image for 'Pizza Hut' restaurant using Pexels
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Searching for restaurant image: 'Pizza Hut', cuisine: 'Unknown'
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Is well-known chain: True
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Restaurant search queries (in order): ['Pizza Hut restaurant logo -flag -iran -emblem -symbol -map', 'Pizza Hut storefront -flag -iran -emblem -symbol -map', 'Pizza Hut restaurant exterior -flag -iran -emblem -symbol -map', 'Pizza Hut restaurant building -flag -iran -emblem -symbol -map', 'Pizza Hut store -flag -iran -emblem -symbol -map']
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Trying Pexels with restaurant query: 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:44,127 - core.utils.image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 10:36:44,287 - core.utils.image_fetcher - INFO - Pexels returned 15 results for query: 'Pizza Hut restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:44,287 - core.utils.image_fetcher - INFO - Selected Pexels image: ID: 3682837, URL: https://images.pexels.com/photos/3682837/pexels-photo-3682837.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 10:36:44,287 - core.utils.image_fetcher - INFO - Image description: Close-up of a freshly baked pepperoni pizza with crispy crust on a wooden table.
+2025-03-07 10:36:44,287 - core.utils.image_fetcher - INFO - Photographer: Victor Miyata
+2025-03-07 10:36:44,508 - core.utils.image_fetcher - INFO - Successfully found image for 'Pizza Hut' restaurant using Pexels
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Searching for restaurant image: 'Starbucks', cuisine: 'Unknown'
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Is well-known chain: True
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Restaurant search queries (in order): ['Starbucks restaurant logo -flag -iran -emblem -symbol -map', 'Starbucks coffee shop entrance -flag -iran -emblem -symbol -map', 'Starbucks restaurant exterior -flag -iran -emblem -symbol -map', 'Starbucks restaurant building -flag -iran -emblem -symbol -map', 'Starbucks store -flag -iran -emblem -symbol -map']
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Trying Pexels with restaurant query: 'Starbucks restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:57,260 - core.utils.image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Starbucks restaurant logo -flag -iran -emblem -symbol -map', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 10:36:57,663 - core.utils.image_fetcher - INFO - Pexels returned 15 results for query: 'Starbucks restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:36:57,664 - core.utils.image_fetcher - INFO - Selected Pexels image: ID: 3352765, URL: https://images.pexels.com/photos/3352765/pexels-photo-3352765.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 10:36:57,664 - core.utils.image_fetcher - INFO - Image description: A cozy Starbucks café in Norwich with inviting exterior lights and seating at night.
+2025-03-07 10:36:57,664 - core.utils.image_fetcher - INFO - Photographer: Suzy Hazelwood
+2025-03-07 10:36:57,712 - core.utils.image_fetcher - INFO - Successfully found image for 'Starbucks' restaurant using Pexels
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Searching for restaurant image: 'Taco Bell', cuisine: 'Unknown'
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Is well-known chain: True
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Restaurant search queries (in order): ['Taco Bell restaurant logo -flag -iran -emblem -symbol -map', 'Taco Bell storefront -flag -iran -emblem -symbol -map', 'Taco Bell restaurant exterior -flag -iran -emblem -symbol -map', 'Taco Bell restaurant building -flag -iran -emblem -symbol -map', 'Taco Bell store -flag -iran -emblem -symbol -map']
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Trying Pexels with restaurant query: 'Taco Bell restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:37:23,009 - core.utils.image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Taco Bell restaurant logo -flag -iran -emblem -symbol -map', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 10:37:23,795 - core.utils.image_fetcher - INFO - Pexels returned 15 results for query: 'Taco Bell restaurant logo -flag -iran -emblem -symbol -map'
+2025-03-07 10:37:23,796 - core.utils.image_fetcher - INFO - Selected Pexels image: ID: 4577740, URL: https://images.pexels.com/photos/4577740/pexels-photo-4577740.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 10:37:23,796 - core.utils.image_fetcher - INFO - Image description: From above of tasty tacos near glass of refreshing drinks and vegetable slices with sauces in cafe
+2025-03-07 10:37:23,796 - core.utils.image_fetcher - INFO - Photographer: Rachel Claire
+2025-03-07 10:37:24,064 - core.utils.image_fetcher - INFO - Successfully found image for 'Taco Bell' restaurant using Pexels
+2025-03-07 11:07:28,603 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 11:07:28,603 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 11:08:16,870 - image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 11:08:16,870 - image_fetcher - INFO - Original restaurant name: 'Pisti konyhája', cuisine: 'Unknown'
+2025-03-07 11:08:18,653 - image_fetcher - INFO - Translated 'Pisti konyhája' from hu to English: 'Pisti's kitchen'
+2025-03-07 11:08:18,654 - image_fetcher - INFO - Translated to English: restaurant name = 'Pisti's kitchen', cuisine = 'Unknown'
+2025-03-07 11:08:18,654 - image_fetcher - INFO - Is well-known chain: False
+2025-03-07 11:08:18,654 - image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 11:08:18,654 - image_fetcher - INFO - Restaurant search queries (in order): ["Pisti's kitchen restaurant exterior -flag -iran -emblem -symbol -map", "Pisti's kitchen restaurant -flag -iran -emblem -symbol -map", "Pisti's kitchen restaurant storefront -flag -iran -emblem -symbol -map", "Pisti's kitchen restaurant entrance -flag -iran -emblem -symbol -map", "Pisti's kitchen dining -flag -iran -emblem -symbol -map"]
+2025-03-07 11:08:18,655 - image_fetcher - INFO - Trying Pexels with restaurant query: 'Pisti's kitchen restaurant exterior -flag -iran -emblem -symbol -map'
+2025-03-07 11:08:18,655 - image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': "Pisti's kitchen restaurant exterior -flag -iran -emblem -symbol -map", 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 11:08:19,088 - image_fetcher - INFO - Pexels returned 15 results for query: 'Pisti's kitchen restaurant exterior -flag -iran -emblem -symbol -map'
+2025-03-07 11:08:19,089 - image_fetcher - INFO - Selected Pexels image: ID: 7317349, URL: https://images.pexels.com/photos/7317349/pexels-photo-7317349.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 11:08:19,089 - image_fetcher - INFO - Image description: Neon sign reading 'Pizzeria Pera' on a textured wall, captured in Istanbul's urban environment.
+2025-03-07 11:08:19,089 - image_fetcher - INFO - Photographer: Meruyert Gonullu
+2025-03-07 11:08:19,160 - image_fetcher - INFO - Successfully found image for 'Pisti's kitchen' restaurant using Pexels
+2025-03-07 11:11:18,986 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 11:11:18,987 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 11:11:45,736 - image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 11:11:45,736 - image_fetcher - INFO - Original restaurant name: 'Laci konyhája', cuisine: 'Unknown'
+2025-03-07 11:11:46,497 - image_fetcher - INFO - Translated 'Laci konyhája' from hu to English: 'Laci's kitchen'
+2025-03-07 11:11:46,498 - image_fetcher - INFO - Translated to English: restaurant name = 'Laci's kitchen', cuisine = 'Unknown'
+2025-03-07 11:11:46,498 - image_fetcher - INFO - Is well-known chain: False
+2025-03-07 11:12:40,332 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 11:12:40,333 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 11:12:58,867 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 11:12:58,867 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 11:13:19,391 - image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 11:13:19,392 - image_fetcher - INFO - Original restaurant name: 'Kínai Szekszárd', cuisine: 'Unknown'
+2025-03-07 11:13:20,767 - image_fetcher - INFO - Translated 'Kínai Szekszárd' from hu to English: 'Szekszárd'
+2025-03-07 11:13:20,768 - image_fetcher - INFO - Translated to English: restaurant name = 'Szekszárd', cuisine = 'Unknown'
+2025-03-07 11:13:20,768 - image_fetcher - INFO - Is well-known chain: False
+2025-03-07 11:13:20,768 - image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 11:13:20,768 - image_fetcher - INFO - Restaurant search queries (in order): ['Szekszárd restaurant exterior ', 'Szekszárd restaurant ', 'Szekszárd restaurant storefront ', 'Szekszárd restaurant entrance ', 'Szekszárd dining ']
+2025-03-07 11:13:20,769 - image_fetcher - INFO - Trying Pexels with restaurant query: 'Szekszárd restaurant exterior '
+2025-03-07 11:13:20,769 - image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Szekszárd restaurant exterior ', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 11:13:21,210 - image_fetcher - INFO - Pexels returned 15 results for query: 'Szekszárd restaurant exterior '
+2025-03-07 11:13:21,211 - image_fetcher - INFO - Selected Pexels image: ID: 30996488, URL: https://images.pexels.com/photos/30996488/pexels-photo-30996488.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 11:13:21,211 - image_fetcher - INFO - Image description: Vibrant scene of a bustling Japanese restaurant with glowing lanterns at night.
+2025-03-07 11:13:21,212 - image_fetcher - INFO - Photographer: Fatih Turan
+2025-03-07 11:13:21,282 - image_fetcher - INFO - Successfully found image for 'Szekszárd' restaurant using Pexels
+2025-03-07 11:14:21,121 - image_fetcher - INFO - ========== NEW RESTAURANT IMAGE REQUEST ==========
+2025-03-07 11:14:21,122 - image_fetcher - INFO - Original restaurant name: 'Vidéki konyha', cuisine: 'Unknown'
+2025-03-07 11:14:22,348 - image_fetcher - INFO - Translated 'Vidéki konyha' from hu to English: 'Country cuisine'
+2025-03-07 11:14:22,348 - image_fetcher - INFO - Translated to English: restaurant name = 'Country cuisine', cuisine = 'Unknown'
+2025-03-07 11:14:22,348 - image_fetcher - INFO - Is well-known chain: False
+2025-03-07 11:14:22,349 - image_fetcher - INFO - Ignoring cuisine 'Unknown' because it's set to Unknown or empty
+2025-03-07 11:14:22,349 - image_fetcher - INFO - Restaurant search queries (in order): ['Country cuisine restaurant exterior ', 'Country cuisine restaurant ', 'Country cuisine restaurant storefront ', 'Country cuisine restaurant entrance ', 'Country cuisine dining ']
+2025-03-07 11:14:22,349 - image_fetcher - INFO - Trying Pexels with restaurant query: 'Country cuisine restaurant exterior '
+2025-03-07 11:14:22,349 - image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': 'Country cuisine restaurant exterior ', 'per_page': 15, 'orientation': 'landscape'}
+2025-03-07 11:14:22,781 - image_fetcher - INFO - Pexels returned 15 results for query: 'Country cuisine restaurant exterior '
+2025-03-07 11:14:22,782 - image_fetcher - INFO - Selected Pexels image: ID: 12700830, URL: https://images.pexels.com/photos/12700830/pexels-photo-12700830.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 11:14:22,782 - image_fetcher - INFO - Image description: Night view of a rustic BBQ restaurant adorned with glowing signage, against a serene street backdrop.
+2025-03-07 11:14:22,782 - image_fetcher - INFO - Photographer: Erik Mclean
+2025-03-07 11:14:22,989 - image_fetcher - INFO - Successfully found image for 'Country cuisine' restaurant using Pexels
