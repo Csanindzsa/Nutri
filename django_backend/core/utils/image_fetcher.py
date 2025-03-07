@@ -2,6 +2,8 @@ import requests
 import os
 import logging
 import random
+import sys  # Add sys module for stdout logging
+from pathlib import Path  # Add Path for better path handling
 from urllib.parse import urlparse, quote_plus
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -9,30 +11,123 @@ import dotenv
 
 dotenv.load_dotenv()
 
-# Configure more detailed logging
+# Configure more robust logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('image_fetcher')  # Use a specific logger name
 
-# Use a specific path for the log file
-log_dir = os.path.join(settings.BASE_DIR, 'logs')
-# Create logs directory if it doesn't exist
-os.makedirs(log_dir, exist_ok=True)
-log_file_path = os.path.join(log_dir, 'image_fetcher.log')
-
-file_handler = logging.FileHandler(log_file_path)
-file_handler.setLevel(logging.INFO)
-formatter = logging.Formatter(
+# First try to log to console so we can see messages immediately
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_formatter = logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-logger.propagate = False
+console_handler.setFormatter(console_formatter)
+logger.addHandler(console_handler)
 
-# Log the location of the log file itself for debugging
-logger.info(f"Log file located at: {os.path.abspath(log_file_path)}")
+# Try to create log file in a location that definitely should be writable
+try:
+    # First try the Django-specified location
+    if hasattr(settings, 'BASE_DIR'):
+        log_dir = Path(settings.BASE_DIR) / 'logs'
+    else:
+        # Fallback to a location relative to this file
+        current_dir = Path(__file__).parent
+        log_dir = current_dir / 'logs'
+
+    # Create logs directory with explicit mode
+    os.makedirs(log_dir, mode=0o755, exist_ok=True)
+    log_file_path = log_dir / 'image_fetcher.log'
+
+    # Try to open the file to test if it's writable
+    with open(log_file_path, 'a') as f:
+        pass  # Just testing if we can write
+
+    # Now set up the file handler
+    file_handler = logging.FileHandler(str(log_file_path))
+    file_handler.setLevel(logging.INFO)
+    file_formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # Fix typo here - was 'levellevel'
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+
+    # Print and log the location
+    print(f"Log file path: {log_file_path}")
+    logger.info(f"Log file active at: {log_file_path.resolve()}")
+
+except Exception as e:
+    # If file logging fails, log to console and try an alternative location
+    print(f"Error setting up log file: {e}")
+    logger.error(f"Error setting up log file: {e}")
+
+    try:
+        # Fallback to a temporary folder
+        temp_log_path = Path(os.environ.get(
+            'TEMP', '/tmp')) / 'image_fetcher.log'
+        file_handler = logging.FileHandler(str(temp_log_path))
+        file_handler.setLevel(logging.INFO)
+        file_formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+
+        print(f"Using fallback log location: {temp_log_path}")
+        logger.info(f"Using fallback log location: {temp_log_path}")
+    except Exception as e2:
+        print(
+            f"Failed to set up fallback logging: {e2}. Logging to console only.")
+
+# Ensure logger propagates messages correctly
+logger.propagate = False  # Don't propagate to root logger to avoid duplicate logs
+logger.setLevel(logging.INFO)  # Ensure logger itself has correct level
+
+# Test log message
+logger.info("Image fetcher logger initialized")
 
 # Use either Unsplash or Pexels API key - I'll provide both options
 UNSPLASH_API_KEY = os.getenv('UNSPLASH_API_KEY')
 PEXELS_API_KEY = os.getenv('PEXELS_API_KEY')
+
+# Add these imports for translation
+try:
+    from googletrans import Translator
+    TRANSLATOR_AVAILABLE = True
+except ImportError:
+    TRANSLATOR_AVAILABLE = False
+    logger.warning(
+        "googletrans library not available. Translation features will be disabled.")
+    logger.warning(
+        "To enable translation, install with: pip install googletrans==4.0.0-rc1")
+
+# Create translator instance if available
+translator = Translator() if TRANSLATOR_AVAILABLE else None
+
+
+def detect_and_translate_to_english(text):
+    """
+    Detects the language of text and translates it to English if needed.
+    Returns the translated text and whether it was translated.
+    """
+    if not text or not TRANSLATOR_AVAILABLE:
+        return text, False
+
+    try:
+        # Detect language
+        detection = translator.detect(text)
+        source_lang = detection.lang
+
+        # If already English, return as is
+        if source_lang == 'en':
+            logger.info(f"Text '{text}' already in English")
+            return text, False
+
+        # Translate to English
+        translated = translator.translate(text, src=source_lang, dest='en')
+        logger.info(
+            f"Translated '{text}' from {source_lang} to English: '{translated.text}'")
+        return translated.text, True
+
+    except Exception as e:
+        logger.warning(f"Translation error for '{text}': {e}")
+        return text, False  # Return original if translation fails
 
 
 def fetch_food_image(food_name, restaurant_name=None):
@@ -42,10 +137,22 @@ def fetch_food_image(food_name, restaurant_name=None):
     """
     logger.info("========== NEW FOOD IMAGE REQUEST ==========")
     logger.info(
-        f"Searching for food image: '{food_name}', restaurant: '{restaurant_name}'")
+        f"Original food name: '{food_name}', restaurant: '{restaurant_name}'")
 
-    # Create more specific search queries for better results
-    base_query = food_name.strip()
+    # Translate food name and restaurant name to English if needed
+    food_name_en, food_translated = detect_and_translate_to_english(food_name)
+
+    restaurant_name_en = restaurant_name
+    if restaurant_name:
+        restaurant_name_en, restaurant_translated = detect_and_translate_to_english(
+            restaurant_name)
+
+    if food_translated or (restaurant_name and restaurant_translated):
+        logger.info(
+            f"Translated to English: food name = '{food_name_en}', restaurant = '{restaurant_name_en}'")
+
+    # Create more specific search queries using translated names
+    base_query = food_name_en.strip()
 
     # Make very specific food-related queries to prevent wrong results
     search_queries = [
@@ -56,8 +163,9 @@ def fetch_food_image(food_name, restaurant_name=None):
     ]
 
     # If restaurant name is available, add it to the search queries
-    if restaurant_name and len(restaurant_name.strip()) > 0:
-        search_queries.insert(0, f"{base_query} food from {restaurant_name}")
+    if restaurant_name_en and len(restaurant_name_en.strip()) > 0:
+        search_queries.insert(
+            0, f"{base_query} food from {restaurant_name_en}")
 
     logger.info(f"Food search queries (in order): {search_queries}")
 
@@ -208,13 +316,29 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
     """
     logger.info("========== NEW RESTAURANT IMAGE REQUEST ==========")
     logger.info(
-        f"Searching for restaurant image: '{restaurant_name}', cuisine: '{cuisine}'")
+        f"Original restaurant name: '{restaurant_name}', cuisine: '{cuisine}'")
 
-    # Create more specific search queries for restaurant images
-    base_query = restaurant_name.strip()
+    # Translate restaurant name and cuisine to English if needed
+    restaurant_name_en, restaurant_translated = detect_and_translate_to_english(
+        restaurant_name)
+
+    # Only translate cuisine if it's provided and not "Unknown"
+    cuisine_en = cuisine
+    cuisine_translated = False
+    if cuisine and cuisine.lower() not in ['unknown', 'unkown', '']:
+        cuisine_en, cuisine_translated = detect_and_translate_to_english(
+            cuisine)
+
+    if restaurant_translated or cuisine_translated:
+        logger.info(
+            f"Translated to English: restaurant name = '{restaurant_name_en}', cuisine = '{cuisine_en}'")
+
+    # Create more specific search queries for restaurant images using translated terms
+    base_query = restaurant_name_en.strip()
 
     # Keywords to exclude from all searches (will be added as negative terms)
-    exclude_terms = "-flag -iran -emblem -symbol -map"
+    # exclude_terms = "-flag -iran -emblem -symbol -map"
+    exclude_terms = ""
 
     # List of well-known restaurant chains for special handling
     well_known_chains = [
@@ -224,7 +348,7 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
         "Cheesecake Factory", "TGI Fridays", "Dunkin' Donuts", "Panera Bread"
     ]
 
-    # Check if this is a well-known chain
+    # Check if this is a well-known chain (use translated name)
     is_well_known = any(chain.lower() in base_query.lower()
                         for chain in well_known_chains)
     logger.info(f"Is well-known chain: {is_well_known}")
@@ -252,13 +376,18 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
             f"{base_query} dining {exclude_terms}",
         ]
 
-    # If cuisine is available, add more specific queries
-    if cuisine and len(cuisine.strip()) > 0:
+    # Use translated cuisine in cuisine-specific queries
+    if cuisine_en and len(cuisine_en.strip()) > 0 and cuisine_en.lower() not in ['unknown', 'unkown']:
         # Make sure cuisine doesn't have any terms that could trigger flag images
-        safe_cuisine = cuisine.replace("iran", "").replace("flag", "")
+        safe_cuisine = cuisine_en.replace("iran", "").replace("flag", "")
         if safe_cuisine.strip():
             search_queries.insert(
                 0, f"{base_query} {safe_cuisine} restaurant {exclude_terms}")
+            logger.info(
+                f"Added cuisine-specific query with cuisine: {safe_cuisine}")
+    elif cuisine:
+        logger.info(
+            f"Ignoring cuisine '{cuisine}' because it's set to Unknown or empty")
 
     logger.info(f"Restaurant search queries (in order): {search_queries}")
 
