@@ -1911,3 +1911,15 @@
 2025-03-07 19:14:37,285 - image_fetcher - INFO - Image fetcher logger initialized
 2025-03-07 19:15:28,112 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
 2025-03-07 19:15:28,113 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 19:18:41,735 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-07 19:18:41,735 - image_fetcher - INFO - Original food name: 'Double Cheeseburger', restaurant: 'McDonald's'
+2025-03-07 19:18:41,882 - image_fetcher - INFO - Text 'Double Cheeseburger' already in English
+2025-03-07 19:18:42,001 - image_fetcher - INFO - Text 'McDonald's' already in English
+2025-03-07 19:18:42,002 - image_fetcher - INFO - Food search queries (in order): ["Double Cheeseburger food from McDonald's", 'Double Cheeseburger food exact dish', 'Double Cheeseburger food meal', 'Double Cheeseburger food closeup', 'Double Cheeseburger dish served']
+2025-03-07 19:18:42,002 - image_fetcher - INFO - Trying Pexels with query: 'Double Cheeseburger food from McDonald's'
+2025-03-07 19:18:42,002 - image_fetcher - INFO - Pexels API request: https://api.pexels.com/v1/search - params: {'query': "Double Cheeseburger food from McDonald's", 'per_page': 15, 'size': 'medium', 'orientation': 'landscape'}
+2025-03-07 19:18:42,730 - image_fetcher - INFO - Pexels returned 15 results for query: 'Double Cheeseburger food from McDonald's'
+2025-03-07 19:18:42,730 - image_fetcher - INFO - Selected Pexels image: ID: 29250659, URL: https://images.pexels.com/photos/29250659/pexels-photo-29250659.jpeg?auto=compress&cs=tinysrgb&h=350
+2025-03-07 19:18:42,730 - image_fetcher - INFO - Image description: Close-up of a juicy burger with thick melted cheddar cheese, served on a plate.
+2025-03-07 19:18:42,730 - image_fetcher - INFO - Photographer: Vinícius Caricatte
+2025-03-07 19:18:42,804 - image_fetcher - INFO - SUCCESS: Found image for 'Double Cheeseburger' using Pexels query: 'Double Cheeseburger food from McDonald's'

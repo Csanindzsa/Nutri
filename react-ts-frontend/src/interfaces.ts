@@ -20,14 +20,6 @@ export interface Restaurant {
     // ...other existing properties
 }
 
-export interface ExactLocation {
-    city_name: string;
-    postal_code: string;
-    street_name: string;
-    street_type: string;
-    house_number: number;
-    restaurant_id: number;  // Represents the foreign key as an ID
-}  
 
 export interface Ingredient {
     id: number;
@@ -95,4 +87,11 @@ export interface FoodChange {
     updated_by?: string;
     updated_date?: string;
     new_hazard_level?: number;
+}
+
+export interface Locations{
+    id: number;
+    latitude: number;
+    longitude: number;
+    restaurant_id: number;
 }

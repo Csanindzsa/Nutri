@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../config/environment";
-import { Restaurant } from "../interfaces";
+import { Restaurant, Locations } from "../interfaces";
 
 // Extended restaurant type with location information
 export interface LocationEnhancedRestaurant extends Restaurant {
@@ -130,10 +130,7 @@ class LocationService {
       // Format distances for display
       const enhancedRestaurants = nearbyRestaurants.map((restaurant: LocationEnhancedRestaurant) => {
         if (restaurant.distance !== undefined) {
-          restaurant.formattedDistance = 
-            restaurant.distance < 1
-              ? `${Math.round(restaurant.distance * 1000)} m`
-              : `${restaurant.distance.toFixed(1)} km`;
+          restaurant.formattedDistance = this.formatDistance(restaurant.distance);
         }
         return restaurant;
       });
@@ -191,6 +188,90 @@ class LocationService {
       return [];
     }
   }
+
+  /**
+   * Add a new method to calculate distances for a batch of restaurants
+   * This ensures distance calculation is consistent across the application
+   */
+  calculateDistancesForRestaurants(
+    restaurants: Restaurant[],
+    userLat: number,
+    userLng: number
+  ): LocationEnhancedRestaurant[] {
+    console.log(`[LocationService] Calculating distances for ${restaurants.length} restaurants`);
+    
+    let restaurantsWithCoordinates = 0;
+    
+    const enhanced = restaurants.map(restaurant => {
+      // Clone the restaurant to avoid modifying the original
+      const enhanced = { ...restaurant } as LocationEnhancedRestaurant;
+      
+      if (enhanced.latitude && enhanced.longitude) {
+        restaurantsWithCoordinates++;
+        
+        // Calculate distance using our standard method
+        const distance = this.calculateDistance(
+          userLat,
+          userLng,
+          enhanced.latitude,
+          enhanced.longitude
+        );
+        
+        enhanced.distance = distance;
+        
+        // Format the distance for display
+        if (distance !== undefined) {
+          enhanced.formattedDistance = this.formatDistance(distance);
+        }
+      } else {
+        console.warn(`[LocationService] Restaurant ${enhanced.name} is missing coordinates`);
+      }
+      
+      return enhanced;
+    });
+    
+    console.log(`[LocationService] Calculated distances for ${restaurantsWithCoordinates}/${restaurants.length} restaurants with coordinates`);
+    return enhanced;
+  }
+  
+  /**
+   * Save a restaurant with location information to the backend
+   */
+  async saveRestaurantWithLocation(restaurantData: {
+    name: string;
+    foods_on_menu: number;
+    image?: string;
+    latitude: number;
+    longitude: number;
+  }): Promise<Restaurant> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/restaurants/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(restaurantData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error saving restaurant: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('[LocationService] Error saving restaurant with location:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Format distance value to human-readable string
+   */
+  formatDistance(distance: number): string {
+    return distance < 1
+      ? `${Math.round(distance * 1000)} m`
+      : `${distance.toFixed(1)} km`;
+  }
   
   /**
    * Infer cuisine type from amenity type when cuisine tag is not available
@@ -214,8 +295,9 @@ class LocationService {
   
   /**
    * Calculate distance between two coordinates using Haversine formula
+   * Make this public so it can be used consistently throughout the app
    */
-  private calculateDistance(lat1: number, lon1: number, lat2?: number, lon2?: number): number | undefined {
+  calculateDistance(lat1: number, lon1: number, lat2?: number, lon2?: number): number | undefined {
     if (!lat2 || !lon2) return undefined;
     
     const R = 6371; // Radius of the earth in km
