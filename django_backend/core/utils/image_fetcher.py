@@ -23,23 +23,61 @@ def fetch_food_image(food_name, restaurant_name=None):
     # Create more specific search queries for better results
     base_query = food_name.strip()
 
-    # Create an array of possible search queries in order of specificity
+    # Make very specific food-related queries to prevent wrong results
     search_queries = [
-        f"{base_query} food dish professional photography",  # Most specific
-        f"{base_query} food plated",
-        f"{base_query} dish",
-        f"{base_query} food",  # Basic fallback
+        f"{base_query} food exact dish",  # Most specific
+        f"{base_query} food meal",
+        f"{base_query} food closeup",
+        f"{base_query} dish served",
     ]
 
-    # If restaurant name is available, add it to the first query
+    # If restaurant name is available, add it to the search queries
     if restaurant_name and len(restaurant_name.strip()) > 0:
         search_queries.insert(0, f"{base_query} food from {restaurant_name}")
 
     logger.info(f"Trying to fetch image for food: {food_name}")
 
-    # fix query
+    # Try Pexels FIRST - switching the order as requested
+    if PEXELS_API_KEY:
+        for query in search_queries:
+            try:
+                logger.info(f"Trying Pexels with query: '{query}'")
+                pexels_url = "https://api.pexels.com/v1/search"
+                headers = {"Authorization": PEXELS_API_KEY}
+                params = {
+                    "query": query,
+                    "per_page": 15,
+                    "size": "medium",
+                    "orientation": "landscape"
+                }
 
-    # Try each search query with Unsplash until we get a result
+                response = requests.get(
+                    pexels_url, headers=headers, params=params)
+                if response.status_code == 200:
+                    data = response.json()
+                    photos = data.get('photos', [])
+
+                    if photos:
+                        # Pick from first 3 results for higher relevance
+                        top_results = photos[:3] if len(
+                            photos) >= 3 else photos
+                        photo = random.choice(top_results)
+                        image_url = photo['src']['medium']
+
+                        # Download the image
+                        img_response = requests.get(image_url)
+                        if img_response.status_code == 200:
+                            logger.info(
+                                f"Successfully found image for '{base_query}' using Pexels")
+                            return True, ContentFile(img_response.content)
+
+                logger.info(f"No results from Pexels for query: '{query}'")
+
+            except Exception as e:
+                logger.error(
+                    f"Error fetching image from Pexels with query '{query}': {str(e)}")
+
+    # Try Unsplash as a fallback
     if UNSPLASH_API_KEY:
         for query in search_queries:
             try:
@@ -51,7 +89,7 @@ def fetch_food_image(food_name, restaurant_name=None):
                     "per_page": 10,
                     "orientation": "landscape",
                     "content_filter": "high",
-                    "order_by": "relevance"
+                    "order_by": "relevant"  # Be sure to use relevant ordering
                 }
 
                 response = requests.get(
@@ -61,16 +99,17 @@ def fetch_food_image(food_name, restaurant_name=None):
                     results = data.get('results', [])
 
                     if results:
-                        # Pick a random image from the first results
-                        # Limit to first 5 for more relevance
-                        image = random.choice(results[:5])
+                        # Only pick from top 3 results for better relevance
+                        top_results = results[:3] if len(
+                            results) >= 3 else results
+                        image = random.choice(top_results)
                         image_url = image['urls']['regular']
 
                         # Download the image
                         img_response = requests.get(image_url)
                         if img_response.status_code == 200:
                             logger.info(
-                                f"Successfully found image for '{base_query}' using query: '{query}'")
+                                f"Successfully found image for '{base_query}' using Unsplash")
                             return True, ContentFile(img_response.content)
 
                 logger.info(f"No results from Unsplash for query: '{query}'")
@@ -79,51 +118,14 @@ def fetch_food_image(food_name, restaurant_name=None):
                 logger.error(
                     f"Error fetching image from Unsplash with query '{query}': {str(e)}")
 
-    # Try Pexels as second choice
-    if PEXELS_API_KEY:
-        for query in search_queries:
-            try:
-                logger.info(f"Trying Pexels with query: '{query}'")
-                pexels_url = "https://api.pexels.com/v1/search"
-                headers = {"Authorization": PEXELS_API_KEY}
-                params = {
-                    "query": query,
-                    "per_page": 10,
-                    "size": "medium"
-                }
-
-                response = requests.get(
-                    pexels_url, headers=headers, params=params)
-                if response.status_code == 200:
-                    data = response.json()
-                    photos = data.get('photos', [])
-
-                    if photos:
-                        # Pick a random image from the first results
-                        # Limit to first 5 for more relevance
-                        photo = random.choice(photos[:5])
-                        image_url = photo['src']['medium']
-
-                        # Download the image
-                        img_response = requests.get(image_url)
-                        if img_response.status_code == 200:
-                            logger.info(
-                                f"Successfully found image for '{base_query}' using Pexels with query: '{query}'")
-                            return True, ContentFile(img_response.content)
-
-                logger.info(f"No results from Pexels for query: '{query}'")
-
-            except Exception as e:
-                logger.error(
-                    f"Error fetching image from Pexels with query '{query}': {str(e)}")
-
-    # Use unsplash source as last fallback - more likely to get relevance results
+    # Use unsplash source direct API as last resort with a very specific query
     try:
-        # Use the most specific query for the fallback
-        encoded_query = quote_plus(search_queries[0])
+        # Create a highly specific query
+        exact_query = f"{base_query.lower()}-food-dish-meal"
+        encoded_query = quote_plus(exact_query)
         fallback_url = f"https://source.unsplash.com/featured/?{encoded_query}"
         logger.info(
-            f"Trying fallback image source with query: '{search_queries[0]}'")
+            f"Trying direct fallback image search with: '{exact_query}'")
 
         img_response = requests.get(fallback_url)
         if img_response.status_code == 200:
