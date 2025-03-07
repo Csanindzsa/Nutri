@@ -23,12 +23,17 @@ import {
   DialogTitle,
   CircularProgress,
   Tooltip,
+  ToggleButtonGroup,
+  ToggleButton,
+  Slider,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import StarIcon from "@mui/icons-material/Star";
+import PublicIcon from "@mui/icons-material/Public"; // For "All" restaurants
+import NearMeIcon from "@mui/icons-material/NearMe"; // For "Nearby" restaurants
 import { Restaurant } from "../interfaces";
 import locationService, {
   LocationEnhancedRestaurant,
@@ -69,6 +74,12 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [searchRadius, setSearchRadius] = useState<number>(5000); // Default 5km radius
+  const [filterMode, setFilterMode] = useState<"all" | "nearby">("all");
+  const [nearbyThreshold, setNearbyThreshold] = useState<number>(5); // 5km default
+  const [apiRestaurants, setApiRestaurants] = useState<EnhancedRestaurant[]>(
+    []
+  );
+  const [showApiResults, setShowApiResults] = useState<boolean>(false);
 
   // Extract unique cuisine types
   const cuisineTypes = Array.from(
@@ -286,16 +297,13 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
           nearbyResults.length
         );
 
-        if (nearbyResults.length === 0) {
-          // If no results from API, use the restaurants passed as props
-          console.log(
-            "[Restaurants] No API results, using prop restaurants with distance calculation"
-          );
-          const withDistances = calculateDistances(restaurants, location);
-          setEnhancedRestaurants(withDistances);
-        } else {
-          setEnhancedRestaurants(nearbyResults);
-        }
+        // Instead of updating enhancedRestaurants with API results,
+        // just store them separately and update distances for database restaurants
+        setApiRestaurants(nearbyResults);
+
+        // Update the database restaurants with distance data
+        const withDistances = calculateDistances(restaurants, location);
+        setEnhancedRestaurants(withDistances);
 
         // Update sort option to distance by default when we get location data
         setSortOption("distance");
@@ -379,7 +387,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       }
     }
 
-    // Initialize with stored restaurant data while waiting for API
+    // Initialize with ONLY stored restaurant data
     setEnhancedRestaurants(restaurants.map((r) => ({ ...r })));
   }, [restaurants, prepareRestaurantsData]);
 
@@ -523,8 +531,34 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       .includes(searchTerm.toLowerCase());
     const matchesCuisine =
       !selectedCuisineType || restaurant.cuisine === selectedCuisineType;
-    return matchesSearch && matchesCuisine;
+    const matchesProximity =
+      filterMode === "all" ||
+      (filterMode === "nearby" &&
+        userLocation &&
+        restaurant.distance !== undefined &&
+        restaurant.distance <= nearbyThreshold);
+    return matchesSearch && matchesCuisine && matchesProximity;
   });
+
+  // Handle filter mode change
+  const handleFilterModeChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newMode: "all" | "nearby" | null
+  ) => {
+    // Don't allow null value (at least one button must be selected)
+    if (newMode !== null) {
+      setFilterMode(newMode);
+
+      // Show location dialog if nearby selected but no location set
+      if (newMode === "nearby" && !userLocation) {
+        setLocationDialog(true);
+        setNotification({
+          message: "Please share your location to see nearby restaurants",
+          type: "info",
+        });
+      }
+    }
+  };
 
   // Debug log for monitoring
   useEffect(() => {
@@ -615,6 +649,84 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                   />
                 ))}
               </Box>
+            </Box>
+
+            {/* Add the new filter mode selector */}
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant="subtitle1"
+                gutterBottom
+                sx={{ fontWeight: 500 }}
+              >
+                Filter by Distance:
+              </Typography>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <ToggleButtonGroup
+                  value={filterMode}
+                  exclusive
+                  onChange={handleFilterModeChange}
+                  aria-label="restaurant distance filter"
+                  size="small"
+                >
+                  <ToggleButton value="all" aria-label="show all restaurants">
+                    <PublicIcon sx={{ mr: 1 }} />
+                    All
+                  </ToggleButton>
+                  <ToggleButton
+                    value="nearby"
+                    aria-label="show nearby restaurants"
+                    disabled={!userLocation}
+                  >
+                    <NearMeIcon sx={{ mr: 1 }} />
+                    Nearby
+                  </ToggleButton>
+                </ToggleButtonGroup>
+
+                {filterMode === "nearby" && (
+                  <Typography variant="body2" color="text.secondary">
+                    Within {nearbyThreshold} km
+                  </Typography>
+                )}
+
+                {filterMode === "nearby" && !userLocation && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<MyLocationIcon />}
+                    onClick={handleRequestLocation}
+                    sx={{ ml: 2 }}
+                  >
+                    Enable Location
+                  </Button>
+                )}
+              </Box>
+
+              {filterMode === "nearby" && userLocation && (
+                <Box sx={{ mt: 1, width: "200px" }}>
+                  <Typography variant="caption" gutterBottom>
+                    Nearby distance: {nearbyThreshold} km
+                  </Typography>
+                  <Slider
+                    value={nearbyThreshold}
+                    onChange={(_, newValue) =>
+                      setNearbyThreshold(newValue as number)
+                    }
+                    min={1}
+                    max={20}
+                    step={1}
+                    marks
+                    valueLabelDisplay="auto"
+                    aria-label="Nearby distance threshold"
+                    sx={{
+                      color: "#FF8C00",
+                      "& .MuiSlider-thumb": {
+                        backgroundColor: "#FF8C00",
+                      },
+                    }}
+                  />
+                </Box>
+              )}
             </Box>
           </Grid>
 
@@ -710,6 +822,14 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
             {apiError}
           </Alert>
         )}
+
+        {/* Show info about API restaurants if any were found */}
+        {apiRestaurants.length > 0 && (
+          <Alert severity="info" sx={{ mt: 2 }}>
+            {apiRestaurants.length} nearby restaurants found via API (only
+            showing database restaurants)
+          </Alert>
+        )}
       </Box>
 
       {/* Results Section */}
@@ -721,7 +841,16 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         }}
       >
         <Typography variant="h6" sx={{ mb: 3 }}>
-          {filteredRestaurants.length} Restaurants Found
+          {filteredRestaurants.length} Database Restaurants Found
+          {filterMode === "nearby" && userLocation && (
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ ml: 1, color: "text.secondary" }}
+            >
+              (within {nearbyThreshold} km)
+            </Typography>
+          )}
         </Typography>
 
         <Grid container spacing={3}>

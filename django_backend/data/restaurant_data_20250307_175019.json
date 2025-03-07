@@ -1,0 +1,370 @@
+[
+  {
+    "name": "The Grilled Piggy (büfékocsi)",
+    "cuisine": "regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_The_Grilled_Piggy_büfékocsi_Y3Xmn0M.jpg",
+    "image_url": "/media/restaurant_images/restaurant_The_Grilled_Piggy_b%C3%BCf%C3%A9kocsi_Y3Xmn0M.jpg"
+  },
+  {
+    "name": "KFC",
+    "cuisine": "chicken",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_KFC_K4e7XGb.jpg",
+    "image_url": "/media/restaurant_images/restaurant_KFC_K4e7XGb.jpg"
+  },
+  {
+    "name": "Bodri Bor- és Halásztanya étterem",
+    "cuisine": "regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Bodri_Bor-_és_Halásztanya_étterem_LZ82z35.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Bodri_Bor-_%C3%A9s_Hal%C3%A1sztanya_%C3%A9tterem_LZ82z35.jpg"
+  },
+  {
+    "name": "Lángos",
+    "cuisine": "burger;hot_dog;kebab;regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Lángos_Ih2Npvr.jpg",
+    "image_url": "/media/restaurant_images/restaurant_L%C3%A1ngos_Ih2Npvr.jpg"
+  },
+  {
+    "name": "Mézes Madzag",
+    "cuisine": "cake",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Mézes_Madzag_zRlYVd0.jpg",
+    "image_url": "/media/restaurant_images/restaurant_M%C3%A9zes_Madzag_zRlYVd0.jpg"
+  },
+  {
+    "name": "McDonald's",
+    "cuisine": "burger",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_McDonalds_vvNRIDk.jpg",
+    "image_url": "/media/restaurant_images/restaurant_McDonalds_vvNRIDk.jpg"
+  },
+  {
+    "name": "Sajti-Pajti Lángos büfé",
+    "cuisine": "coffee_shop;regional;sandwich",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Sajti-Pajti_Lángos_büfé_tQLaH2L.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Sajti-Pajti_L%C3%A1ngos_b%C3%BCf%C3%A9_tQLaH2L.jpg"
+  },
+  {
+    "name": "Happy Food",
+    "cuisine": "burger;friture;kebab;wings",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Happy_Food_kQC21NT.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Happy_Food_kQC21NT.jpg"
+  },
+  {
+    "name": "Rétes-bár Vegyes-tár",
+    "cuisine": "burger;regional;hot_dog;coffee_shop;sandwich",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Rétes-bár_Vegyes-tár_lZxLgVu.jpg",
+    "image_url": "/media/restaurant_images/restaurant_R%C3%A9tes-b%C3%A1r_Vegyes-t%C3%A1r_lZxLgVu.jpg"
+  },
+  {
+    "name": "Don Pepe",
+    "cuisine": "pizza",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Don_Pepe_kHsDryB.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Don_Pepe_kHsDryB.jpg"
+  },
+  {
+    "name": "Gyros Box",
+    "cuisine": "kebab",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Gyros_Box_eDgKe1f.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Gyros_Box_eDgKe1f.jpg"
+  },
+  {
+    "name": "Mx.Vich Hamburger Box",
+    "cuisine": "burger",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Mx_HpcGuBq.Vich_Hamburger_Box.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Mx_HpcGuBq.Vich_Hamburger_Box.jpg"
+  },
+  {
+    "name": "Mokka Café & Waffel Bar",
+    "cuisine": "Café",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Mokka_Café__Waffel_Bar_Uc7Jhza.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Mokka_Caf%C3%A9__Waffel_Bar_Uc7Jhza.jpg"
+  },
+  {
+    "name": "Wok n' Go",
+    "cuisine": "thai",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Wok_n_Go_Cuka5fb.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Wok_n_Go_Cuka5fb.jpg"
+  },
+  {
+    "name": "Café Amaretto",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Café_Amaretto_AtfyxXE.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Caf%C3%A9_Amaretto_AtfyxXE.jpg"
+  },
+  {
+    "name": "Kínai büfé",
+    "cuisine": "chinese",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Kínai_büfé_u5VW7eL.jpg",
+    "image_url": "/media/restaurant_images/restaurant_K%C3%ADnai_b%C3%BCf%C3%A9_u5VW7eL.jpg"
+  },
+  {
+    "name": "Istanbul Kebab",
+    "cuisine": "turkish",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Istanbul_Kebab_5cxk41Y.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Istanbul_Kebab_5cxk41Y.jpg"
+  },
+  {
+    "name": "Ázsia étterem",
+    "cuisine": "asian;regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Ázsia_étterem_wRsEqfX.jpg",
+    "image_url": "/media/restaurant_images/restaurant_%C3%81zsia_%C3%A9tterem_wRsEqfX.jpg"
+  },
+  {
+    "name": "Kebab Büfé",
+    "cuisine": "kebab",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Kebab_Büfé_4WRASbe.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Kebab_B%C3%BCf%C3%A9_4WRASbe.jpg"
+  },
+  {
+    "name": "Belvárosi kávéház",
+    "cuisine": "Café",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Belvárosi_kávéház_Fl0V32z.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Belv%C3%A1rosi_k%C3%A1v%C3%A9h%C3%A1z_Fl0V32z.jpg"
+  },
+  {
+    "name": "Szász söröző és étterem",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Szász_söröző_és_étterem_Cny8k80.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Sz%C3%A1sz_s%C3%B6r%C3%B6z%C5%91_%C3%A9s_%C3%A9tterem_Cny8k80.jpg"
+  },
+  {
+    "name": "Toscana Étterem és Kávézó",
+    "cuisine": "italian",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Toscana_Étterem_és_Kávézó_s4eJmFZ.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Toscana_%C3%89tterem_%C3%A9s_K%C3%A1v%C3%A9z%C3%B3_s4eJmFZ.jpg"
+  },
+  {
+    "name": "Mx.Vich",
+    "cuisine": "burger",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Mx_VTce5Yh.Vich.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Mx_VTce5Yh.Vich.jpg"
+  },
+  {
+    "name": "Poharas Faloda",
+    "cuisine": "Fast Food",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Poharas_Faloda_YinhUmp.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Poharas_Faloda_YinhUmp.jpg"
+  },
+  {
+    "name": "Ízlelő étterem",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Ízlelő_étterem_Qy87676.jpg",
+    "image_url": "/media/restaurant_images/restaurant_%C3%8Dzlel%C5%91_%C3%A9tterem_Qy87676.jpg"
+  },
+  {
+    "name": "Lángos büfé",
+    "cuisine": "regional;langos",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Lángos_büfé_X1LcDu1.jpg",
+    "image_url": "/media/restaurant_images/restaurant_L%C3%A1ngos_b%C3%BCf%C3%A9_X1LcDu1.jpg"
+  },
+  {
+    "name": "Corner Cafe and Bar",
+    "cuisine": "ice_cream;sandwich;cake",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Corner_Cafe_and_Bar_J5gFwjr.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Corner_Cafe_and_Bar_J5gFwjr.jpg"
+  },
+  {
+    "name": "Gosti Grill",
+    "cuisine": "Fast Food",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Gosti_Grill_PXhOkrY.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Gosti_Grill_PXhOkrY.jpg"
+  },
+  {
+    "name": "Corso Grill ételbár",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Corso_Grill_ételbár_FAsa33s.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Corso_Grill_%C3%A9telb%C3%A1r_FAsa33s.jpg"
+  },
+  {
+    "name": "PizzAma",
+    "cuisine": "pizza",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_PizzAma_5DJ3VQA.jpg",
+    "image_url": "/media/restaurant_images/restaurant_PizzAma_5DJ3VQA.jpg"
+  },
+  {
+    "name": "Ama konyha",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Ama_konyha_D8KOTk8.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Ama_konyha_D8KOTk8.jpg"
+  },
+  {
+    "name": "Stefán ételbár",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Stefán_ételbár_wmbTWQ2.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Stef%C3%A1n_%C3%A9telb%C3%A1r_wmbTWQ2.jpg"
+  },
+  {
+    "name": "KOI sushi room",
+    "cuisine": "japanese;sushi",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_KOI_sushi_room_3KslDur.jpg",
+    "image_url": "/media/restaurant_images/restaurant_KOI_sushi_room_3KslDur.jpg"
+  },
+  {
+    "name": "Bella Napoli",
+    "cuisine": "italian",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Bella_Napoli_Qlqkuvi.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Bella_Napoli_Qlqkuvi.jpg"
+  },
+  {
+    "name": "Gyros Larion Agha",
+    "cuisine": "Fast Food",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Gyros_Larion_Agha_WkMcDmn.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Gyros_Larion_Agha_WkMcDmn.jpg"
+  },
+  {
+    "name": "Oázis presszó",
+    "cuisine": "burger",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Oázis_presszó.jpg",
+    "image_url": "/media/restaurant_images/restaurant_O%C3%A1zis_pressz%C3%B3.jpg"
+  },
+  {
+    "name": "MainStreet Bistro",
+    "cuisine": "burger;pizza;friture",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_MainStreet_Bistro.jpg",
+    "image_url": "/media/restaurant_images/restaurant_MainStreet_Bistro.jpg"
+  },
+  {
+    "name": "Diákétkeztetési Kft.",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Diákétkeztetési_Kft..jpg",
+    "image_url": "/media/restaurant_images/restaurant_Di%C3%A1k%C3%A9tkeztet%C3%A9si_Kft..jpg"
+  },
+  {
+    "name": "Trattoria da Matteo",
+    "cuisine": "italian",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Trattoria_da_Matteo.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Trattoria_da_Matteo.jpg"
+  },
+  {
+    "name": "Arany Kulacs kisvendéglő",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Arany_Kulacs_kisvendéglő.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Arany_Kulacs_kisvend%C3%A9gl%C5%91.jpg"
+  },
+  {
+    "name": "Zrínyi Sörkert Étterem",
+    "cuisine": "regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Zrínyi_Sörkert_Étterem.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Zr%C3%ADnyi_S%C3%B6rkert_%C3%89tterem.jpg"
+  },
+  {
+    "name": "Merops Étterem",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Merops_Étterem.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Merops_%C3%89tterem.jpg"
+  },
+  {
+    "name": "Élmény étterem",
+    "cuisine": "Unknown",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Élmény_étterem.jpg",
+    "image_url": "/media/restaurant_images/restaurant_%C3%89lm%C3%A9ny_%C3%A9tterem.jpg"
+  },
+  {
+    "name": "Rákóczi Gyros",
+    "cuisine": "Fast Food",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Rákóczi_Gyros.jpg",
+    "image_url": "/media/restaurant_images/restaurant_R%C3%A1k%C3%B3czi_Gyros.jpg"
+  },
+  {
+    "name": "Autós bisztró",
+    "cuisine": "burger;coffee_shop;regional",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Autós_bisztró.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Aut%C3%B3s_bisztr%C3%B3.jpg"
+  },
+  {
+    "name": "Olimpia büfé",
+    "cuisine": "Fast Food",
+    "description": "",
+    "foods_on_menu": 0,
+    "image": "restaurant_images/restaurant_Olimpia_büfé.jpg",
+    "image_url": "/media/restaurant_images/restaurant_Olimpia_b%C3%BCf%C3%A9.jpg"
+  }
+]

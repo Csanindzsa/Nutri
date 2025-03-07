@@ -28,10 +28,12 @@ from rest_framework.exceptions import ValidationError
 import logging
 import smtplib
 from rest_framework.decorators import api_view, permission_classes
-from django.core.files.storage import default_storage
 
 # Add this import at the top of your file
-from .utils.image_fetcher import fetch_food_image, fetch_restaurant_image
+from .utils.image_fetcher import fetch_food_image
+
+# Add this import near the top with other imports
+from .services.restaurant_service import RestaurantService
 
 logger = logging.getLogger(__name__)
 
@@ -725,18 +727,18 @@ class GetRestaurantLocationView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
-        # Get the locations for this restaurant
-        locations = Location.objects.filter(restaurants=instance)
+        # Get the locations for this restaurant using the foreign key directly
+        locations = Location.objects.filter(restaurant=instance)
 
         if not locations.exists():
             return Response({"detail": "No location data found for this restaurant"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Use the first location (most restaurants will have just one)
+        # Use the first location
         location = locations.first()
 
         return Response({
             "restaurant_id": instance.id,
-            "restaurant_name": instance.name,
+            "restaurant_name": instance.name,  # Now getting name from restaurant directly
             "latitude": location.latitude,
             "longitude": location.longitude
         })
@@ -746,15 +748,16 @@ class GetAllRestaurantLocationsView(generics.ListAPIView):
     """Get locations for all restaurants"""
 
     def list(self, request, *args, **kwargs):
-        # Get all restaurants with locations
+        # Get all locations with their associated restaurants using select_related for efficiency
+        locations = Location.objects.select_related('restaurant').all()
+
+        # Create a list of restaurants with their locations
         restaurants_with_locations = []
-        for restaurant in Restaurant.objects.all():
-            locations = Location.objects.filter(restaurants=restaurant)
-            if locations.exists():
-                location = locations.first()
+        for location in locations:
+            if location.restaurant:  # Make sure restaurant exists
                 restaurants_with_locations.append({
-                    "restaurant_id": restaurant.id,
-                    "restaurant_name": restaurant.name,
+                    "restaurant_id": location.restaurant.id,
+                    "restaurant_name": location.restaurant.name,
                     "latitude": location.latitude,
                     "longitude": location.longitude
                 })
@@ -763,7 +766,7 @@ class GetAllRestaurantLocationsView(generics.ListAPIView):
 
 
 class BatchSaveRestaurantsView(generics.CreateAPIView):
-    """Save multiple restaurants with location in a single request"""
+    """Process restaurant data in batch but don't save to file"""
     serializer_class = RestaurantSerializer
 
     def create(self, request, *args, **kwargs):
@@ -772,77 +775,33 @@ class BatchSaveRestaurantsView(generics.CreateAPIView):
         if not isinstance(restaurants_data, list):
             return Response({"error": "Expected a list of restaurants"}, status=status.HTTP_400_BAD_REQUEST)
 
-        saved_restaurants = []
-        errors = []
+        try:
+            # Process a sample preview (first 5 restaurants)
+            sample_size = min(5, len(restaurants_data))
+            sample_data = restaurants_data[:sample_size]
+            sample_results = []
 
-        for restaurant_data in restaurants_data:
-
-            try:
-                # Extract location data if provided
-                latitude = restaurant_data.pop('latitude', None)
-                longitude = restaurant_data.pop('longitude', None)
-
-                # Extract restaurant name and cuisine for image search
-                restaurant_name = restaurant_data.get('name', '')
-                cuisine = restaurant_data.get('cuisine', '')
-
-                # Check if restaurant has an image already
-                has_image = restaurant_data.get('image') not in [
-                    None, '', 'https://via.placeholder.com/150']
-
-                # First, check if a restaurant with this name already exists
-                existing = Restaurant.objects.filter(
-                    name=restaurant_data.get('name')).first()
-
-                if existing:
-                    # Update existing restaurant
-                    for key, value in restaurant_data.items():
-                        setattr(existing, key, value)
-                    existing.save()
-                    restaurant = existing
-                else:
-                    # Create new restaurant
-                    restaurant = Restaurant.objects.create(**restaurant_data)
-
-                # Try to fetch an image if one isn't provided
-                if not has_image and restaurant_name:
-                    success, image_content_or_error = fetch_restaurant_image(
-                        restaurant_name, cuisine)
-                    if success:
-                        # Generate image name
-                        image_name = f"restaurant_{restaurant.id}_{restaurant_name.replace(' ', '_')}.jpg"
-
-                        # Save to storage
-                        filepath = default_storage.save(
-                            f'restaurant_images/{image_name}', image_content_or_error)
-
-                        # For simplicity, construct a relative URL path
-                        restaurant.image = f"/media/restaurant_images/{image_name}"
-                        restaurant.save()
-
-                # Handle location data if provided
-                if latitude is not None and longitude is not None:
-                    location, created = Location.objects.get_or_create(
-                        latitude=latitude,
-                        longitude=longitude
-                    )
-                    location.restaurants.add(restaurant)
-
-                # Add to saved restaurants
-                saved_restaurants.append({
-                    "id": restaurant.id,
-                    "name": restaurant.name,
-                    "foods_on_menu": restaurant.foods_on_menu,
-                    "image": restaurant.image
+            for restaurant in sample_data:
+                name = restaurant.get('name', 'Unknown')
+                # Check if this restaurant already exists
+                exists = Restaurant.objects.filter(name__iexact=name).exists()
+                sample_results.append({
+                    "name": name,
+                    "exists": exists,
+                    "would_update" if exists else "would_create": True
                 })
-            except Exception as e:
-                errors.append(
-                    {"restaurant_data": restaurant_data, "error": str(e)})
 
-        if errors:
-            return Response({"saved_restaurants": saved_restaurants, "errors": errors}, status=status.HTTP_207_MULTI_STATUS)
+            return Response({
+                "message": f"Received {len(restaurants_data)} restaurants",
+                "sample_preview": sample_results,
+                "note": "To save this data, use the management command: python manage.py export_restaurants_to_file"
+            }, status=status.HTTP_200_OK)
 
-        return Response({"saved_restaurants": saved_restaurants}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error(f"Error processing restaurants: {str(e)}")
+            return Response({
+                "error": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # GENERICS - mainly for testing purposes
@@ -861,54 +820,6 @@ class UserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class RestaurantListCreateView(generics.ListCreateAPIView):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
-
-    def create(self, request, *args, **kwargs):
-        try:
-            # Extract restaurant data
-            restaurant_name = request.data.get('name', '')
-            cuisine = request.data.get('cuisine', '')
-
-            # Check if an image is provided
-            has_image = request.data.get('image') not in [
-                None, '', 'https://via.placeholder.com/150']
-
-            # Proceed with default creation
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            restaurant = serializer.save()
-
-            # If no image provided, try to fetch one
-            if not has_image and restaurant_name:
-                success, image_content_or_error = fetch_restaurant_image(
-                    restaurant_name, cuisine)
-                if success:
-                    # Generate a file name for the image
-                    image_name = f"restaurant_{restaurant.id}_{restaurant_name.replace(' ', '_')}.jpg"
-
-                    # In this case we're dealing with a URL field, not a FileField
-                    # So we need to save the image to media storage and update the URL
-                    from django.core.files.storage import default_storage
-                    from django.core.files.base import ContentFile
-
-                    # Save the image to storage
-                    filepath = default_storage.save(
-                        f'restaurant_images/{image_name}', image_content_or_error)
-
-                    # Update the restaurant's image field with the URL to the saved image
-                    full_url = request.build_absolute_uri(
-                        settings.MEDIA_URL + filepath)
-                    restaurant.image = full_url
-                    restaurant.save()
-
-                    # Update serializer data to include the new image
-                    serializer = self.get_serializer(restaurant)
-
-            # Return the created object
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        except Exception as e:
-            logger.error(f"Error creating restaurant: {str(e)}")
-            return Response({"error": f"Error creating restaurant: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RestaurantRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
