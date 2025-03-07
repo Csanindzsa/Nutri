@@ -1923,3 +1923,33 @@
 2025-03-07 19:18:42,730 - image_fetcher - INFO - Image description: Close-up of a juicy burger with thick melted cheddar cheese, served on a plate.
 2025-03-07 19:18:42,730 - image_fetcher - INFO - Photographer: Vinícius Caricatte
 2025-03-07 19:18:42,804 - image_fetcher - INFO - SUCCESS: Found image for 'Double Cheeseburger' using Pexels query: 'Double Cheeseburger food from McDonald's'
+2025-03-07 22:00:19,129 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:00:19,130 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:00:48,645 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:00:48,645 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:00:56,353 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:00:56,353 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:00:59,650 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:00:59,651 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:20,624 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:20,624 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:28,496 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:28,497 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:32,061 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:32,061 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:35,546 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:35,546 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:43,330 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:43,330 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:48,028 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:48,029 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:52,314 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:52,315 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 22:24:55,438 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 22:24:55,439 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 23:05:28,594 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 23:05:28,595 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 23:08:50,225 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 23:08:50,225 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-07 23:09:05,626 - image_fetcher - INFO - Log file active at: C:\Users\Csanindzsa\Desktop\finals\Nutri\django_backend\logs\image_fetcher.log
+2025-03-07 23:09:05,627 - image_fetcher - INFO - Image fetcher logger initialized

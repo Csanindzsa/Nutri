@@ -16,6 +16,8 @@ class CoreConfig(AppConfig):
         """
         # Import is inside ready to avoid premature imports
         import os
+        # Import signals to register them
+        import core.signals
 
         # Skip when running management commands to prevent circular imports
         # and redundant execution during migrations, collectstatic, etc.

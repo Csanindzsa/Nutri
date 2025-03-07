@@ -17,6 +17,7 @@ export interface Restaurant {
     average_rating?: number;
     latitude?: number;  // Add latitude for geolocation
     longitude?: number; // Add longitude for geolocation
+    hazard_level?: number; // Average hazard level of foods at this restaurant
     // ...other existing properties
 }
 
