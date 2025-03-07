@@ -37,6 +37,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Restaurant, Food, Ingredient, MacroTable } from "../interfaces";
+import HazardLevelIndicator from "../components/HazardLevelIndicator";
+import { getHazardColor } from "../utils/hazardUtils";
 
 interface FoodListProps {
   accessToken: string | null;
@@ -399,6 +401,15 @@ const FoodList: React.FC<FoodListProps> = ({
                   <Typography variant="h6" component="h2" gutterBottom>
                     {food.name}
                   </Typography>
+
+                  {/* Add hazard level indicator below the name */}
+                  <Box sx={{ mb: 2 }}>
+                    <HazardLevelIndicator
+                      hazardLevel={food.hazard_level}
+                      size="small"
+                      showLabel={false}
+                    />
+                  </Box>
 
                   <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
                     <RestaurantIcon

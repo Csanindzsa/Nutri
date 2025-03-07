@@ -52,6 +52,93 @@ interface RestaurantsPageProps {
 // We're now using the enhanced restaurant type from our service
 type EnhancedRestaurant = LocationEnhancedRestaurant;
 
+interface HazardLevelIndicatorProps {
+  hazardLevel?: number;
+}
+
+const HazardLevelIndicator: React.FC<HazardLevelIndicatorProps> = ({
+  hazardLevel = 0,
+}) => {
+  // Round the hazard level to the nearest whole number for display
+  const level = Math.round(hazardLevel);
+
+  // Define colors for each hazard level
+  const getHazardColor = (level: number): string => {
+    switch (level) {
+      case 0:
+        return "#4CAF50"; // Green
+      case 1:
+        return "#8BC34A"; // Light Green
+      case 2:
+        return "#FFEB3B"; // Yellow
+      case 3:
+        return "#F44336"; // Red
+      case 4:
+        return "#9C27B0"; // Purple
+      default:
+        return "#CCCCCC"; // Gray for undefined
+    }
+  };
+
+  const getLevelLabel = (level: number): string => {
+    switch (level) {
+      case 0:
+        return "Safe";
+      case 1:
+        return "Minimal Risk";
+      case 2:
+        return "Mild Risk";
+      case 3:
+        return "Moderate Risk";
+      case 4:
+        return "High Risk";
+      default:
+        return "Unknown Risk";
+    }
+  };
+
+  const color = getHazardColor(level);
+  const label = getLevelLabel(level);
+
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        component="div"
+        sx={{ mb: 0.5, fontSize: "0.7rem", color: "text.secondary" }}
+      >
+        Hazard Level
+      </Typography>
+      <Tooltip title={`${label} (Level ${level})`}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Box
+            sx={{
+              width: "100%",
+              height: 8,
+              borderRadius: 4,
+              bgcolor: "#f0f0f0",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                height: "100%",
+                width: `${Math.min(100, (level / 4) * 100)}%`,
+                bgcolor: color,
+                transition: "width 0.3s ease",
+              }}
+            />
+          </Box>
+        </Box>
+      </Tooltip>
+    </Box>
+  );
+};
+
 const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -1053,20 +1140,10 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                     >
                       View Foods
                     </Button>
-                    <Tooltip
-                      title={`${
-                        restaurant.average_rating?.toFixed(1) || 0
-                      }/5 rating`}
-                    >
-                      <Box>
-                        <Rating
-                          value={restaurant.average_rating || 0}
-                          readOnly
-                          size="small"
-                          precision={0.5}
-                        />
-                      </Box>
-                    </Tooltip>
+
+                    <HazardLevelIndicator
+                      hazardLevel={restaurant.hazard_level}
+                    />
                   </Box>
                 </CardContent>
               </Card>
@@ -1152,7 +1229,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         ) : undefined}
       </Snackbar>
 
-      {/* Display debug info in development mode */}
+      {/* Display debug info in development mode
       {process.env.NODE_ENV !== "production" && userLocation && (
         <Box
           sx={{
@@ -1171,7 +1248,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
             Location: {JSON.stringify(userLocation, null, 2)}
           </Typography>
         </Box>
-      )}
+      )} */}
     </Container>
   );
 };

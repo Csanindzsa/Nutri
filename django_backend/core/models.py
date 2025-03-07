@@ -54,6 +54,8 @@ class Restaurant(models.Model):
                               default="https://via.placeholder.com/150")
     cuisine = models.CharField(max_length=255, default="Unknown")
     description = models.TextField(blank=True, null=True)
+    # Add hazard_level field to store the average hazard level of all foods
+    hazard_level = models.FloatField(default=0)
 
     def __str__(self):
         return self.name
@@ -106,9 +108,10 @@ class Location(models.Model):
 class Ingredient(models.Model):
     HAZARD_LEVEL_CHOICES = [
         (0, "Safe"),
-        (1, "Mild Risk"),
-        (2, "Moderate Risk"),
-        (3, "High Risk"),
+        (1, "Minimal Risk"),
+        (2, "Mild Risk"),
+        (3, "Moderate Risk"),
+        (4, "High Risk"),
     ]
 
     name = models.CharField(max_length=255, unique=True)

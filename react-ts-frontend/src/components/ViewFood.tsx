@@ -24,6 +24,7 @@ import {
   TextField,
   Snackbar,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import CheckIcon from "@mui/icons-material/Check";
@@ -34,6 +35,8 @@ import EditIcon from "@mui/icons-material/Edit"; // Add this import
 import DeleteIcon from "@mui/icons-material/Delete"; // Add this import
 import { styled } from "@mui/material/styles";
 import { API_ENDPOINTS } from "../config/environment"; // Add this import
+import HazardLevelIndicator from "./HazardLevelIndicator";
+import { getHazardLabel, getHazardColor } from "../utils/hazardUtils"; // Update import to include getHazardColor
 
 interface ViewFoodProps {
   food: Food;
@@ -162,11 +165,16 @@ const ViewFood: React.FC<ViewFoodProps> = ({
     setNotification(null);
   };
 
-  // Map ingredient IDs to their names
-  const getIngredientNames = (ingredientIds: number[]): string[] => {
+  // Update this function to return more information about each ingredient
+  const getIngredientDetails = (
+    ingredientIds: number[]
+  ): { name: string; hazardLevel: number }[] => {
     return ingredientIds.map((id) => {
       const ingredient = ingredients.find((ing) => ing.id === id);
-      return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
+      return {
+        name: ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`,
+        hazardLevel: ingredient ? ingredient.hazard_level : 0,
+      };
     });
   };
 
@@ -400,6 +408,26 @@ const ViewFood: React.FC<ViewFoodProps> = ({
           {/* Food Details */}
           <Grid item xs={12} md={7}>
             <Box>
+              {/* Hazard Level Indicator - Add this section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Hazard Level
+                </Typography>
+                <Box sx={{ maxWidth: "300px" }}>
+                  <HazardLevelIndicator
+                    hazardLevel={food.hazard_level || 0}
+                    size="large"
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 1, color: "text.secondary" }}
+                  >
+                    {getHazardLabel(food.hazard_level || 0)}: This food has been
+                    rated based on its ingredients.
+                  </Typography>
+                </Box>
+              </Box>
+
               {/* Dietary Properties */}
               <Typography variant="h6" gutterBottom>
                 Dietary Information
@@ -443,28 +471,111 @@ const ViewFood: React.FC<ViewFoodProps> = ({
                 </Typography>
               </Box>
 
-              {/* Ingredients */}
+              {/* Updated Ingredients Section */}
               <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Ingredients
               </Typography>
               <Box sx={{ mb: 3 }}>
                 {food.ingredients && food.ingredients.length > 0 ? (
                   <List dense>
-                    {getIngredientNames(food.ingredients).map((name, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <EggIcon color="action" fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText primary={name} />
-                      </ListItem>
-                    ))}
+                    {getIngredientDetails(food.ingredients).map(
+                      (ingredient, index) => (
+                        <ListItem
+                          key={index}
+                          sx={{
+                            borderLeft: `4px solid ${getHazardColor(
+                              ingredient.hazardLevel
+                            )}`,
+                            pl: 2,
+                            mb: 0.5,
+                            borderRadius: 1,
+                            bgcolor: `${getHazardColor(
+                              ingredient.hazardLevel
+                            )}15`, // Very light background with 15% opacity
+                          }}
+                        >
+                          <ListItemIcon>
+                            <EggIcon
+                              fontSize="small"
+                              sx={{
+                                color: getHazardColor(ingredient.hazardLevel),
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={ingredient.name}
+                            secondary={getHazardLabel(ingredient.hazardLevel)}
+                          />
+                          <Tooltip
+                            title={`Hazard Level: ${ingredient.hazardLevel}`}
+                          >
+                            <Box
+                              sx={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: "50%",
+                                bgcolor: getHazardColor(ingredient.hazardLevel),
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white",
+                                fontWeight: "bold",
+                                fontSize: "0.8rem",
+                              }}
+                            >
+                              {ingredient.hazardLevel}
+                            </Box>
+                          </Tooltip>
+                        </ListItem>
+                      )
+                    )}
                   </List>
                 ) : (
                   <Typography color="text.secondary">
                     No ingredients listed
                   </Typography>
                 )}
+
+                {/* Add a legend for hazard levels */}
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2,
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                    border: "1px solid #eee",
+                  }}
+                >
+                  <Typography variant="subtitle2" gutterBottom>
+                    Ingredient Hazard Level Legend:
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}
+                  >
+                    {[0, 1, 2, 3, 4].map((level) => (
+                      <Box
+                        key={level}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <Box
+                          sx={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: "50%",
+                            bgcolor: getHazardColor(level),
+                            mr: 1,
+                          }}
+                        />
+                        <Typography variant="caption">
+                          {level}: {getHazardLabel(level)}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
               </Box>
+
+              {/* ...existing serving size section... */}
             </Box>
           </Grid>
 

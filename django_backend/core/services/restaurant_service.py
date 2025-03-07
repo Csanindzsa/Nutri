@@ -1,6 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional
 from django.db import transaction, IntegrityError, DatabaseError
+from django.db.models import Avg, Count
 from ..models import Restaurant, Location
 
 logger = logging.getLogger(__name__)
@@ -313,3 +314,125 @@ class RestaurantService:
         except Exception as e:
             logger.error(f"Error finding closest location: {str(e)}")
             return None
+
+    @staticmethod
+    def update_restaurant_hazard_level(restaurant_id):
+        """
+        Calculate and update the hazard level for a restaurant based on all its foods
+        """
+        # Import here to avoid circular imports
+        from core.models import Restaurant, Food
+
+        try:
+            with transaction.atomic():
+                restaurant = Restaurant.objects.get(id=restaurant_id)
+
+                # Get all approved foods for this restaurant
+                foods = Food.objects.filter(
+                    restaurant=restaurant, is_approved=True)
+
+                if foods.exists():
+                    # Calculate the average hazard level across all foods
+                    avg_hazard = foods.aggregate(
+                        avg=Avg('hazard_level'))['avg'] or 0
+
+                    # Round to 1 decimal place for consistency
+                    restaurant.hazard_level = round(avg_hazard, 1)
+                    restaurant.save(update_fields=['hazard_level'])
+
+                    logger.info(
+                        f"Updated restaurant {restaurant.name} hazard level to {restaurant.hazard_level}")
+                else:
+                    # If no foods, set hazard level to 0
+                    restaurant.hazard_level = 0
+                    restaurant.save(update_fields=['hazard_level'])
+
+                    logger.info(
+                        f"Restaurant {restaurant.name} has no foods, hazard level set to 0")
+
+                return restaurant.hazard_level
+
+        except Restaurant.DoesNotExist:
+            logger.error(f"Restaurant with ID {restaurant_id} not found")
+            return None
+        except Exception as e:
+            logger.error(f"Error updating restaurant hazard level: {str(e)}")
+            return None
+
+    @staticmethod
+    def process_pending_food_changes():
+        """
+        Process any pending food changes that might have reached the approval threshold
+        but weren't processed due to race conditions or other issues
+        """
+        from ..models import FoodChange, Food
+
+        logger.info(
+            "Checking for pending food changes that meet approval criteria...")
+        required_approvals = 2  # Should match the value in ApproveProposal view
+
+        # Get approved but not processed food changes
+        pending_changes = FoodChange.objects.annotate(
+            approval_count=Count('new_approved_supervisors')
+        ).filter(
+            new_is_approved=False,
+            approval_count__gte=required_approvals
+        )
+
+        processed_count = 0
+
+        for change in pending_changes:
+            try:
+                # Mark as approved
+                change.new_is_approved = True
+                change.save()
+                logger.info(f"Marked pending change #{change.id} as approved")
+
+                # Check if the food still exists
+                if change.old_version:
+                    try:
+                        food = Food.objects.get(id=change.old_version.id)
+
+                        # Apply the changes or delete as appropriate
+                        if change.is_deletion:
+                            restaurant_id = food.restaurant.id
+                            food.delete()
+                            logger.info(
+                                f"Deleted food #{food.id} from pending change")
+                            RestaurantService.update_restaurant_hazard_level(
+                                restaurant_id)
+                        else:
+                            # Apply all the updates
+                            # (Similar code to ApproveProposal but simplified)
+                            food.name = change.new_name
+                            food.restaurant = change.new_restaurant
+                            food.macro_table = change.new_macro_table
+                            food.serving_size = change.new_serving_size
+                            food.is_organic = change.new_is_organic
+                            food.is_gluten_free = change.new_is_gluten_free
+                            food.is_alcohol_free = change.new_is_alcohol_free
+                            food.is_lactose_free = change.new_is_lactose_free
+
+                            if change.new_image:
+                                food.image = change.new_image
+
+                            food.ingredients.set(change.new_ingredients.all())
+                            food.calculate_hazard_level()
+                            food.save()
+
+                            logger.info(
+                                f"Applied pending change #{change.id} to food #{food.id}")
+                            RestaurantService.update_restaurant_hazard_level(
+                                food.restaurant.id)
+                    except Food.DoesNotExist:
+                        logger.error(
+                            f"Food #{change.old_version.id} for pending change #{change.id} not found")
+
+                processed_count += 1
+
+            except Exception as e:
+                logger.error(
+                    f"Error processing pending change #{change.id}: {e}")
+
+        logger.info(f"Processed {processed_count} pending food changes")
+        return processed_count
