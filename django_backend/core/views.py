@@ -658,129 +658,23 @@ class ApproveProposal(generics.UpdateAPIView):
         if approval_count >= required_approvals:
             logger.info(
                 f"Food change #{food_change.id} has reached approval threshold!")
-
             try:
-                with transaction.atomic():  # Use transaction to ensure consistency
-                    # Mark the FoodChange as approved
-                    food_change.new_is_approved = True
-                    food_change.save()
-                    logger.info(
-                        f"Marked food change #{food_change.id} as approved")
-
-                    # Process the original Food object if it exists
-                    if food_change.old_version:
-                        try:
-                            original_food = Food.objects.get(
-                                id=food_change.old_version.id)
-                            logger.info(
-                                f"Found original food #{original_food.id} ({original_food.name})")
-
-                            if not food_change.is_deletion:
-                                # Update the food with new values
-                                logger.info(
-                                    f"Applying changes to food #{original_food.id}")
-
-                                # Log all changes for debugging
-                                changes = []
-
-                                if original_food.name != food_change.new_name:
-                                    changes.append(
-                                        f"name: '{original_food.name}' → '{food_change.new_name}'")
-                                    original_food.name = food_change.new_name
-
-                                if original_food.restaurant.id != food_change.new_restaurant.id:
-                                    changes.append(
-                                        f"restaurant: {original_food.restaurant.name} → {food_change.new_restaurant.name}")
-                                    original_food.restaurant = food_change.new_restaurant
-
-                                # Add other field comparisons...
-                                original_food.macro_table = food_change.new_macro_table
-                                original_food.serving_size = food_change.new_serving_size
-                                original_food.is_organic = food_change.new_is_organic
-                                original_food.is_gluten_free = food_change.new_is_gluten_free
-                                original_food.is_alcohol_free = food_change.new_is_alcohol_free
-                                original_food.is_lactose_free = food_change.new_is_lactose_free
-
-                                if food_change.new_image:
-                                    original_food.image = food_change.new_image
-
-                                # Update ingredients
-                                old_ingredients = set(
-                                    original_food.ingredients.values_list('id', flat=True))
-                                new_ingredients = set(
-                                    food_change.new_ingredients.values_list('id', flat=True))
-
-                                if old_ingredients != new_ingredients:
-                                    changes.append(
-                                        f"ingredients changed: {old_ingredients} → {new_ingredients}")
-                                    original_food.ingredients.set(
-                                        food_change.new_ingredients.all())
-
-                                # Log all the changes that were applied
-                                if changes:
-                                    logger.info(
-                                        f"Applied changes to food #{original_food.id}: {', '.join(changes)}")
-                                else:
-                                    logger.info(
-                                        f"No actual field changes to food #{original_food.id}")
-
-                                # Calculate the hazard level based on the new ingredients
-                                old_hazard = original_food.hazard_level
-                                original_food.calculate_hazard_level()
-                                logger.info(
-                                    f"Updated hazard level: {old_hazard} → {original_food.hazard_level}")
-
-                                # Save the updated food
-                                original_food.save()
-                                logger.info(
-                                    f"Successfully saved updated food #{original_food.id}")
-
-                                # Update restaurant hazard level
-                                from .services.restaurant_service import RestaurantService
-                                RestaurantService.update_restaurant_hazard_level(
-                                    original_food.restaurant.id)
-                                logger.info(
-                                    f"Restaurant #{original_food.restaurant.id} hazard level updated")
-
-                            else:
-                                # Delete the original Food object if this is a deletion request
-                                logger.info(
-                                    f"Deleting food #{original_food.id} ({original_food.name})")
-                                restaurant_id = original_food.restaurant.id
-                                original_food.delete()
-                                logger.info(
-                                    f"Food #{food_change.old_version.id} deleted successfully")
-
-                                # Update restaurant hazard level after deletion
-                                from .services.restaurant_service import RestaurantService
-                                RestaurantService.update_restaurant_hazard_level(
-                                    restaurant_id)
-                                logger.info(
-                                    f"Restaurant #{restaurant_id} hazard level updated after food deletion")
-
-                        except Food.DoesNotExist:
-                            # Handle the case where the original Food object no longer exists
-                            logger.error(
-                                f"Food #{food_change.old_version.id} does not exist!")
-                            return Response(
-                                {"error": "The original Food object does not exist."},
-                                status=status.HTTP_404_NOT_FOUND,
-                            )
-                    else:
-                        logger.warning(
-                            f"Food change #{food_change.id} has no old_version reference")
-
+                # Simply mark as approved; the signal will handle applying the changes
+                food_change.new_is_approved = True
+                food_change.save()
+                logger.info(
+                    f"Marked food change #{food_change.id} as approved")
             except Exception as e:
-                # Catch and log any errors during the update process
+                # Log any errors during the approval process
                 logger.error(
-                    f"Error updating food from change #{food_change.id}: {e}")
+                    f"Error approving food change #{food_change.id}: {e}")
                 logger.error(traceback.format_exc())
                 return Response(
-                    {"error": f"Error updating food: {str(e)}"},
+                    {"error": f"Error approving food change: {str(e)}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
-        return Response({"message": "Food change approved successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "Food change approval recorded successfully."}, status=status.HTTP_200_OK)
 
 
 class RestaurantWithLocationView(generics.CreateAPIView):
