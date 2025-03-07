@@ -62,19 +62,20 @@ class Restaurant(models.Model):
         db_table = "Restaurants"
 
     def save(self, *args, **kwargs):
-        # If no image is set, try to fetch one automatically
-        if (not self.image or str(self.image) == "https://via.placeholder.com/150") and self.name:
-            # This will run during migrations even if fetch_restaurant_image isn't defined yet
-            # So we need to handle the import error case
-            try:
-                from .utils.image_fetcher import fetch_restaurant_image
-                success, image_content = fetch_restaurant_image(
-                    self.name, self.cuisine)
-                if success:
-                    image_name = f"restaurant_{self.name.replace(' ', '_')}.jpg"
-                    self.image.save(image_name, image_content, save=False)
-            except (ImportError, Exception) as e:
-                pass  # Silently continue if image fetcher isn't available
+        # Only try to fetch an image for new restaurants without an image
+        if not self.pk and (not self.image or str(self.image) == "https://via.placeholder.com/150") and self.name:
+            # First, check if this restaurant already exists by name
+            if not Restaurant.objects.filter(name__iexact=self.name).exists():
+                # Only then try to fetch an image
+                try:
+                    from .utils.image_fetcher import fetch_restaurant_image
+                    success, image_content = fetch_restaurant_image(
+                        self.name, self.cuisine)
+                    if success:
+                        image_name = f"restaurant_{self.name.replace(' ', '_')}.jpg"
+                        self.image.save(image_name, image_content, save=False)
+                except (ImportError, Exception) as e:
+                    pass  # Silently continue if image fetcher isn't available
 
         super().save(*args, **kwargs)
 
@@ -82,10 +83,24 @@ class Restaurant(models.Model):
 class Location(models.Model):
     longitude = models.FloatField(default=0.0)  # Default value of 0.0
     latitude = models.FloatField(default=0.0)   # Default value of 0.0
-    restaurants = models.ManyToManyField(Restaurant, related_name="locations")
+
+    # Replace ManyToMany with ForeignKey to establish OneToMany
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,  # When restaurant is deleted, delete its locations
+        related_name="locations",   # Keep same related_name for backward compatibility
+        null=True,  # Set to True temporarily for migration
+        blank=True  # Also allow blank temporarily
+    )
+
+    def __str__(self):
+        return f"{self.restaurant.name} at ({self.latitude:.4f}, {self.longitude:.4f})"
 
     class Meta:
         db_table = "Locations"
+        indexes = [
+            models.Index(fields=['latitude', 'longitude'])
+        ]
 
 
 class Ingredient(models.Model):

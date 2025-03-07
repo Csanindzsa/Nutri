@@ -62,13 +62,13 @@ class RestaurantSerializer(serializers.ModelSerializer):
         # Create the restaurant
         restaurant = Restaurant.objects.create(**validated_data)
 
-        # If location data is provided, create or get a Location object and link it
+        # If location data is provided, create a Location object with restaurant FK
         if latitude is not None and longitude is not None:
-            location, created = Location.objects.get_or_create(
+            Location.objects.create(
+                restaurant=restaurant,  # This sets the restaurant_id
                 latitude=latitude,
                 longitude=longitude
             )
-            location.restaurants.add(restaurant)
 
         return restaurant
 
@@ -82,38 +82,37 @@ class RestaurantSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
 
-        # If location data is provided, update the location
+        # If location data is provided, update or create the location
         if latitude is not None and longitude is not None:
             # First check if there's an existing location for this restaurant
-            existing_locations = Location.objects.filter(restaurants=instance)
+            existing_location = Location.objects.filter(
+                restaurant=instance).first()
 
-            if existing_locations.exists():
-                # Update existing location if exists
-                location = existing_locations.first()
-                location.latitude = latitude
-                location.longitude = longitude
-                location.save()
+            if existing_location:
+                # Update existing location
+                existing_location.latitude = latitude
+                existing_location.longitude = longitude
+                existing_location.save()
             else:
-                # Create new location if doesn't exist
-                location, created = Location.objects.get_or_create(
+                # Create new location with restaurant FK
+                Location.objects.create(
+                    restaurant=instance,
                     latitude=latitude,
                     longitude=longitude
                 )
-                location.restaurants.add(instance)
 
         return instance
 
 
 class LocationSerializer(serializers.ModelSerializer):
-    restaurants = serializers.PrimaryKeyRelatedField(
-        queryset=Restaurant.objects.all(),
-        many=True,
-        required=False
-    )
+    restaurant_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Location
-        fields = ['id', 'latitude', 'longitude', 'restaurants']
+        fields = ['id', 'latitude', 'longitude', 'restaurant_id']
+
+    def get_restaurant_name(self, obj):
+        return obj.restaurant.name if obj.restaurant else None
 
 
 class IngredientSerializer(serializers.ModelSerializer):

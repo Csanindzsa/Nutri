@@ -67,6 +67,10 @@ urlpatterns = [
     path('restaurants/locations/', GetAllRestaurantLocationsView.as_view(),
          name='get-all-restaurant-locations'),
 
+    # Add the URL pattern for the batch save endpoint
+    path('restaurants/batch-save/', BatchSaveRestaurantsView.as_view(),
+         name='batch-save-restaurants'),
+
     # # ExactLocation URLs
     # path('exact-locations/', ExactLocationListCreateView.as_view(), name='exact-location-list-create'),
     # path('exact-locations/<int:pk>/', ExactLocationRetrieveUpdateDestroyView.as_view(), name='exact-location-retrieve-update-destroy'),
