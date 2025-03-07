@@ -34,11 +34,16 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import StarIcon from "@mui/icons-material/Star";
 import PublicIcon from "@mui/icons-material/Public"; // For "All" restaurants
 import NearMeIcon from "@mui/icons-material/NearMe"; // For "Nearby" restaurants
-import { Restaurant } from "../interfaces";
+import { Restaurant, Locations } from "../interfaces";
 import locationService, {
   LocationEnhancedRestaurant,
 } from "../services/LocationService";
 import { getRestaurantImage } from "../utils/imageUtils";
+import { API_BASE_URL } from "../config/environment";
+import {
+  normalizeCuisine,
+  formatMultipleCuisines,
+} from "../utils/cuisineUtils";
 
 interface RestaurantsPageProps {
   restaurants: Restaurant[];
@@ -81,10 +86,22 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
   );
   const [showApiResults, setShowApiResults] = useState<boolean>(false);
 
-  // Extract unique cuisine types
-  const cuisineTypes = Array.from(
-    new Set(restaurants.map((r) => r.cuisine).filter(Boolean))
-  );
+  // Add a ref to track if distance calculation has been done for initial restaurants
+  const initialCalculationDone = React.useRef(false);
+
+  // Get unique cuisines and process them
+  const processedCuisines = React.useMemo(() => {
+    // Extract all cuisines and split multi-cuisines (separated by semicolons)
+    const allCuisines = restaurants
+      .flatMap((r) => (r.cuisine ? r.cuisine.split(";") : []))
+      .filter(Boolean);
+
+    // Normalize and group cuisines
+    const normalizedCuisines = allCuisines.map((c) => normalizeCuisine(c));
+
+    // Get unique cuisines and sort alphabetically
+    return Array.from(new Set(normalizedCuisines)).sort();
+  }, [restaurants]);
 
   // Haversine formula to calculate distance between two coordinates
   const getHaversineDistance = useCallback(
@@ -95,6 +112,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
 
       const R = 6371; // Earth's radius in kilometers
       const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      // Fix the incorrect calculation: was (lon1 - lon1)
       const dLon = ((lon2 - lon1) * Math.PI) / 180;
       const a =
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -118,57 +136,15 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       location: { lat: number; lng: number }
     ) => {
       console.log(
-        "[Distance] Starting distance calculation with location:",
-        location
+        "[Distance] Using LocationService for consistent distance calculation"
       );
-
-      if (!location) {
-        console.warn(
-          "[Distance] No location provided for distance calculation"
-        );
-        return restaurants;
-      }
-
-      try {
-        const updatedRestaurants = restaurants.map((restaurant) => {
-          if (restaurant.latitude && restaurant.longitude) {
-            const distance = getHaversineDistance(
-              location.lat,
-              location.lng,
-              restaurant.latitude,
-              restaurant.longitude
-            );
-
-            // Format the distance string
-            const formattedDistance =
-              distance < 1
-                ? `${Math.round(distance * 1000)} m`
-                : `${distance.toFixed(1)} km`;
-
-            console.log(`[Distance] ${restaurant.name}: ${formattedDistance}`);
-
-            return {
-              ...restaurant,
-              distance,
-              formattedDistance,
-            };
-          }
-          console.log(`[Distance] ${restaurant.name}: Missing coordinates`);
-          return restaurant;
-        });
-
-        console.log(
-          "[Distance] Distance calculation completed for",
-          updatedRestaurants.length,
-          "restaurants"
-        );
-        return updatedRestaurants;
-      } catch (error) {
-        console.error("[Distance] Error calculating distances:", error);
-        return restaurants;
-      }
+      return locationService.calculateDistancesForRestaurants(
+        restaurants,
+        location.lat,
+        location.lng
+      );
     },
-    [getHaversineDistance]
+    []
   );
 
   // Sort restaurants by option
@@ -240,11 +216,18 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
           enhancedRestaurant.average_rating = Math.random() * 3 + 2; // Random rating between 2-5
         }
 
-        // Add mock location if not present (for demo purposes)
+        // Add mock location ONLY if not present - prioritize existing coordinates
         if (!enhancedRestaurant.latitude || !enhancedRestaurant.longitude) {
+          console.log(
+            `[Prepare] No coordinates for ${restaurant.name}, generating mock coordinates`
+          );
           const mockCoords = generateMockCoordinates(restaurant, baseLocation);
           enhancedRestaurant.latitude = mockCoords.latitude;
           enhancedRestaurant.longitude = mockCoords.longitude;
+        } else {
+          console.log(
+            `[Prepare] Using existing coordinates for ${restaurant.name}: (${enhancedRestaurant.latitude}, ${enhancedRestaurant.longitude})`
+          );
         }
 
         return enhancedRestaurant;
@@ -272,6 +255,92 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
     [calculateDistances, generateMockCoordinates, sortRestaurantsByOption]
   );
 
+  // Add this helper function to ensure we have location data for each restaurant
+  const ensureRestaurantLocations = useCallback(async () => {
+    if (!restaurants || restaurants.length === 0) return;
+
+    try {
+      console.log("[Locations] Fetching restaurant locations from backend");
+      // Fetch all restaurant locations from the backend
+      const response = await fetch(`${API_BASE_URL}/restaurants/locations/`);
+      if (!response.ok) throw new Error("Failed to fetch restaurant locations");
+
+      // Type the location data as Locations[]
+      const locationData = (await response.json()) as Locations[];
+      console.log(
+        "[Locations] Fetched restaurant locations:",
+        locationData.length
+      );
+
+      // Create a map of restaurant ID to its location data
+      const locationMap = new Map<
+        number,
+        { latitude: number; longitude: number }
+      >();
+      locationData.forEach((loc: Locations) => {
+        locationMap.set(loc.restaurant_id, {
+          latitude: loc.latitude,
+          longitude: loc.longitude,
+        });
+      });
+
+      console.log(
+        `[Locations] Created map with ${locationMap.size} restaurant locations`
+      );
+
+      // Update our restaurant data with location information
+      const updatedRestaurants = restaurants.map((restaurant) => {
+        const locationInfo = locationMap.get(restaurant.id);
+        if (locationInfo) {
+          console.log(
+            `[Locations] Found coordinates for ${restaurant.name}: (${locationInfo.latitude}, ${locationInfo.longitude})`
+          );
+          return {
+            ...restaurant,
+            latitude: locationInfo.latitude,
+            longitude: locationInfo.longitude,
+          };
+        } else {
+          console.log(
+            `[Locations] No coordinates found for ${restaurant.name}`
+          );
+        }
+        return restaurant;
+      });
+
+      console.log(
+        `[Locations] Updated ${updatedRestaurants.length} restaurants with location data`
+      );
+
+      // Apply distance calculations if we have user location
+      if (userLocation) {
+        console.log("[Locations] Calculating distances with current location");
+        const withDistances = locationService.calculateDistancesForRestaurants(
+          updatedRestaurants,
+          userLocation.lat,
+          userLocation.lng
+        );
+
+        // Set the flag to indicate calculations have been done
+        initialCalculationDone.current = true;
+
+        // Sort by distance
+        const sorted = sortRestaurantsByOption(withDistances, "distance");
+        setEnhancedRestaurants(sorted);
+        setSortOption("distance");
+      } else {
+        // Just update the restaurants without distance calculation
+        setEnhancedRestaurants(updatedRestaurants);
+      }
+
+      console.log("[Locations] Updated restaurants with location data");
+    } catch (error) {
+      console.error("[Locations] Error fetching restaurant locations:", error);
+      // Still setup the restaurants even if locations fail
+      setEnhancedRestaurants(restaurants.map((r) => ({ ...r })));
+    }
+  }, [restaurants, userLocation, sortRestaurantsByOption]);
+
   // Function to fetch nearby restaurants from external API
   const fetchNearbyRestaurants = useCallback(
     async (location: { lat: number; lng: number }) => {
@@ -279,10 +348,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       setApiError(null);
 
       try {
-        console.log(
-          "[Restaurants] Fetching nearby restaurants for location:",
-          location
-        );
+        console.log("[Restaurants] Fetching additional nearby restaurants");
 
         // Use our location service to get restaurants near the user
         const nearbyResults = await locationService.findNearbyRestaurants({
@@ -297,33 +363,59 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
           nearbyResults.length
         );
 
-        // Instead of updating enhancedRestaurants with API results,
-        // just store them separately and update distances for database restaurants
-        setApiRestaurants(nearbyResults);
+        // Create a set of existing restaurant names for quick lookup
+        const existingRestaurantNames = new Set(
+          enhancedRestaurants.map((r) => r.name.toLowerCase())
+        );
 
-        // Update the database restaurants with distance data
-        const withDistances = calculateDistances(restaurants, location);
-        setEnhancedRestaurants(withDistances);
+        // Filter out restaurants that we already have in our database
+        const newRestaurantsOnly = nearbyResults.filter(
+          (r) => !existingRestaurantNames.has(r.name.toLowerCase())
+        );
 
-        // Update sort option to distance by default when we get location data
-        setSortOption("distance");
+        console.log(
+          `[Restaurants] Found ${newRestaurantsOnly.length} new restaurants not in our database`
+        );
+
+        if (newRestaurantsOnly.length > 0) {
+          // Make sure all new restaurants have distances calculated
+          const newWithDistances =
+            locationService.calculateDistancesForRestaurants(
+              newRestaurantsOnly,
+              location.lat,
+              location.lng
+            );
+
+          // Combine with existing restaurants - keeping both sets
+          const combined = [...enhancedRestaurants, ...newWithDistances];
+
+          // Sort the combined list
+          const sorted = sortRestaurantsByOption(
+            combined,
+            sortOption || "distance"
+          );
+
+          // Update state with combined restaurants
+          setEnhancedRestaurants(sorted);
+
+          // Just track API restaurants separately for informational purposes
+          setApiRestaurants(newRestaurantsOnly);
+          setShowApiResults(true);
+        } else {
+          console.log("[Restaurants] No new restaurants found via API");
+          setApiRestaurants([]);
+        }
       } catch (error) {
         console.error(
           "[Restaurants] Error fetching nearby restaurants:",
           error
         );
-        setApiError(
-          "Failed to fetch nearby restaurants. Using stored data instead."
-        );
-
-        // Fallback to using the restaurants from props with distance calculation
-        const withDistances = calculateDistances(restaurants, location);
-        setEnhancedRestaurants(withDistances);
+        setApiError("Failed to fetch additional nearby restaurants");
       } finally {
         setIsLoading(false);
       }
     },
-    [restaurants, searchRadius]
+    [searchRadius, enhancedRestaurants, sortOption, sortRestaurantsByOption]
   );
 
   // Combine database restaurants with external API results
@@ -347,6 +439,11 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
     },
     []
   );
+
+  // Call this in useEffect to fetch restaurant locations only once
+  useEffect(() => {
+    ensureRestaurantLocations();
+  }, [ensureRestaurantLocations]);
 
   // Request location on component mount
   useEffect(() => {
@@ -386,62 +483,66 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         setEnhancedRestaurants(prepared);
       }
     }
-
-    // Initialize with ONLY stored restaurant data
-    setEnhancedRestaurants(restaurants.map((r) => ({ ...r })));
   }, [restaurants, prepareRestaurantsData]);
 
-  // Update distances when user location changes
+  // Update distances when user location changes - prevent infinite loops
   useEffect(() => {
     console.log("[Location Effect] User location updated:", userLocation);
+    console.log(
+      "[Location Effect] Initial calculation done:",
+      initialCalculationDone.current
+    );
 
-    if (
-      userLocation &&
-      enhancedRestaurants.length > 0 &&
-      !isProcessingLocation
-    ) {
+    if (userLocation && !initialCalculationDone.current) {
+      // First immediately calculate distances for existing restaurants
       setIsProcessingLocation(true);
       console.log(
-        "[Location Effect] Recalculating distances with new location"
+        "[Location Effect] Calculating distances for database restaurants"
       );
 
       try {
-        const updatedWithDistances = calculateDistances(
+        // Use LocationService to calculate distances consistently
+        const withDistances = locationService.calculateDistancesForRestaurants(
+          // Start with a fresh copy of the restaurants from props
           enhancedRestaurants,
-          userLocation
-        );
-        const sorted = sortRestaurantsByOption(
-          updatedWithDistances,
-          "distance"
+          userLocation.lat,
+          userLocation.lng
         );
 
+        const sorted = sortRestaurantsByOption(withDistances, "distance");
         console.log(
-          "[Location Effect] Setting updated restaurants with distances"
+          "[Location Effect] Setting distances for database restaurants"
         );
         setEnhancedRestaurants(sorted);
         setSortOption("distance");
+
+        // Set flag to prevent recalculation
+        initialCalculationDone.current = true;
+
+        // Then fetch ONLY NEW nearby restaurants
+        console.log("[Location Effect] Looking for new restaurants via API");
+        fetchNearbyRestaurants(userLocation);
       } catch (error) {
         console.error("[Location Effect] Error updating distances:", error);
       } finally {
         setIsProcessingLocation(false);
       }
+    } else if (userLocation && initialCalculationDone.current) {
+      // If we already calculated distances but location changed, just fetch new restaurants
+      console.log(
+        "[Location Effect] Location changed but calculations already done"
+      );
+      console.log("[Location Effect] Looking for new restaurants via API");
+      fetchNearbyRestaurants(userLocation);
     }
   }, [
     userLocation,
-    enhancedRestaurants.length,
-    calculateDistances,
+    enhancedRestaurants,
     sortRestaurantsByOption,
-    isProcessingLocation,
+    fetchNearbyRestaurants,
   ]);
 
-  // Effect to fetch nearby restaurants when user location changes
-  useEffect(() => {
-    if (userLocation) {
-      fetchNearbyRestaurants(userLocation);
-    }
-  }, [userLocation, fetchNearbyRestaurants]);
-
-  // Handle location request
+  // Handle location request - reset the calculation flag when location is updated
   const handleRequestLocation = useCallback(() => {
     console.log("[Location Request] Starting...");
     setLocationLoading(true);
@@ -468,18 +569,25 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         localStorage.setItem("userLng", newLocation.lng.toString());
         console.log("[Location Request] Saved to localStorage");
 
+        // Reset the calculation flag to force recalculation with new location
+        initialCalculationDone.current = false;
+
         // Process the new location
         setUserLocation(newLocation);
 
-        // Force immediate recalculation
+        // Force immediate recalculation using LocationService
         console.log("[Location Request] Forcing immediate recalculation");
-        const recalculated = calculateDistances(
+        const recalculated = locationService.calculateDistancesForRestaurants(
           enhancedRestaurants,
-          newLocation
+          newLocation.lat,
+          newLocation.lng
         );
         const sorted = sortRestaurantsByOption(recalculated, "distance");
         setEnhancedRestaurants(sorted);
         setSortOption("distance");
+
+        // Set the flag after calculation
+        initialCalculationDone.current = true;
 
         setLocationLoading(false);
         setLocationDialog(false);
@@ -503,7 +611,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         maximumAge: 0,
       }
     );
-  }, [enhancedRestaurants, calculateDistances, sortRestaurantsByOption]);
+  }, [enhancedRestaurants, sortRestaurantsByOption]);
 
   // Handle restaurant click
   const handleRestaurantClick = (restaurantId: number) => {
@@ -529,14 +637,22 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
     const matchesSearch = restaurant.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+
+    // Use the new cuisine filtering logic
     const matchesCuisine =
-      !selectedCuisineType || restaurant.cuisine === selectedCuisineType;
+      !selectedCuisineType ||
+      (restaurant.cuisine &&
+        restaurant.cuisine
+          .split(";")
+          .some((c) => normalizeCuisine(c) === selectedCuisineType));
+
     const matchesProximity =
       filterMode === "all" ||
       (filterMode === "nearby" &&
         userLocation &&
         restaurant.distance !== undefined &&
         restaurant.distance <= nearbyThreshold);
+
     return matchesSearch && matchesCuisine && matchesProximity;
   });
 
@@ -636,7 +752,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                 Filter by Cuisine:
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {cuisineTypes.map((cuisine) => (
+                {processedCuisines.map((cuisine) => (
                   <Chip
                     key={cuisine}
                     label={cuisine}
@@ -902,8 +1018,15 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                     <Typography variant="body2" color="text.secondary">
                       {restaurant.formattedDistance
                         ? `${restaurant.formattedDistance} away`
-                        : restaurant.location ||
-                          "Location information not available"}
+                        : restaurant.location &&
+                          restaurant.location !== "null" &&
+                          restaurant.location !== "undefined"
+                        ? restaurant.location
+                        : restaurant.latitude && restaurant.longitude
+                        ? `Coordinates: (${restaurant.latitude.toFixed(
+                            4
+                          )}, ${restaurant.longitude.toFixed(4)})`
+                        : "Location information not available"}
                     </Typography>
                   </Box>
 
@@ -930,7 +1053,6 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
                     >
                       View Foods
                     </Button>
-
                     <Tooltip
                       title={`${
                         restaurant.average_rating?.toFixed(1) || 0
@@ -950,25 +1072,25 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
               </Card>
             </Grid>
           ))}
-
-          {filteredRestaurants.length === 0 && (
-            <Box
-              sx={{
-                width: "100%",
-                textAlign: "center",
-                py: 8,
-                px: 2,
-              }}
-            >
-              <Typography variant="h6" color="text.secondary">
-                No restaurants match your search criteria
-              </Typography>
-              <Typography variant="body2" color="text.secondary" mt={1}>
-                Try adjusting your search term or filters
-              </Typography>
-            </Box>
-          )}
         </Grid>
+
+        {filteredRestaurants.length === 0 && (
+          <Box
+            sx={{
+              width: "100%",
+              textAlign: "center",
+              py: 8,
+              px: 2,
+            }}
+          >
+            <Typography variant="h6" color="text.secondary">
+              No restaurants match your search criteria
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mt={1}>
+              Try adjusting your search term or filters
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       {/* Location Permission Dialog */}
@@ -1036,18 +1158,17 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
           sx={{
             mt: 2,
             p: 2,
-            border: "1px dashed rgba(0,0,0,0.1)",
             borderRadius: 1,
-            display: "none",
+            border: "1px dashed rgba(0,0,0,0.1)",
           }}
         >
           <Typography variant="subtitle2">Debug:</Typography>
           <Typography variant="caption" component="pre">
-            Location: {JSON.stringify(userLocation, null, 2)}
-            <br />
             Restaurants with distance:{" "}
             {enhancedRestaurants.filter((r) => r.distance !== undefined).length}
             /{enhancedRestaurants.length}
+            <br />
+            Location: {JSON.stringify(userLocation, null, 2)}
           </Typography>
         </Box>
       )}
