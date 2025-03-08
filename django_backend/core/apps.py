@@ -21,9 +21,9 @@ class CoreConfig(AppConfig):
             # Import signals to register them
             from . import signals
 
-            # Start background task to fetch missing images
-            # We do this in a thread to avoid blocking startup
-            def run_fetch_missing_images():
+            # Start background tasks to fetch missing images
+            # We do this in threads to avoid blocking startup
+            def run_fetch_missing_food_images():
                 # Sleep for a few seconds to allow full server startup
                 time.sleep(5)
 
@@ -37,10 +37,36 @@ class CoreConfig(AppConfig):
                                  delay=1.0)  # 1 second delay between requests
                     logger.info("Food image fetch task completed")
                 except Exception as e:
-                    logger.error(f"Error running image fetch task: {str(e)}")
+                    logger.error(
+                        f"Error running food image fetch task: {str(e)}")
 
-            # Start in a separate thread
-            image_thread = threading.Thread(target=run_fetch_missing_images)
-            image_thread.daemon = True  # Make it a daemon so it doesn't prevent app shutdown
-            image_thread.start()
-            logger.info("Background image fetch thread started")
+            def run_fetch_missing_restaurant_images():
+                # Sleep for a few seconds to allow full server startup
+                # Start slightly after food images to avoid API rate issues
+                time.sleep(8)
+
+                logger.info(
+                    "Starting background task to fetch missing restaurant images")
+                try:
+                    from django.core.management import call_command
+                    call_command('fetch_missing_restaurant_images',
+                                 limit=30,  # Process up to 30 restaurants at startup
+                                 batch_size=10,
+                                 delay=1.0)  # 1 second delay between requests
+                    logger.info("Restaurant image fetch task completed")
+                except Exception as e:
+                    logger.error(
+                        f"Error running restaurant image fetch task: {str(e)}")
+
+            # Start in separate threads
+            food_image_thread = threading.Thread(
+                target=run_fetch_missing_food_images)
+            food_image_thread.daemon = True
+            food_image_thread.start()
+            logger.info("Background food image fetch thread started")
+
+            restaurant_image_thread = threading.Thread(
+                target=run_fetch_missing_restaurant_images)
+            restaurant_image_thread.daemon = True
+            restaurant_image_thread.start()
+            logger.info("Background restaurant image fetch thread started")

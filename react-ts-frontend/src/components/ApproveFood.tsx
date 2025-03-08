@@ -25,6 +25,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Tooltip,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
@@ -44,6 +45,8 @@ import {
   getApprovalProgressColor,
 } from "../config/approvalConfig";
 import LinearProgress from "@mui/material/LinearProgress";
+import HazardLevelIndicator from "./HazardLevelIndicator";
+import { getHazardLabel, getHazardColor } from "../utils/hazardUtils";
 
 interface ApproveFoodProps {
   food: Food;
@@ -51,7 +54,7 @@ interface ApproveFoodProps {
   userId: number | undefined;
   ingredients: Ingredient[];
   onApprove: (updatedFood: Food) => void;
-  showApproveButton?: boolean; // Add this prop
+  showApproveButton?: boolean;
 }
 
 // Styled components for nutrition facts table
@@ -59,7 +62,7 @@ const NutritionFactsContainer = styled(Box)(({ theme }) => ({
   border: "1px solid #000",
   padding: theme.spacing(2),
   width: "100%",
-  maxWidth: "100%", // Changed from 400px to 100% to fill the container width
+  maxWidth: "100%",
   margin: "0 auto",
   fontFamily: '"Helvetica", "Arial", sans-serif',
   backgroundColor: "white",
@@ -73,18 +76,12 @@ const NutritionFactsHeader = styled(Typography)({
   margin: "0 0 5px 0",
 });
 
-const NutritionFactsSubheader = styled(Typography)({
-  fontSize: "1.2rem",
-  fontWeight: "bold",
-  margin: "10px 0",
-});
-
 const NutritionRow = styled(Box)<{
   bold?: boolean;
   indent?: boolean;
   doubleIndent?: boolean;
   noBorder?: boolean;
-}>(({ bold, indent, doubleIndent, noBorder, theme }) => ({
+}>(({ bold, indent, doubleIndent, noBorder }) => ({
   display: "flex",
   justifyContent: "space-between",
   padding: "2px 0",
@@ -111,7 +108,7 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
   userId,
   ingredients,
   onApprove,
-  showApproveButton = true, // Default to true
+  showApproveButton = true,
 }) => {
   const [isUserApproved, setIsUserApproved] = useState<boolean>(() =>
     food.approved_supervisors != null
@@ -129,15 +126,19 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
   const approvalPercentage = calculateApprovalPercentage(approvedCount);
   const approvalColor = getApprovalProgressColor(approvedCount);
 
-  // Map ingredient IDs to their names
-  const getIngredientNames = (ingredientIds: number[]): string[] => {
+  // Update this function to return more information about each ingredient
+  const getIngredientDetails = (
+    ingredientIds: number[]
+  ): { name: string; hazardLevel: number }[] => {
     return ingredientIds.map((id) => {
       const ingredient = ingredients.find((ing) => ing.id === id);
-      return ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`;
+      return {
+        name: ingredient ? ingredient.name : `Unknown Ingredient (ID: ${id})`,
+        hazardLevel: ingredient ? ingredient.hazard_level : 0,
+      };
     });
   };
 
-  // Add this helper function for formatting numbers consistently
   const formatNutritionValue = (value: number | null | undefined): string => {
     if (value === null || value === undefined) return "0";
 
@@ -360,7 +361,8 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
             <Card
               elevation={2}
               sx={{
-                height: "100%",
+                height: "auto",
+                maxHeight: 450,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -400,6 +402,26 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
           {/* Food Details */}
           <Grid item xs={12} md={7}>
             <Box>
+              {/* Hazard Level Indicator - Add this section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Hazard Level
+                </Typography>
+                <Box sx={{ maxWidth: "300px" }}>
+                  <HazardLevelIndicator
+                    hazardLevel={food.hazard_level || 0}
+                    size="large"
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 1, color: "text.secondary" }}
+                  >
+                    {getHazardLabel(food.hazard_level || 0)}: This food has been
+                    rated based on its ingredients.
+                  </Typography>
+                </Box>
+              </Box>
+
               {/* Dietary Properties */}
               <Typography variant="h6" gutterBottom>
                 Dietary Information
@@ -443,27 +465,129 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
                 </Typography>
               </Box>
 
-              {/* Ingredients */}
+              {/* Updated Ingredients Section with scrollable container */}
               <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Ingredients
               </Typography>
               <Box sx={{ mb: 3 }}>
                 {food.ingredients && food.ingredients.length > 0 ? (
-                  <List dense>
-                    {getIngredientNames(food.ingredients).map((name, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <EggIcon color="action" fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText primary={name} />
-                      </ListItem>
-                    ))}
-                  </List>
+                  <Box
+                    sx={{
+                      maxHeight: 250,
+                      overflowY: "auto",
+                      pr: 1,
+                      "&::-webkit-scrollbar": {
+                        width: 8,
+                      },
+                      "&::-webkit-scrollbar-thumb": {
+                        backgroundColor: "rgba(0,0,0,0.2)",
+                        borderRadius: 4,
+                      },
+                      "&::-webkit-scrollbar-track": {
+                        backgroundColor: "rgba(0,0,0,0.05)",
+                        borderRadius: 4,
+                      },
+                    }}
+                  >
+                    <List dense>
+                      {getIngredientDetails(food.ingredients).map(
+                        (ingredient, index) => (
+                          <ListItem
+                            key={index}
+                            sx={{
+                              borderLeft: `4px solid ${getHazardColor(
+                                ingredient.hazardLevel
+                              )}`,
+                              pl: 2,
+                              mb: 0.5,
+                              borderRadius: 1,
+                              bgcolor: `${getHazardColor(
+                                ingredient.hazardLevel
+                              )}15`,
+                            }}
+                          >
+                            <ListItemIcon>
+                              <EggIcon
+                                fontSize="small"
+                                sx={{
+                                  color: getHazardColor(ingredient.hazardLevel),
+                                }}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={ingredient.name}
+                              secondary={getHazardLabel(ingredient.hazardLevel)}
+                            />
+                            <Tooltip
+                              title={`Hazard Level: ${ingredient.hazardLevel}`}
+                            >
+                              <Box
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: "50%",
+                                  bgcolor: getHazardColor(
+                                    ingredient.hazardLevel
+                                  ),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "white",
+                                  fontWeight: "bold",
+                                  fontSize: "0.8rem",
+                                }}
+                              >
+                                {ingredient.hazardLevel}
+                              </Box>
+                            </Tooltip>
+                          </ListItem>
+                        )
+                      )}
+                    </List>
+                  </Box>
                 ) : (
                   <Typography color="text.secondary">
                     No ingredients listed
                   </Typography>
                 )}
+
+                {/* Add a legend for hazard levels */}
+                <Box
+                  sx={{
+                    mt: 3,
+                    p: 2,
+                    bgcolor: "background.paper",
+                    borderRadius: 1,
+                    border: "1px solid #eee",
+                  }}
+                >
+                  <Typography variant="subtitle2" gutterBottom>
+                    Ingredient Hazard Level Legend:
+                  </Typography>
+                  <Box
+                    sx={{ display: "flex", flexWrap: "wrap", gap: 2, mt: 1 }}
+                  >
+                    {[0, 1, 2, 3, 4].map((level) => (
+                      <Box
+                        key={level}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <Box
+                          sx={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: "50%",
+                            bgcolor: getHazardColor(level),
+                            mr: 1,
+                          }}
+                        />
+                        <Typography variant="caption">
+                          {level}: {getHazardLabel(level)}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
               </Box>
 
               {/* Conditionally render approval section */}
@@ -563,8 +687,6 @@ const ApproveFood: React.FC<ApproveFoodProps> = ({
               Nutritional Information
             </Typography>
             <Box sx={{ mx: "auto", width: "100%" }}>
-              {" "}
-              {/* Added wrapper with full width */}
               {renderMacroTable(food.macro_table, food.serving_size)}
             </Box>
           </Grid>
