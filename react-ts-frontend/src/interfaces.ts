@@ -26,7 +26,7 @@ export interface Ingredient {
     id: number;
     name: string;
     description?: string | null;
-    hazard_level: 0 | 1 | 2 | 3; // Enum values
+    hazard_level: 0 | 1 | 2 | 3 | 4; // Enum values
 }
 
 export interface Supervisor {

@@ -1,10 +1,9 @@
 */__pycache__/*
-*/node_modules/
 *.env
 */target/
 */Cargo.lock
 *.pyc
-node_modules
 venv
 django_backend/django_backend/env
 django_backend/env
+node_modules

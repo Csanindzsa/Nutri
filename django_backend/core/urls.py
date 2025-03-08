@@ -37,7 +37,7 @@ urlpatterns = [
          name='create-food-change'),  # same as in approve-removal
 
     path('food/<int:food_id>/propose-removal/',
-         CreateFoodRemoval.as_view(), name='food-delete'),
+         CreateFoodRemoval.as_view(), name='propose-food-removal'),
     path('food-changes/deletions/', FoodChangeDeletionListView.as_view(),
          name='food-change-deletions-list'),
     path('food-changes/<int:pk>/approve-removal/',
