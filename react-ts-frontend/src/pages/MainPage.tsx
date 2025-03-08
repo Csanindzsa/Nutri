@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
+import { Restaurant, Food, Ingredient } from "../interfaces";
 import WelcomeSection from "../components/WelcomeSection";
 import { Box } from "@mui/material"; // Remove Container import
-import {API_BASE_URL} from "../config/environment";
+import { API_BASE_URL } from "../config/environment";
 
 // Fix interface to match all possible props
 interface MainPageProps {
@@ -19,8 +19,6 @@ interface MainPageProps {
   setRestaurants?: React.Dispatch<React.SetStateAction<Restaurant[]>>;
   setIngredients?: React.Dispatch<React.SetStateAction<Ingredient[]>>;
   setFoods?: React.Dispatch<React.SetStateAction<Food[]>>;
-  exactLocations?: ExactLocation[];
-  setExactLocations?: React.Dispatch<React.SetStateAction<ExactLocation[]>>;
 }
 
 const MainPage: React.FC<MainPageProps> = ({
@@ -36,8 +34,6 @@ const MainPage: React.FC<MainPageProps> = ({
   setRestaurants = () => {},
   setIngredients = () => {},
   setFoods = () => {},
-  exactLocations = [],
-  setExactLocations = () => {},
 }) => {
   const isDataLoaded = React.useRef(false);
   const navigate = useNavigate();

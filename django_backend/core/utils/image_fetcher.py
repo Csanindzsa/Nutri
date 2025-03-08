@@ -2,8 +2,10 @@ import requests
 import os
 import logging
 import random
-import sys  # Add sys module for stdout logging
-from pathlib import Path  # Add Path for better path handling
+import sys
+import time
+from datetime import datetime, timedelta
+from pathlib import Path
 from urllib.parse import urlparse, quote_plus
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -45,7 +47,7 @@ try:
     file_handler = logging.FileHandler(str(log_file_path))
     file_handler.setLevel(logging.INFO)
     file_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')  # Fix typo here - was 'levellevel'
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
 
@@ -100,6 +102,58 @@ except ImportError:
 # Create translator instance if available
 translator = Translator() if TRANSLATOR_AVAILABLE else None
 
+# Add a rate limiter class to track API requests
+
+
+class ApiRateLimiter:
+    def __init__(self, limit_per_hour=200):
+        self.limit_per_hour = limit_per_hour
+        self.request_timestamps = []
+        self.last_reset = datetime.now()
+        self.enabled = True  # Can be disabled for testing
+
+    def add_request(self):
+        """Record a new API request"""
+        now = datetime.now()
+        self._reset_if_needed(now)
+        self.request_timestamps.append(now)
+
+    def can_make_request(self):
+        """Check if a new request can be made without exceeding the rate limit"""
+        if not self.enabled:
+            return True  # Always allow if rate limiting is disabled
+
+        now = datetime.now()
+        self._reset_if_needed(now)
+        return len(self.request_timestamps) < self.limit_per_hour
+
+    def _reset_if_needed(self, now=None):
+        """Reset the counter if an hour has passed since the last reset"""
+        if now is None:
+            now = datetime.now()
+
+        # Reset if it's been more than an hour since the last reset
+        if now - self.last_reset > timedelta(hours=1):
+            self.request_timestamps = []
+            self.last_reset = now
+            logger.info(f"API rate limit counter reset at {now}")
+
+    def get_remaining(self):
+        """Get the number of remaining requests in the current hour"""
+        self._reset_if_needed()
+        return max(0, self.limit_per_hour - len(self.request_timestamps))
+
+    def get_reset_time(self):
+        """Get the time when the rate limit will reset"""
+        return self.last_reset + timedelta(hours=1)
+
+
+# Create rate limiter instances
+# Pexels limit: 200 requests per hour
+pexels_limiter = ApiRateLimiter(limit_per_hour=200)
+# Unsplash limit is much higher but adding for safety
+unsplash_limiter = ApiRateLimiter(limit_per_hour=50)
+
 
 def detect_and_translate_to_english(text):
     """
@@ -115,7 +169,7 @@ def detect_and_translate_to_english(text):
         source_lang = detection.lang
 
         # If already English, return as is
-        if source_lang == 'en':
+        if (source_lang == 'en'):
             logger.info(f"Text '{text}' already in English")
             return text, False
 
@@ -138,6 +192,21 @@ def fetch_food_image(food_name, restaurant_name=None):
     logger.info("========== NEW FOOD IMAGE REQUEST ==========")
     logger.info(
         f"Original food name: '{food_name}', restaurant: '{restaurant_name}'")
+
+    # Check rate limits before proceeding
+    pexels_remaining = pexels_limiter.get_remaining()
+    unsplash_remaining = unsplash_limiter.get_remaining()
+    logger.info(f"API rate limits: Pexels {pexels_remaining}/{pexels_limiter.limit_per_hour} remaining, "
+                f"Unsplash {unsplash_remaining}/{unsplash_limiter.limit_per_hour} remaining")
+
+    if pexels_remaining == 0 and unsplash_remaining == 0:
+        reset_time = min(pexels_limiter.get_reset_time(),
+                         unsplash_limiter.get_reset_time())
+        minutes_to_reset = max(
+            0, int((reset_time - datetime.now()).total_seconds() / 60))
+        logger.warning(
+            f"API rate limits exhausted! Will reset in approximately {minutes_to_reset} minutes")
+        return False, "API rate limits reached. Please try again later."
 
     # Translate food name and restaurant name to English if needed
     food_name_en, food_translated = detect_and_translate_to_english(food_name)
@@ -170,7 +239,7 @@ def fetch_food_image(food_name, restaurant_name=None):
     logger.info(f"Food search queries (in order): {search_queries}")
 
     # Try Pexels FIRST - switching the order as requested
-    if PEXELS_API_KEY:
+    if PEXELS_API_KEY and pexels_limiter.can_make_request():
         for query in search_queries:
             try:
                 logger.info(f"Trying Pexels with query: '{query}'")
@@ -186,8 +255,16 @@ def fetch_food_image(food_name, restaurant_name=None):
                 logger.info(
                     f"Pexels API request: {pexels_url} - params: {params}")
 
+                # Record this request in the rate limiter
+                pexels_limiter.add_request()
+
                 response = requests.get(
                     pexels_url, headers=headers, params=params)
+                remaining = response.headers.get('X-Ratelimit-Remaining')
+                if remaining:
+                    logger.info(
+                        f"Pexels API reported {remaining} requests remaining")
+
                 if response.status_code == 200:
                     data = response.json()
                     photos = data.get('photos', [])
@@ -219,6 +296,12 @@ def fetch_food_image(food_name, restaurant_name=None):
                     else:
                         logger.info(
                             f"No photos found for Pexels query: '{query}'")
+                elif response.status_code == 429:  # Too many requests
+                    logger.warning("Pexels API rate limit reached!")
+                    # Mark the rate limiter as exhausted
+                    while pexels_limiter.can_make_request():
+                        pexels_limiter.add_request()
+                    break  # Exit the Pexels loop and try Unsplash
                 else:
                     logger.warning(
                         f"Pexels API error: Status {response.status_code} - {response.text}")
@@ -228,7 +311,7 @@ def fetch_food_image(food_name, restaurant_name=None):
                     f"Error fetching image from Pexels with query '{query}': {str(e)}")
 
     # Try Unsplash as a fallback
-    if UNSPLASH_API_KEY:
+    if UNSPLASH_API_KEY and unsplash_limiter.can_make_request():
         for query in search_queries:
             try:
                 logger.info(f"Trying Unsplash with query: '{query}'")
@@ -245,8 +328,16 @@ def fetch_food_image(food_name, restaurant_name=None):
                 logger.info(
                     f"Unsplash API request: {unsplash_url} - params: {params}")
 
+                # Record this request in the rate limiter
+                unsplash_limiter.add_request()
+
                 response = requests.get(
                     unsplash_url, headers=headers, params=params)
+                remaining = response.headers.get('X-Ratelimit-Remaining')
+                if remaining:
+                    logger.info(
+                        f"Unsplash API reported {remaining} requests remaining")
+
                 if response.status_code == 200:
                     data = response.json()
                     results = data.get('results', [])
@@ -278,6 +369,12 @@ def fetch_food_image(food_name, restaurant_name=None):
                     else:
                         logger.info(
                             f"No results found for Unsplash query: '{query}'")
+                elif response.status_code == 429:  # Too many requests
+                    logger.warning("Unsplash API rate limit reached!")
+                    # Mark the rate limiter as exhausted
+                    while unsplash_limiter.can_make_request():
+                        unsplash_limiter.add_request()
+                    break  # Exit the Unsplash loop
                 else:
                     logger.warning(
                         f"Unsplash API error: Status {response.status_code} - {response.text}")
@@ -286,23 +383,27 @@ def fetch_food_image(food_name, restaurant_name=None):
                 logger.error(
                     f"Error fetching image from Unsplash with query '{query}': {str(e)}")
 
-    # Use unsplash source direct API as last resort with a very specific query
-    try:
-        # Create a highly specific query
-        exact_query = f"{base_query.lower()}-food-dish-meal"
-        encoded_query = quote_plus(exact_query)
-        fallback_url = f"https://source.unsplash.com/featured/?{encoded_query}"
-        logger.info(
-            f"Trying direct fallback image search with: '{exact_query}'")
-        logger.info(f"Fallback URL: {fallback_url}")
-
-        img_response = requests.get(fallback_url)
-        if img_response.status_code == 200:
+    # Use unsplash source direct API as last resort only if we haven't hit the limit
+    if pexels_limiter.get_remaining() == 0 and unsplash_limiter.get_remaining() == 0:
+        logger.warning(
+            "All API rate limits reached. Skipping direct fallback to prevent further rate limit issues.")
+    else:
+        try:
+            # Create a highly specific query
+            exact_query = f"{base_query.lower()}-food-dish-meal"
+            encoded_query = quote_plus(exact_query)
+            fallback_url = f"https://source.unsplash.com/featured/?{encoded_query}"
             logger.info(
-                f"Found fallback image for '{base_query}' at final URL: {img_response.url}")
-            return True, ContentFile(img_response.content)
-    except Exception as e:
-        logger.error(f"Error fetching fallback image: {str(e)}")
+                f"Trying direct fallback image search with: '{exact_query}'")
+            logger.info(f"Fallback URL: {fallback_url}")
+
+            img_response = requests.get(fallback_url)
+            if img_response.status_code == 200:
+                logger.info(
+                    f"Found fallback image for '{base_query}' at final URL: {img_response.url}")
+                return True, ContentFile(img_response.content)
+        except Exception as e:
+            logger.error(f"Error fetching fallback image: {str(e)}")
 
     logger.warning(
         f"FAILED: Could not find any relevant image for food: {food_name}")
@@ -317,6 +418,21 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
     logger.info("========== NEW RESTAURANT IMAGE REQUEST ==========")
     logger.info(
         f"Original restaurant name: '{restaurant_name}', cuisine: '{cuisine}'")
+
+    # Check rate limits before proceeding
+    pexels_remaining = pexels_limiter.get_remaining()
+    unsplash_remaining = unsplash_limiter.get_remaining()
+    logger.info(f"API rate limits: Pexels {pexels_remaining}/{pexels_limiter.limit_per_hour} remaining, "
+                f"Unsplash {unsplash_remaining}/{unsplash_limiter.limit_per_hour} remaining")
+
+    if pexels_remaining == 0 and unsplash_remaining == 0:
+        reset_time = min(pexels_limiter.get_reset_time(),
+                         unsplash_limiter.get_reset_time())
+        minutes_to_reset = max(
+            0, int((reset_time - datetime.now()).total_seconds() / 60))
+        logger.warning(
+            f"API rate limits exhausted! Will reset in approximately {minutes_to_reset} minutes")
+        return False, "API rate limits reached. Please try again later."
 
     # Translate restaurant name and cuisine to English if needed
     restaurant_name_en, restaurant_translated = detect_and_translate_to_english(
@@ -398,7 +514,7 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
         return any(indicator in url_lower for indicator in flag_indicators)
 
     # Try Pexels FIRST for restaurant images
-    if PEXELS_API_KEY:
+    if PEXELS_API_KEY and pexels_limiter.can_make_request():
         for query in search_queries:
             try:
                 logger.info(f"Trying Pexels with restaurant query: '{query}'")
@@ -413,8 +529,16 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                 logger.info(
                     f"Pexels API request: {pexels_url} - params: {params}")
 
+                # Record this request in the rate limiter
+                pexels_limiter.add_request()
+
                 response = requests.get(
                     pexels_url, headers=headers, params=params)
+                remaining = response.headers.get('X-Ratelimit-Remaining')
+                if remaining:
+                    logger.info(
+                        f"Pexels API reported {remaining} requests remaining")
+
                 if response.status_code == 200:
                     data = response.json()
                     photos = data.get('photos', [])
@@ -452,6 +576,12 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                     else:
                         logger.info(
                             f"No photos found for Pexels query: '{query}'")
+                elif response.status_code == 429:  # Too many requests
+                    logger.warning("Pexels API rate limit reached!")
+                    # Mark the rate limiter as exhausted
+                    while pexels_limiter.can_make_request():
+                        pexels_limiter.add_request()
+                    break  # Exit the Pexels loop and try Unsplash
                 else:
                     logger.warning(
                         f"Pexels API error: Status {response.status_code} - {response.text}")
@@ -461,7 +591,7 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                     f"Error fetching restaurant image from Pexels with query '{query}': {str(e)}")
 
     # Try Unsplash with more specific queries to avoid flags
-    if UNSPLASH_API_KEY:
+    if UNSPLASH_API_KEY and unsplash_limiter.can_make_request():
         for query in search_queries:
             try:
                 logger.info(
@@ -479,8 +609,16 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                 logger.info(
                     f"Unsplash API request: {unsplash_url} - params: {params}")
 
+                # Record this request in the rate limiter
+                unsplash_limiter.add_request()
+
                 response = requests.get(
                     unsplash_url, headers=headers, params=params)
+                remaining = response.headers.get('X-Ratelimit-Remaining')
+                if remaining:
+                    logger.info(
+                        f"Unsplash API reported {remaining} requests remaining")
+
                 if response.status_code == 200:
                     data = response.json()
                     results = data.get('results', [])
@@ -518,6 +656,12 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                     else:
                         logger.info(
                             f"No results found for Unsplash query: '{query}'")
+                elif response.status_code == 429:  # Too many requests
+                    logger.warning("Unsplash API rate limit reached!")
+                    # Mark the rate limiter as exhausted
+                    while unsplash_limiter.can_make_request():
+                        unsplash_limiter.add_request()
+                    break  # Exit the Unsplash loop
                 else:
                     logger.warning(
                         f"Unsplash API error: Status {response.status_code} - {response.text}")
@@ -527,20 +671,24 @@ def fetch_restaurant_image(restaurant_name, cuisine=None):
                     f"Error fetching restaurant image from Unsplash with query '{query}': {str(e)}")
 
     # Instead of the direct fallback which might be causing the flag issue, use a generic restaurant image
-    try:
-        # Use a very specific restaurant query that's unlikely to return flags
-        fallback_query = "generic restaurant building storefront dining"
-        encoded_query = quote_plus(fallback_query)
-        fallback_url = f"https://source.unsplash.com/featured/?{encoded_query}"
-        logger.info(f"Using generic restaurant fallback image")
+    if pexels_limiter.get_remaining() == 0 and unsplash_limiter.get_remaining() == 0:
+        logger.warning(
+            "All API rate limits reached. Skipping direct fallback to prevent further rate limit issues.")
+    else:
+        try:
+            # Use a very specific restaurant query that's unlikely to return flags
+            fallback_query = "generic restaurant building storefront dining"
+            encoded_query = quote_plus(fallback_query)
+            fallback_url = f"https://source.unsplash.com/featured/?{encoded_query}"
+            logger.info(f"Using generic restaurant fallback image")
 
-        img_response = requests.get(fallback_url)
-        if img_response.status_code == 200:
-            logger.info(f"Found generic restaurant fallback image")
-            return True, ContentFile(img_response.content)
-    except Exception as e:
-        logger.error(
-            f"Error fetching generic restaurant fallback image: {str(e)}")
+            img_response = requests.get(fallback_url)
+            if img_response.status_code == 200:
+                logger.info(f"Found generic restaurant fallback image")
+                return True, ContentFile(img_response.content)
+        except Exception as e:
+            logger.error(
+                f"Error fetching generic restaurant fallback image: {str(e)}")
 
     logger.warning(
         f"FAILED: Could not find any relevant image for restaurant: {restaurant_name}")

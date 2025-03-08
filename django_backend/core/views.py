@@ -572,6 +572,10 @@ class CreateFoodRemoval(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, food_id, *args, **kwargs):
+        # Log authentication information for debugging
+        logger.debug(f"Request auth: {request.auth}")
+        logger.debug(f"Request user: {request.user}")
+
         food = get_object_or_404(Food, id=food_id)
 
         try:

@@ -120,16 +120,29 @@ const ViewFood: React.FC<ViewFoodProps> = ({
   };
 
   const handleRequestDeletion = async () => {
-    if (!accessToken) return;
+    if (!accessToken) {
+      // Add specific error message for missing token
+      setNotification({
+        message: "You need to be logged in to request deletion",
+        severity: "error",
+      });
+      handleCloseDeleteDialog();
+      return;
+    }
 
     setSubmitting(true);
 
     try {
+      console.log(
+        "Making deletion request with token:",
+        accessToken.substring(0, 10) + "..."
+      );
+
       const response = await fetch(API_ENDPOINTS.proposeRemoval(food.id), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`, // Ensure correct spacing and format
         },
         body: JSON.stringify({ reason: deleteReason }),
       });
@@ -139,6 +152,14 @@ const ViewFood: React.FC<ViewFoodProps> = ({
           message:
             "Deletion request submitted successfully. It will be reviewed by supervisors.",
           severity: "success",
+        });
+        handleCloseDeleteDialog();
+      } else if (response.status === 401) {
+        // Handle unauthorized specifically
+        setNotification({
+          message:
+            "Authentication error: Your session may have expired. Please log in again.",
+          severity: "error",
         });
         handleCloseDeleteDialog();
       } else {
@@ -363,12 +384,13 @@ const ViewFood: React.FC<ViewFoodProps> = ({
         }}
       >
         <Grid container spacing={4}>
-          {/* Food Image */}
+          {/* Food Image - Fixed height to prevent stretching */}
           <Grid item xs={12} md={5}>
             <Card
               elevation={2}
               sx={{
-                height: "100%",
+                height: "auto", // Change from 100% to auto
+                maxHeight: 450, // Add a maximum height
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -471,65 +493,87 @@ const ViewFood: React.FC<ViewFoodProps> = ({
                 </Typography>
               </Box>
 
-              {/* Updated Ingredients Section */}
+              {/* Updated Ingredients Section with scrollable container */}
               <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
                 Ingredients
               </Typography>
               <Box sx={{ mb: 3 }}>
                 {food.ingredients && food.ingredients.length > 0 ? (
-                  <List dense>
-                    {getIngredientDetails(food.ingredients).map(
-                      (ingredient, index) => (
-                        <ListItem
-                          key={index}
-                          sx={{
-                            borderLeft: `4px solid ${getHazardColor(
-                              ingredient.hazardLevel
-                            )}`,
-                            pl: 2,
-                            mb: 0.5,
-                            borderRadius: 1,
-                            bgcolor: `${getHazardColor(
-                              ingredient.hazardLevel
-                            )}15`, // Very light background with 15% opacity
-                          }}
-                        >
-                          <ListItemIcon>
-                            <EggIcon
-                              fontSize="small"
-                              sx={{
-                                color: getHazardColor(ingredient.hazardLevel),
-                              }}
-                            />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={ingredient.name}
-                            secondary={getHazardLabel(ingredient.hazardLevel)}
-                          />
-                          <Tooltip
-                            title={`Hazard Level: ${ingredient.hazardLevel}`}
+                  <Box
+                    sx={{
+                      maxHeight: 250, // Add a maximum height
+                      overflowY: "auto", // Make it scrollable when content exceeds height
+                      pr: 1, // Add some padding for the scrollbar
+                      // Add subtle scrollbar styling
+                      "&::-webkit-scrollbar": {
+                        width: 8,
+                      },
+                      "&::-webkit-scrollbar-thumb": {
+                        backgroundColor: "rgba(0,0,0,0.2)",
+                        borderRadius: 4,
+                      },
+                      "&::-webkit-scrollbar-track": {
+                        backgroundColor: "rgba(0,0,0,0.05)",
+                        borderRadius: 4,
+                      },
+                    }}
+                  >
+                    <List dense>
+                      {getIngredientDetails(food.ingredients).map(
+                        (ingredient, index) => (
+                          <ListItem
+                            key={index}
+                            sx={{
+                              borderLeft: `4px solid ${getHazardColor(
+                                ingredient.hazardLevel
+                              )}`,
+                              pl: 2,
+                              mb: 0.5,
+                              borderRadius: 1,
+                              bgcolor: `${getHazardColor(
+                                ingredient.hazardLevel
+                              )}15`, // Very light background with 15% opacity
+                            }}
                           >
-                            <Box
-                              sx={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: "50%",
-                                bgcolor: getHazardColor(ingredient.hazardLevel),
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "white",
-                                fontWeight: "bold",
-                                fontSize: "0.8rem",
-                              }}
+                            <ListItemIcon>
+                              <EggIcon
+                                fontSize="small"
+                                sx={{
+                                  color: getHazardColor(ingredient.hazardLevel),
+                                }}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={ingredient.name}
+                              secondary={getHazardLabel(ingredient.hazardLevel)}
+                            />
+                            <Tooltip
+                              title={`Hazard Level: ${ingredient.hazardLevel}`}
                             >
-                              {ingredient.hazardLevel}
-                            </Box>
-                          </Tooltip>
-                        </ListItem>
-                      )
-                    )}
-                  </List>
+                              <Box
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: "50%",
+                                  bgcolor: getHazardColor(
+                                    ingredient.hazardLevel
+                                  ),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "white",
+                                  fontWeight: "bold",
+                                  fontSize: "0.8rem",
+                                }}
+                              >
+                                {ingredient.hazardLevel}
+                              </Box>
+                            </Tooltip>
+                          </ListItem>
+                        )
+                      )}
+                    </List>
+                  </Box>
                 ) : (
                   <Typography color="text.secondary">
                     No ingredients listed

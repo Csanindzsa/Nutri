@@ -13,7 +13,7 @@ import Login from "./Login";
 import ConfirmEmail from "./ConfirmEmail";
 import MainPage from "./MainPage";
 import CreateFood from "./CreateFood";
-import { Restaurant, Food, Ingredient, ExactLocation } from "../interfaces";
+import { Restaurant, Food, Ingredient } from "../interfaces";
 import ApprovableFoods from "./ApprovableFoods";
 import ApproveRemovals from "./ApproveRemovals";
 import ApproveUpdates from "./ApproveUpdates";
@@ -52,7 +52,7 @@ import { Helmet, HelmetProvider } from "react-helmet-async"; // Updated import
 import MuiAlert from "@mui/material/Alert";
 
 // Add this missing import
-import { API_ENDPOINTS , API_BASE_URL} from "../config/environment";
+import { API_ENDPOINTS, API_BASE_URL } from "../config/environment";
 
 // Import ButtonProps for the type definition
 import { ButtonProps } from "@mui/material/Button";
@@ -445,7 +445,6 @@ const App = () => {
     email?: string;
   }>({});
   const [restaurants, setRestaurants] = useState<Array<Restaurant>>([]);
-  const [exactLocations, setExactLocations] = useState<ExactLocation[]>([]);
   const [ingredients, setIngredients] = useState<Array<Ingredient>>([]);
   const [foods, setFoods] = useState<Array<Food>>([]);
   const [selectedRestaurants, setSelectedRestaurants] = useState<number[]>([]);
@@ -686,7 +685,8 @@ const App = () => {
         <div className="App">
           <Helmet>
             <title>Nutri - Your Dietary Aid</title>
-            <link rel="icon" href={logoImage} />
+            <link rel="icon" href="/favicon.ico" />{" "}
+            {/* Update this line to use favicon.ico */}
             <meta
               name="description"
               content="Nutri - Your Dietary Aid Application"
@@ -713,8 +713,6 @@ const App = () => {
                   setRestaurants={setRestaurants}
                   setIngredients={setIngredients}
                   setFoods={setFoods}
-                  exactLocations={exactLocations || []}
-                  setExactLocations={setExactLocations}
                 />
               }
             />
