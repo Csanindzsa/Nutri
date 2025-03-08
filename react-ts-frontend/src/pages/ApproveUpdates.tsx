@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { FoodChange, Ingredient, Food, MacroTable } from "../interfaces";
 import {
@@ -93,6 +93,11 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     changeId: null,
     action: "approve",
   });
+
+  // Add pagination state
+  const [visibleCount, setVisibleCount] = useState(50);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     // Check authentication
@@ -402,6 +407,45 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
     );
   };
 
+  // Function to load more items
+  const loadMoreItems = useCallback(() => {
+    if (isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prevCount) => Math.min(prevCount + 50, updates.length));
+      setIsLoadingMore(false);
+    }, 300);
+  }, [updates.length, isLoadingMore]);
+
+  // Slice the food changes to display only the visible ones
+  const visibleFoodChanges = updates.slice(0, visibleCount);
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          visibleFoodChanges.length < updates.length
+        ) {
+          loadMoreItems();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [loadMoreItems, visibleFoodChanges.length, updates.length]);
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
       {/* Orange header section */}
@@ -448,7 +492,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {updates.map((change) => (
+            {visibleFoodChanges.map((change) => (
               <Grid item xs={12} key={change.id}>
                 <Card
                   sx={{
@@ -710,6 +754,30 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
           </Grid>
         )}
       </Paper>
+
+      {/* Loading indicator for infinite scroll */}
+      {visibleFoodChanges.length < updates.length && (
+        <Box
+          ref={loadMoreRef}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 4,
+          }}
+        >
+          {isLoadingMore ? (
+            <CircularProgress size={30} sx={{ color: "#FF8C00" }} />
+          ) : (
+            <Button
+              variant="outlined"
+              onClick={loadMoreItems}
+              sx={{ mt: 3, color: "#FF8C00", borderColor: "#FF8C00" }}
+            >
+              Load More Items
+            </Button>
+          )}
+        </Box>
+      )}
 
       {/* Confirmation Dialog */}
       <Dialog
