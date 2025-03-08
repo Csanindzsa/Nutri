@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -63,9 +69,12 @@ const FoodList: React.FC<FoodListProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const loaderRef = useRef<HTMLDivElement>(null); // Reference for infinite scroll detection
 
-  // Add state for search term
+  // Add debounced search state
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Add state for dietary filters
   const [dietaryFilters, setDietaryFilters] = useState({
@@ -74,6 +83,10 @@ const FoodList: React.FC<FoodListProps> = ({
     isAlcoholFree: false,
     isLactoseFree: false,
   });
+
+  // Pagination state
+  const [visibleCount, setVisibleCount] = useState(100);
+  const [loading, setLoading] = useState(false);
 
   const toggleRestaurantSelection = (id: number) => {
     setSelectedRestaurants((prevSelected) =>
@@ -96,10 +109,30 @@ const FoodList: React.FC<FoodListProps> = ({
     navigate(`/food/${foodId}`); // Change from '/approve-food/' to '/food/'
   };
 
-  // Handler for search input change
+  // Handler for search input change with debounce
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const value = event.target.value;
+    setSearchTerm(value); // Update the display value immediately for user feedback
+
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set a new timeout to update the actual search term used for filtering
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(value);
+    }, 300); // 300ms delay
   };
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handler for restaurant selection change
   const handleRestaurantChange = (event: SelectChangeEvent<number[]>) => {
@@ -145,6 +178,7 @@ const FoodList: React.FC<FoodListProps> = ({
     const searchQuery = searchParams.get("search");
     if (searchQuery) {
       setSearchTerm(searchQuery);
+      setDebouncedSearchTerm(searchQuery); // Also set debounced term immediately in this case
     }
 
     // Handle restaurant parameter
@@ -165,40 +199,99 @@ const FoodList: React.FC<FoodListProps> = ({
     }
   }, [location.search, setSelectedRestaurants]);
 
-  // Filter foods based on selected restaurants, ingredients, and search term
-  const filteredFoods = foods.filter((food) => {
-    // Restaurant filter
-    if (
-      selectedRestaurants.length > 0 &&
-      !selectedRestaurants.includes(food.restaurant)
-    ) {
-      return false;
+  // Filter foods based on all criteria - now using debouncedSearchTerm
+  const allFilteredFoods = useMemo(() => {
+    return foods.filter((food) => {
+      // Restaurant filter
+      if (
+        selectedRestaurants.length > 0 &&
+        !selectedRestaurants.includes(food.restaurant)
+      ) {
+        return false;
+      }
+
+      // Ingredient filter - food must contain at least one selected ingredient
+      if (
+        selectedIngredients.length > 0 &&
+        !food.ingredients.some((id) => selectedIngredients.includes(id))
+      ) {
+        return false;
+      }
+
+      // Search term filter (case insensitive) - using debounced search term
+      if (
+        debouncedSearchTerm.trim() !== "" &&
+        !food.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Dietary filters
+      if (dietaryFilters.isOrganic && !food.is_organic) return false;
+      if (dietaryFilters.isGlutenFree && !food.is_gluten_free) return false;
+      if (dietaryFilters.isAlcoholFree && !food.is_alcohol_free) return false;
+      if (dietaryFilters.isLactoseFree && !food.is_lactose_free) return false;
+
+      return true;
+    });
+  }, [
+    foods,
+    selectedRestaurants,
+    selectedIngredients,
+    debouncedSearchTerm, // Changed from searchTerm to debouncedSearchTerm
+    dietaryFilters,
+  ]);
+
+  // Visible foods - only show up to the current visibleCount
+  const filteredFoods = useMemo(() => {
+    return allFilteredFoods.slice(0, visibleCount);
+  }, [allFilteredFoods, visibleCount]);
+
+  // Load more foods when user scrolls to bottom
+  const loadMoreFoods = useCallback(() => {
+    if (loading) return;
+
+    setLoading(true);
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + 100, allFilteredFoods.length));
+      setLoading(false);
+    }, 300); // Small delay to prevent too many updates
+  }, [allFilteredFoods.length, loading]);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(100);
+  }, [
+    debouncedSearchTerm,
+    selectedRestaurants,
+    selectedIngredients,
+    dietaryFilters,
+  ]); // Updated to use debouncedSearchTerm
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          filteredFoods.length < allFilteredFoods.length
+        ) {
+          loadMoreFoods();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
     }
 
-    // Ingredient filter - food must contain at least one selected ingredient
-    if (
-      selectedIngredients.length > 0 &&
-      !food.ingredients.some((id) => selectedIngredients.includes(id))
-    ) {
-      return false;
-    }
-
-    // Search term filter (case insensitive)
-    if (
-      searchTerm.trim() !== "" &&
-      !food.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) {
-      return false;
-    }
-
-    // Dietary filters
-    if (dietaryFilters.isOrganic && !food.is_organic) return false;
-    if (dietaryFilters.isGlutenFree && !food.is_gluten_free) return false;
-    if (dietaryFilters.isAlcoholFree && !food.is_alcohol_free) return false;
-    if (dietaryFilters.isLactoseFree && !food.is_lactose_free) return false;
-
-    return true;
-  });
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [filteredFoods.length, allFilteredFoods.length, loadMoreFoods]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
@@ -367,7 +460,9 @@ const FoodList: React.FC<FoodListProps> = ({
         }}
       >
         <Typography variant="h6" gutterBottom>
-          {filteredFoods.length} Results Found
+          {allFilteredFoods.length} Results Found
+          {allFilteredFoods.length > filteredFoods.length &&
+            ` (Showing ${filteredFoods.length})`}
         </Typography>
 
         <Grid container spacing={3}>
@@ -496,7 +591,7 @@ const FoodList: React.FC<FoodListProps> = ({
           ))}
 
           {/* Show message if no foods match the filters */}
-          {filteredFoods.length === 0 && (
+          {allFilteredFoods.length === 0 && (
             <Box
               sx={{
                 width: "100%",
@@ -514,6 +609,20 @@ const FoodList: React.FC<FoodListProps> = ({
             </Box>
           )}
         </Grid>
+
+        {/* Loading indicator at bottom for infinite scroll */}
+        {filteredFoods.length < allFilteredFoods.length && (
+          <Box
+            ref={loaderRef}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 4,
+            }}
+          >
+            <CircularProgress size={30} sx={{ color: "#FF8C00" }} />
+          </Box>
+        )}
       </Box>
     </Container>
   );

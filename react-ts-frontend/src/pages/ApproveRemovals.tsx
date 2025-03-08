@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Container,
   Typography,
@@ -61,6 +61,11 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  // Add pagination state
+  const [visibleCount, setVisibleCount] = useState(50);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Fetch food changes that are deletion requests
   useEffect(() => {
@@ -150,6 +155,47 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
     }
   };
 
+  // Function to load more items
+  const loadMoreItems = useCallback(() => {
+    if (isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prevCount) =>
+        Math.min(prevCount + 50, foodChanges.length)
+      );
+      setIsLoadingMore(false);
+    }, 300);
+  }, [foodChanges.length, isLoadingMore]);
+
+  // Slice the food changes to display only the visible ones
+  const visibleFoodChanges = foodChanges.slice(0, visibleCount);
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          visibleFoodChanges.length < foodChanges.length
+        ) {
+          loadMoreItems();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [loadMoreItems, visibleFoodChanges.length, foodChanges.length]);
+
   if (loading) {
     return (
       <Container sx={{ mt: 4, textAlign: "center" }}>
@@ -194,6 +240,8 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
         </Typography>
         <Typography variant="subtitle1">
           Review and approve requests to remove food items from the database
+          {foodChanges.length > 0 &&
+            ` (${visibleFoodChanges.length}/${foodChanges.length})`}
         </Typography>
       </Box>
 
@@ -206,7 +254,7 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
         }}
       >
         <Grid container spacing={3}>
-          {foodChanges.map((change) => (
+          {visibleFoodChanges.map((change) => (
             <Grid item xs={12} md={6} lg={4} key={change.id}>
               <Card>
                 <CardHeader
@@ -391,6 +439,32 @@ const ApproveRemovals: React.FC<ApproveFoodRemovalsProps> = ({
             </Grid>
           ))}
         </Grid>
+
+        {/* Loading indicator for infinite scroll */}
+        {visibleFoodChanges.length < foodChanges.length && (
+          <Box
+            ref={loadMoreRef}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 4,
+            }}
+          >
+            {isLoadingMore ? (
+              <CircularProgress size={30} sx={{ color: "#FF8C00" }} />
+            ) : (
+              <Button
+                variant="outlined"
+                onClick={loadMoreItems}
+                sx={{ mt: 3, color: "#FF8C00", borderColor: "#FF8C00" }}
+              >
+                Load More Items
+              </Button>
+            )}
+          </Box>
+        )}
+
+        {/* ...existing empty state handling... */}
       </Paper>
     </Container>
   );

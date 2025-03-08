@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Food, Ingredient } from "../interfaces";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -23,7 +23,7 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import Slide, { SlideProps } from "@mui/material/Slide";
-import {API_BASE_URL} from "../config/environment";
+import { API_BASE_URL } from "../config/environment";
 
 interface ApprovableFoodsProps {
   accessToken: string | null;
@@ -33,14 +33,20 @@ interface ApprovableFoodsProps {
 
 const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
   accessToken,
-  foods: initialFoods,
+  foods,
   handleApprove,
 }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [foods, setFoods] = useState<Food[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [approvableFoods, setApprovableFoods] = useState<Food[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  // Add pagination state
+  const [visibleCount, setVisibleCount] = useState(50);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const location = useLocation();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [approvalError, setApprovalError] = useState<string | null>(null);
 
@@ -74,18 +80,15 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
       }
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/foods/approvable/`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/foods/approvable/`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
         if (response.ok) {
           const data = await response.json();
-          setFoods(data);
+          setApprovableFoods(data);
         } else {
           setError("Failed to fetch approvable foods. Please try again later.");
         }
@@ -108,7 +111,9 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
       // Show success message with our custom UI
       setSuccessMessage("Food approved successfully!");
       // Remove the approved food from the list or mark it as approved
-      setFoods((prevFoods) => prevFoods.filter((food) => food.id !== foodId));
+      setApprovableFoods((prevFoods) =>
+        prevFoods.filter((food) => food.id !== foodId)
+      );
     } catch (error) {
       console.error("Error approving food:", error);
       setApprovalError("Failed to approve food. Please try again.");
@@ -124,6 +129,47 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
     setSuccessMessage(null);
     setApprovalError(null);
   };
+
+  // Function to load more items
+  const loadMoreFoods = useCallback(() => {
+    if (isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prevCount) =>
+        Math.min(prevCount + 50, approvableFoods.length)
+      );
+      setIsLoadingMore(false);
+    }, 300);
+  }, [approvableFoods.length, isLoadingMore]);
+
+  // Slice the foods to display only the visible ones
+  const visibleFoods = approvableFoods.slice(0, visibleCount);
+
+  // Setup intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          visibleFoods.length < approvableFoods.length
+        ) {
+          loadMoreFoods();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [loadMoreFoods, visibleFoods.length, approvableFoods.length]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
@@ -163,7 +209,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
           </Alert>
-        ) : foods.length === 0 ? (
+        ) : approvableFoods.length === 0 ? (
           <Box sx={{ textAlign: "center", py: 8 }}>
             <Typography variant="h6" color="text.secondary">
               No foods currently pending approval
@@ -171,7 +217,7 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
           </Box>
         ) : (
           <Grid container spacing={3}>
-            {foods.map((food) => (
+            {visibleFoods.map((food) => (
               <Grid item xs={12} sm={6} md={4} key={food.id}>
                 <Card
                   sx={{
@@ -271,6 +317,30 @@ const ApprovableFoods: React.FC<ApprovableFoodsProps> = ({
           </Grid>
         )}
       </Paper>
+
+      {/* Loading indicator for infinite scroll */}
+      {visibleFoods.length < approvableFoods.length && (
+        <Box
+          ref={loadMoreRef}
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            py: 4,
+          }}
+        >
+          {isLoadingMore ? (
+            <CircularProgress size={30} sx={{ color: "#FF8C00" }} />
+          ) : (
+            <Button
+              variant="outlined"
+              onClick={loadMoreFoods}
+              sx={{ mt: 3, color: "#FF8C00", borderColor: "#FF8C00" }}
+            >
+              Load More Foods to Approve
+            </Button>
+          )}
+        </Box>
+      )}
 
       {/* Success & error notifications */}
       <Snackbar

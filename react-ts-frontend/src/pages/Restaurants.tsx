@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -175,6 +175,11 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
 
   // Add a ref to track if distance calculation has been done for initial restaurants
   const initialCalculationDone = React.useRef(false);
+
+  // Add pagination state
+  const [visibleCount, setVisibleCount] = useState(50);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Get unique cuisines and process them
   const processedCuisines = React.useMemo(() => {
@@ -743,6 +748,51 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
     return matchesSearch && matchesCuisine && matchesProximity;
   });
 
+  // Only display limited number of restaurants
+  const visibleRestaurants = filteredRestaurants.slice(0, visibleCount);
+
+  // Add load more function
+  const loadMoreRestaurants = useCallback(() => {
+    if (isLoadingMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((prevCount) =>
+        Math.min(prevCount + 50, filteredRestaurants.length)
+      );
+      setIsLoadingMore(false);
+    }, 300);
+  }, [filteredRestaurants.length, isLoadingMore]);
+
+  // Add intersection observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          visibleRestaurants.length < filteredRestaurants.length
+        ) {
+          loadMoreRestaurants();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (loadMoreRef.current) {
+        observer.unobserve(loadMoreRef.current);
+      }
+    };
+  }, [
+    loadMoreRestaurants,
+    visibleRestaurants.length,
+    filteredRestaurants.length,
+  ]);
+
   // Handle filter mode change
   const handleFilterModeChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -1045,6 +1095,8 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
       >
         <Typography variant="h6" sx={{ mb: 3 }}>
           {filteredRestaurants.length} Database Restaurants Found
+          {visibleRestaurants.length < filteredRestaurants.length &&
+            ` (Showing ${visibleRestaurants.length})`}
           {filterMode === "nearby" && userLocation && (
             <Typography
               component="span"
@@ -1057,7 +1109,7 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
         </Typography>
 
         <Grid container spacing={3}>
-          {filteredRestaurants.map((restaurant) => (
+          {visibleRestaurants.map((restaurant) => (
             <Grid item xs={12} sm={6} md={4} key={restaurant.id}>
               <Card
                 sx={{
@@ -1150,6 +1202,30 @@ const Restaurants: React.FC<RestaurantsPageProps> = ({ restaurants }) => {
             </Grid>
           ))}
         </Grid>
+
+        {/* Loading more indicator */}
+        {visibleRestaurants.length < filteredRestaurants.length && (
+          <Box
+            ref={loadMoreRef}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              py: 4,
+            }}
+          >
+            {isLoadingMore ? (
+              <CircularProgress size={30} sx={{ color: "#FF8C00" }} />
+            ) : (
+              <Button
+                variant="outlined"
+                onClick={loadMoreRestaurants}
+                sx={{ color: "#FF8C00", borderColor: "#FF8C00" }}
+              >
+                Load More Restaurants
+              </Button>
+            )}
+          </Box>
+        )}
 
         {filteredRestaurants.length === 0 && (
           <Box
