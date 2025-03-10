@@ -12,14 +12,8 @@ import {
   CircularProgress,
   Grid, // Regular Grid as backup
 } from "@mui/material";
-// Try to import Grid2, fallback to regular Grid (handled in render)
-let Grid2: typeof Grid;
-try {
-  Grid2 = require("@mui/material/Unstable_Grid2").default;
-} catch (e) {
-  console.warn("Unstable_Grid2 not available, using regular Grid as fallback");
-  Grid2 = Grid;
-}
+// Try to import Grid, fallback to regular Grid (handled in render)
+
 
 import { API_ENDPOINTS } from "../config/environment";
 import { styled } from "@mui/material/styles";
@@ -147,8 +141,8 @@ const Login: React.FC<LoginProps> = ({
         )}
 
         <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%" }}>
-          <Grid2 container spacing={3}>
-            <Grid2 item xs={12}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
               <TextField
                 required
                 fullWidth
@@ -160,8 +154,8 @@ const Login: React.FC<LoginProps> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={submitting}
               />
-            </Grid2>
-            <Grid2 item xs={12}>
+            </Grid>
+            <Grid item xs={12}>
               <TextField
                 required
                 fullWidth
@@ -174,8 +168,8 @@ const Login: React.FC<LoginProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={submitting}
               />
-            </Grid2>
-            <Grid2 item xs={12}>
+            </Grid>
+            <Grid item xs={12}>
               <Button
                 type="submit"
                 fullWidth
@@ -194,17 +188,17 @@ const Login: React.FC<LoginProps> = ({
                   "Sign In"
                 )}
               </Button>
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12} textAlign="center">
+            <Grid item xs={12} textAlign="center">
               <Typography variant="body2" color="text.secondary">
                 Don't have an account?{" "}
                 <Link component={RouterLink} to="/register" variant="body2">
                   Sign up
                 </Link>
               </Typography>
-            </Grid2>
-          </Grid2>
+            </Grid>
+          </Grid>
         </Box>
       </FormPaper>
     </Container>
