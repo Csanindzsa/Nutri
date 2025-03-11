@@ -70,18 +70,89 @@ class CreateUserView(generics.CreateAPIView):
 
             confirmation_token.save()
 
-            # You can send an email to the user with this token if needed.
-            # Email sending logic would be here (omitted for brevity).
-            subject = 'Please confirm your email address'
-            message = f'Click here to confirm your email: http://localhost:5173/confirm-email/%7Bconfirmation_token.code%7D'
+            subject = "Confirm Your Email - Welcome!"
+            html_message = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Confirm Your Email</title>
+                <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }}
+                    .container {{
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background: #ffffff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                        text-align: center;
+                    }}
+                    h2 {{
+                        color: #333;
+                    }}
+                    p {{
+                        font-size: 16px;
+                        color: #555;
+                    }}
+                    .button {{
+                        display: inline-block;
+                        padding: 12px 24px;
+                        font-size: 18px;
+                        color: #ffffff;
+                        background-color: #007BFF;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        margin-top: 20px;
+                    }}
+                    .button:hover {{
+                        background-color: #0056b3;
+                    }}
+                    .footer {{
+                        font-size: 14px;
+                        color: #888;
+                        margin-top: 20px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h2>Welcome to Our Service!</h2>
+                    <p>Click the button below to confirm your email address and activate your account.</p>
+                    <a href="http://localhost:5173/confirm-email/{confirmation_token.code}" class="button">Confirm Email</a>
+                    <p class="footer">If you didn’t request this, please ignore this email.</p>
+                </div>
+            </body>
+            </html>
+            """
+
+
             from_email = os.getenv("EMAIL")  # Use the email from your settings
             recipient_list = [user.email]  # The recipient's email address
+            try:
+                send_mail(
+                subject, 
+                None,  # Text version omitted for simplicity
+                from_email, 
+                recipient_list, 
+                html_message=html_message
+                )
+                
+                return Response({
+                    "message": "User created successfully, a confirmation token has been generated."
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                user.delete()
+                print(e)
+                return Response({"message":"Failed to send email"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
 
-            send_mail(subject, message, from_email, recipient_list)
 
-            return Response({
-                "message": "User created successfully, a confirmation token has been generated."
-            }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
