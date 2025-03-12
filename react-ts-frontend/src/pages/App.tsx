@@ -746,7 +746,7 @@ const App = () => {
                 />
               }
             />
-            <Route path="/confirm-email/:key" element={<ConfirmEmail />} />
+            <Route path="/confirm-email/:token" element={<ConfirmEmail />} />
             <Route path="/account-deleted" element={<AccountDeleted />} />
             <Route path="/forbidden" element={<Forbidden />} />
             <Route path="*" element={<NotFound />} />

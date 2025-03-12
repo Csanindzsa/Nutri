@@ -32,3 +32,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+node_modules
+**/node_modules/**
+*/node_modules/*
+node_modules/*
+node_modules/**

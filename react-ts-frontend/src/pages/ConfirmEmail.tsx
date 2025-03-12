@@ -27,6 +27,8 @@ const ConfirmEmail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  console.log("got token: ", token)
+
   // Function to handle email confirmation request
   const confirmEmail = async () => {
     try {
