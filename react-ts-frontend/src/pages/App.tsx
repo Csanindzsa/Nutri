@@ -69,11 +69,16 @@ import EditFood from "./EditFood"; // Add this import
 import Support from "./Support"; // Add this import
 import SupportIcon from "@mui/icons-material/Support"; // Add this import
 
+// import styled from "styled-components";
+
+
+
 // Transparent logo container
 const LogoContainer = styled("div")({
   marginRight: "16px",
   display: "flex",
   alignItems: "center",
+  cursor: "pointer",
 });
 
 // Styling for the transparent logo
@@ -208,7 +213,7 @@ const Navbar = ({
         <Toolbar disableGutters>
           {/* Fix the logo path */}
           <LogoContainer>
-            <Logo src={logoImage} alt="Nutri Logo" />
+            <Logo src={logoImage} alt="Nutri Logo" onClick={()=>handleNavigation("/")}/>
           </LogoContainer>
 
           {/* Website Name */}
@@ -220,6 +225,7 @@ const Navbar = ({
               color: "#fff",
               fontWeight: 600,
               display: { xs: "block", sm: "block" },
+              cursor: "pointer",
             }}
           >
             Nutri
