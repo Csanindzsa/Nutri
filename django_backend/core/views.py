@@ -70,7 +70,7 @@ class CreateUserView(generics.CreateAPIView):
 
             confirmation_token.save()
 
-            subject = "Confirm Your Email - Welcome!"
+            subject = "Confirm Your Email - Nutri"
             html_message = f"""
             <!DOCTYPE html>
             <html>
@@ -105,24 +105,27 @@ class CreateUserView(generics.CreateAPIView):
                         padding: 12px 24px;
                         font-size: 18px;
                         color: #ffffff;
-                        background-color: #007BFF;
+                        background-color: #ff9800;
                         text-decoration: none;
                         border-radius: 5px;
                         margin-top: 20px;
                     }}
                     .button:hover {{
-                        background-color: #0056b3;
+                        background-color: #e68a00;
                     }}
                     .footer {{
                         font-size: 14px;
                         color: #888;
                         margin-top: 20px;
                     }}
+                    div {{
+                        color: #fff;
+                    }}
                 </style>
             </head>
             <body>
                 <div class="container">
-                    <h2>Welcome to Our Service!</h2>
+                    <h2>Welcome to Nutri!</h2>
                     <p>Click the button below to confirm your email address and activate your account.</p>
                     <a href="http://localhost:5173/confirm-email/{confirmation_token.code}" class="button">Confirm Email</a>
                     <p class="footer">If you didn’t request this, please ignore this email.</p>
