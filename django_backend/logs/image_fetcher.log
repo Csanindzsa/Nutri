@@ -11995,3 +11995,159 @@
 2025-03-11 10:35:10,134 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
 2025-03-11 10:35:10,135 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
 2025-03-11 10:35:10,507 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 08:55:07,417 - image_fetcher - INFO - Log file active at: /home/csabi/Desktop/Nutri/django_backend/logs/image_fetcher.log
+2025-03-12 08:55:07,417 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-12 08:55:07,417 - image_fetcher - WARNING - googletrans library not available. Translation features will be disabled.
+2025-03-12 08:55:07,417 - image_fetcher - WARNING - To enable translation, install with: pip install googletrans==4.0.0-rc1
+2025-03-12 08:55:12,219 - image_fetcher - INFO - Log file active at: /home/csabi/Desktop/Nutri/django_backend/logs/image_fetcher.log
+2025-03-12 08:55:12,220 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-12 08:55:12,220 - image_fetcher - WARNING - googletrans library not available. Translation features will be disabled.
+2025-03-12 08:55:12,220 - image_fetcher - WARNING - To enable translation, install with: pip install googletrans==4.0.0-rc1
+2025-03-12 08:55:12,233 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:12,233 - image_fetcher - INFO - Original food name: 'Vegetable Platter', restaurant: 'Rákóczi Gyros'
+2025-03-12 08:55:12,233 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:12,233 - image_fetcher - INFO - Food search queries (in order): ['Vegetable Platter food from Rákóczi Gyros', 'Vegetable Platter food exact dish', 'Vegetable Platter food meal', 'Vegetable Platter food closeup', 'Vegetable Platter dish served']
+2025-03-12 08:55:12,233 - image_fetcher - INFO - Trying direct fallback image search with: 'vegetable platter-food-dish-meal'
+2025-03-12 08:55:12,234 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?vegetable+platter-food-dish-meal
+2025-03-12 08:55:12,268 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:12,268 - image_fetcher - INFO - Original food name: 'Vegetable Platter', restaurant: 'Rákóczi Gyros'
+2025-03-12 08:55:12,268 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:12,268 - image_fetcher - INFO - Food search queries (in order): ['Vegetable Platter food from Rákóczi Gyros', 'Vegetable Platter food exact dish', 'Vegetable Platter food meal', 'Vegetable Platter food closeup', 'Vegetable Platter dish served']
+2025-03-12 08:55:12,269 - image_fetcher - INFO - Trying direct fallback image search with: 'vegetable platter-food-dish-meal'
+2025-03-12 08:55:12,269 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?vegetable+platter-food-dish-meal
+2025-03-12 08:55:13,007 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Vegetable Platter
+2025-03-12 08:55:13,008 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Vegetable Platter
+2025-03-12 08:55:14,008 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:14,008 - image_fetcher - INFO - Original food name: 'Stew', restaurant: 'Bodri Bor- és Halásztanya étterem'
+2025-03-12 08:55:14,009 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:14,009 - image_fetcher - INFO - Food search queries (in order): ['Stew food from Bodri Bor- és Halásztanya étterem', 'Stew food exact dish', 'Stew food meal', 'Stew food closeup', 'Stew dish served']
+2025-03-12 08:55:14,009 - image_fetcher - INFO - Trying direct fallback image search with: 'stew-food-dish-meal'
+2025-03-12 08:55:14,009 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?stew-food-dish-meal
+2025-03-12 08:55:14,011 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:14,011 - image_fetcher - INFO - Original food name: 'Stew', restaurant: 'Bodri Bor- és Halásztanya étterem'
+2025-03-12 08:55:14,011 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:14,011 - image_fetcher - INFO - Food search queries (in order): ['Stew food from Bodri Bor- és Halásztanya étterem', 'Stew food exact dish', 'Stew food meal', 'Stew food closeup', 'Stew dish served']
+2025-03-12 08:55:14,011 - image_fetcher - INFO - Trying direct fallback image search with: 'stew-food-dish-meal'
+2025-03-12 08:55:14,011 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?stew-food-dish-meal
+2025-03-12 08:55:14,514 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Stew
+2025-03-12 08:55:14,518 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Stew
+2025-03-12 08:55:15,518 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:15,518 - image_fetcher - INFO - Original food name: 'Cupcakes', restaurant: 'Mézes Madzag'
+2025-03-12 08:55:15,519 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:15,519 - image_fetcher - INFO - Food search queries (in order): ['Cupcakes food from Mézes Madzag', 'Cupcakes food exact dish', 'Cupcakes food meal', 'Cupcakes food closeup', 'Cupcakes dish served']
+2025-03-12 08:55:15,519 - image_fetcher - INFO - Trying direct fallback image search with: 'cupcakes-food-dish-meal'
+2025-03-12 08:55:15,519 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cupcakes-food-dish-meal
+2025-03-12 08:55:15,520 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:15,521 - image_fetcher - INFO - Original food name: 'Cupcakes', restaurant: 'Mézes Madzag'
+2025-03-12 08:55:15,521 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:15,521 - image_fetcher - INFO - Food search queries (in order): ['Cupcakes food from Mézes Madzag', 'Cupcakes food exact dish', 'Cupcakes food meal', 'Cupcakes food closeup', 'Cupcakes dish served']
+2025-03-12 08:55:15,521 - image_fetcher - INFO - Trying direct fallback image search with: 'cupcakes-food-dish-meal'
+2025-03-12 08:55:15,521 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cupcakes-food-dish-meal
+2025-03-12 08:55:16,097 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cupcakes
+2025-03-12 08:55:16,099 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cupcakes
+2025-03-12 08:55:17,101 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:17,102 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 08:55:17,102 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:17,102 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 08:55:17,102 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 08:55:17,102 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 08:55:17,102 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:17,102 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 08:55:17,102 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:17,103 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 08:55:17,103 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 08:55:17,103 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 08:55:17,624 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 08:55:17,625 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 08:55:18,627 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:18,627 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 08:55:18,627 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:18,627 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 08:55:18,628 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 08:55:18,628 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 08:55:18,629 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 08:55:18,629 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 08:55:18,629 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 08:55:18,629 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 08:55:18,630 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 08:55:18,630 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 08:55:19,162 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 08:55:19,168 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 09:17:39,306 - image_fetcher - INFO - Log file active at: /home/csabi/Desktop/Nutri/django_backend/logs/image_fetcher.log
+2025-03-12 09:17:39,306 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-12 09:17:39,306 - image_fetcher - WARNING - googletrans library not available. Translation features will be disabled.
+2025-03-12 09:17:39,307 - image_fetcher - WARNING - To enable translation, install with: pip install googletrans==4.0.0-rc1
+2025-03-12 09:17:44,164 - image_fetcher - INFO - Log file active at: /home/csabi/Desktop/Nutri/django_backend/logs/image_fetcher.log
+2025-03-12 09:17:44,164 - image_fetcher - INFO - Image fetcher logger initialized
+2025-03-12 09:17:44,164 - image_fetcher - WARNING - googletrans library not available. Translation features will be disabled.
+2025-03-12 09:17:44,164 - image_fetcher - WARNING - To enable translation, install with: pip install googletrans==4.0.0-rc1
+2025-03-12 09:17:44,171 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:44,171 - image_fetcher - INFO - Original food name: 'Vegetable Platter', restaurant: 'Rákóczi Gyros'
+2025-03-12 09:17:44,171 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:44,171 - image_fetcher - INFO - Food search queries (in order): ['Vegetable Platter food from Rákóczi Gyros', 'Vegetable Platter food exact dish', 'Vegetable Platter food meal', 'Vegetable Platter food closeup', 'Vegetable Platter dish served']
+2025-03-12 09:17:44,171 - image_fetcher - INFO - Trying direct fallback image search with: 'vegetable platter-food-dish-meal'
+2025-03-12 09:17:44,171 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?vegetable+platter-food-dish-meal
+2025-03-12 09:17:44,209 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:44,210 - image_fetcher - INFO - Original food name: 'Vegetable Platter', restaurant: 'Rákóczi Gyros'
+2025-03-12 09:17:44,210 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:44,210 - image_fetcher - INFO - Food search queries (in order): ['Vegetable Platter food from Rákóczi Gyros', 'Vegetable Platter food exact dish', 'Vegetable Platter food meal', 'Vegetable Platter food closeup', 'Vegetable Platter dish served']
+2025-03-12 09:17:44,210 - image_fetcher - INFO - Trying direct fallback image search with: 'vegetable platter-food-dish-meal'
+2025-03-12 09:17:44,210 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?vegetable+platter-food-dish-meal
+2025-03-12 09:17:44,828 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Vegetable Platter
+2025-03-12 09:17:44,830 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Vegetable Platter
+2025-03-12 09:17:45,830 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:45,830 - image_fetcher - INFO - Original food name: 'Stew', restaurant: 'Bodri Bor- és Halásztanya étterem'
+2025-03-12 09:17:45,830 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:45,830 - image_fetcher - INFO - Food search queries (in order): ['Stew food from Bodri Bor- és Halásztanya étterem', 'Stew food exact dish', 'Stew food meal', 'Stew food closeup', 'Stew dish served']
+2025-03-12 09:17:45,830 - image_fetcher - INFO - Trying direct fallback image search with: 'stew-food-dish-meal'
+2025-03-12 09:17:45,830 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?stew-food-dish-meal
+2025-03-12 09:17:45,834 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:45,835 - image_fetcher - INFO - Original food name: 'Stew', restaurant: 'Bodri Bor- és Halásztanya étterem'
+2025-03-12 09:17:45,836 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:45,837 - image_fetcher - INFO - Food search queries (in order): ['Stew food from Bodri Bor- és Halásztanya étterem', 'Stew food exact dish', 'Stew food meal', 'Stew food closeup', 'Stew dish served']
+2025-03-12 09:17:45,837 - image_fetcher - INFO - Trying direct fallback image search with: 'stew-food-dish-meal'
+2025-03-12 09:17:45,838 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?stew-food-dish-meal
+2025-03-12 09:17:46,444 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Stew
+2025-03-12 09:17:46,495 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Stew
+2025-03-12 09:17:47,448 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:47,448 - image_fetcher - INFO - Original food name: 'Cupcakes', restaurant: 'Mézes Madzag'
+2025-03-12 09:17:47,449 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:47,449 - image_fetcher - INFO - Food search queries (in order): ['Cupcakes food from Mézes Madzag', 'Cupcakes food exact dish', 'Cupcakes food meal', 'Cupcakes food closeup', 'Cupcakes dish served']
+2025-03-12 09:17:47,449 - image_fetcher - INFO - Trying direct fallback image search with: 'cupcakes-food-dish-meal'
+2025-03-12 09:17:47,449 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cupcakes-food-dish-meal
+2025-03-12 09:17:47,500 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:47,500 - image_fetcher - INFO - Original food name: 'Cupcakes', restaurant: 'Mézes Madzag'
+2025-03-12 09:17:47,500 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:47,500 - image_fetcher - INFO - Food search queries (in order): ['Cupcakes food from Mézes Madzag', 'Cupcakes food exact dish', 'Cupcakes food meal', 'Cupcakes food closeup', 'Cupcakes dish served']
+2025-03-12 09:17:47,500 - image_fetcher - INFO - Trying direct fallback image search with: 'cupcakes-food-dish-meal'
+2025-03-12 09:17:47,501 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cupcakes-food-dish-meal
+2025-03-12 09:17:47,971 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cupcakes
+2025-03-12 09:17:47,979 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cupcakes
+2025-03-12 09:17:48,976 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:48,976 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 09:17:48,976 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:48,976 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 09:17:48,976 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 09:17:48,976 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 09:17:48,982 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:48,982 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 09:17:48,982 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:48,982 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 09:17:48,982 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 09:17:48,982 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 09:17:49,563 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 09:17:49,583 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 09:17:50,567 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:50,567 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 09:17:50,567 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:50,567 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 09:17:50,567 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 09:17:50,567 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 09:17:50,587 - image_fetcher - INFO - ========== NEW FOOD IMAGE REQUEST ==========
+2025-03-12 09:17:50,587 - image_fetcher - INFO - Original food name: 'Cheeseburger', restaurant: 'McDonald's'
+2025-03-12 09:17:50,587 - image_fetcher - INFO - API rate limits: Pexels 200/200 remaining, Unsplash 50/50 remaining
+2025-03-12 09:17:50,587 - image_fetcher - INFO - Food search queries (in order): ["Cheeseburger food from McDonald's", 'Cheeseburger food exact dish', 'Cheeseburger food meal', 'Cheeseburger food closeup', 'Cheeseburger dish served']
+2025-03-12 09:17:50,587 - image_fetcher - INFO - Trying direct fallback image search with: 'cheeseburger-food-dish-meal'
+2025-03-12 09:17:50,587 - image_fetcher - INFO - Fallback URL: https://source.unsplash.com/featured/?cheeseburger-food-dish-meal
+2025-03-12 09:17:51,019 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
+2025-03-12 09:17:51,021 - image_fetcher - WARNING - FAILED: Could not find any relevant image for food: Cheeseburger
