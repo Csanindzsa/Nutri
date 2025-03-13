@@ -200,18 +200,32 @@ const CreateFood: React.FC<CreateFoodProps> = ({
       return;
     }
 
+    //if the calories are negative, they will become positive
+    let macroTable = formData.macro_table;
+    if (macroTable.energy_kcal < 0){
+      macroTable.energy_kcal *= -1;
+    }
+
+    // Convert all numeric values to their absolute values
+    (Object.keys(macroTable) as Array<keyof typeof macroTable>).forEach((key) => {
+      if (typeof macroTable[key] === "number") {
+        macroTable[key] = Math.abs(macroTable[key]);
+      }
+    });
+  
+
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.name);
     formDataToSend.append("restaurant", String(formData.restaurant));
     formData.ingredients.forEach((ingredientId) => {
       formDataToSend.append("ingredients", String(ingredientId));
     });
-    formDataToSend.append("macro_table", JSON.stringify(formData.macro_table));
+    formDataToSend.append("macro_table", JSON.stringify(macroTable));
     formDataToSend.append("is_organic", String(formData.is_organic));
     formDataToSend.append("is_gluten_free", String(formData.is_gluten_free));
     formDataToSend.append("is_alcohol_free", String(formData.is_alcohol_free));
     formDataToSend.append("is_lactose_free", String(formData.is_lactose_free));
-    formDataToSend.append("serving_size", String(formData.serving_size));
+    formDataToSend.append("serving_size", String(Math.abs(formData.serving_size)));
 
     if (image) {
       formDataToSend.append("image", image);
