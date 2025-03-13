@@ -227,6 +227,7 @@ const Navbar = ({
               display: { xs: "block", sm: "block" },
               cursor: "pointer",
             }}
+            onClick={()=>handleNavigation("/")}
           >
             Nutri
           </Typography>
