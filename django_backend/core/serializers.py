@@ -196,3 +196,9 @@ class ConfirmationTokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfirmationToken
         fields = ["code"]
+
+
+class SupportMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupportMessage
+        fields = '__all__'

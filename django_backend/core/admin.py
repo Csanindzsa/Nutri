@@ -4,7 +4,8 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from .models import (
     User, Restaurant, Location, Ingredient,
-    Food, FoodChange, ConfirmationToken
+    Food, FoodChange, ConfirmationToken,
+    SupportMessage
 )
 from .services.restaurant_service import RestaurantService
 
@@ -106,6 +107,13 @@ class FoodChangeAdmin(admin.ModelAdmin):
     list_filter = ('is_deletion', 'new_is_approved')
     filter_horizontal = ('new_ingredients', 'new_approved_supervisors')
 
+@admin.register(SupportMessage)
+class SupportMessageAdmin(admin.ModelAdmin):
+    list_display = ("subject", "email", "category", "created_at")
+    search_fields = ("subject", "email", "message")
+    list_filter = ("category", "created_at")
+
+
 # ConfirmationToken admin
 
 
@@ -113,3 +121,6 @@ class FoodChangeAdmin(admin.ModelAdmin):
 class ConfirmationTokenAdmin(admin.ModelAdmin):
     list_display = ('user_id', 'code')  # Removed 'created_at'
     search_fields = ('user_id__username', 'user_id__email')
+
+
+

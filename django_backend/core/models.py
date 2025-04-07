@@ -252,3 +252,34 @@ class ConfirmationToken(models.Model):
 
     class Meta:
         db_table = "ConfirmationTokens"
+
+class SupportMessage(models.Model):
+    CATEGORY_CHOICES = [
+        ("general_question", "General Question"),
+        ("account_issues", "Account Issues"),
+        ("food_data_questions", "Food Data Questions"),
+        ("restaurant_information", "Restaurant Information"),
+        ("report_a_bug", "Report a Bug"),
+        ("feature_request", "Feature Request"),
+        ("other", "Other"),
+    ]
+
+
+    category = models.CharField(
+        max_length=50, choices=CATEGORY_CHOICES, verbose_name="Category")
+    subject = models.CharField(max_length=255, verbose_name="Subject")
+    message = models.TextField(verbose_name="Message")
+    email = models.EmailField(verbose_name="Email")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="support_messages", null=True, blank=True, verbose_name="User"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+
+    def __str__(self):
+        return f"Support Message - {self.subject}"
+
+    class Meta:
+        db_table = "SupportMessages"
+        verbose_name = "Support Message"
+        verbose_name_plural = "Support Messages"
+        ordering = ['-created_at']
