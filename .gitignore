@@ -38,3 +38,5 @@ node_modules
 */node_modules/*
 node_modules/*
 node_modules/**
+django_backend/logs/**
+django_backend/logs/
