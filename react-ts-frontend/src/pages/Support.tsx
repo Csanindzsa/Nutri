@@ -24,6 +24,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { sendEmail, EmailData } from "../utils/emailService";
+import { API_BASE_URL } from "../config/environment";
 
 interface SupportProps {
   accessToken: string | null;
@@ -39,7 +40,7 @@ const Support: React.FC<SupportProps> = ({ accessToken, userData }) => {
   // Form state
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [category, setCategory] = useState("general");
+  const [category, setCategory] = useState("general_question");
   const [userEmail, setUserEmail] = useState(userData.email || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +49,12 @@ const Support: React.FC<SupportProps> = ({ accessToken, userData }) => {
 
   // Support categories
   const supportCategories = [
-    { value: "general", label: "General Question" },
-    { value: "account", label: "Account Issues" },
-    { value: "foods", label: "Food Data Questions" },
-    { value: "restaurants", label: "Restaurant Information" },
-    { value: "bug", label: "Report a Bug" },
-    { value: "feature", label: "Feature Request" },
+    { value: "general_question", label: "General Question" },
+    { value: "account_issues", label: "Account Issues" },
+    { value: "food_data_questions", label: "Food Data Questions" },
+    { value: "restaurant_information", label: "Restaurant Information" },
+    { value: "report_a_bug", label: "Report a Bug" },
+    { value: "feature_request", label: "Feature Request" },
     { value: "other", label: "Other" },
   ];
 
@@ -80,37 +81,40 @@ const Support: React.FC<SupportProps> = ({ accessToken, userData }) => {
     setLoading(true);
     setError(null);
 
-    const emailData: EmailData = {
-      subject,
-      message,
-      category,
-      userName: userData.username || "Anonymous User",
-      userEmail,
-    };
-
     try {
-      // Send the email using our email service
-      const result = await sendEmail(emailData);
-
-      if (result) {
-        setSuccess(true);
-        setFormSubmitted(true);
-
-        // Clear form after successful submission
-        setSubject("");
-        setMessage("");
-        setCategory("general");
-      } else {
-        throw new Error("Failed to send message");
+      const response = await fetch(`${API_BASE_URL}/ticket/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: accessToken ? `Bearer ${accessToken}` : "",
+        },
+        body: JSON.stringify({
+          subject,
+          message,
+          category,
+          // userName: userData.username || "Anonymous User",
+          email: userEmail,
+        }),
+      });
+    
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
       }
+    
+      setSuccess(true);
+      setFormSubmitted(true);
+    
+      // Optional delay before redirect to let user see the success Snackbar
+      setTimeout(() => {
+        navigate("/"); // Redirect to home page
+      }, 2000);
     } catch (err) {
-      console.error("Error sending support request:", err);
+      console.error("Error submitting ticket:", err);
       setError(
         "Failed to send your message. Please try again or contact us directly."
       );
-    } finally {
-      setLoading(false);
     }
+    
   };
 
   const validateEmail = (email: string): boolean => {
@@ -127,7 +131,7 @@ const Support: React.FC<SupportProps> = ({ accessToken, userData }) => {
     setFormSubmitted(false);
     setSubject("");
     setMessage("");
-    setCategory("general");
+    setCategory(supportCategories[0].value);
     setSuccess(false);
   };
 
