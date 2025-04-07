@@ -972,7 +972,7 @@ def create_food(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class SupportMessageListCreateView(generics.CreateAPIView):
+class SupportMessageCreateView(generics.CreateAPIView):
     serializer_class = SupportMessageSerializer
     permission_classes = [IsAuthenticated]
 

@@ -97,6 +97,10 @@ urlpatterns = [
          name='food-change-list-create'),
     path('food-changes/<int:pk>/', FoodChangeRetrieveUpdateDestroyView.as_view(),
          name='food-change-retrieve-update-destroy'),
+
+     #support ticket creation
+     path('ticket/', SupportMessageCreateView.as_view(), name="support-message-create-view"),
+     
 ]
 
 
