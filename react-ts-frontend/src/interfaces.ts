@@ -1,8 +1,8 @@
 export interface User {
-    id: number;
-    email: string;
-    username: string;
-    is_supervisor: boolean;
+    user_id?: number;
+    email?: string;
+    username?: string;
+    is_supervisor?: boolean;
 }
 
 export interface Restaurant {
@@ -18,7 +18,6 @@ export interface Restaurant {
     latitude?: number;  // Add latitude for geolocation
     longitude?: number; // Add longitude for geolocation
     hazard_level?: number; // Average hazard level of foods at this restaurant
-    // ...other existing properties
 }
 
 

@@ -99,19 +99,10 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  useEffect(() => {
-    // Check authentication
-    if (!accessToken) {
-      navigate("/forbidden");
-      return;
-    }
-
-    // Fetch the update requests
-    fetchUpdates();
-  }, [accessToken, userId, navigate]);
+  
 
   const fetchUpdates = async () => {
-    if (!accessToken || !userId) {
+    if (!accessToken) {
       setError("You need to be logged in to access this page");
       setLoading(false);
       return;
@@ -167,6 +158,17 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check authentication
+    if (!accessToken) {
+      navigate("/forbidden");
+      return;
+    }
+
+    // Fetch the update requests
+    fetchUpdates();
+  }, [accessToken, userId, navigate]);
 
   const handleOpenConfirm = (
     changeId: number,
@@ -444,7 +446,7 @@ const ApproveUpdates: React.FC<ApproveUpdatesProps> = ({
         observer.unobserve(loadMoreRef.current);
       }
     };
-  }, [loadMoreItems, visibleFoodChanges.length, updates.length]);
+  }, [accessToken, loadMoreItems, visibleFoodChanges.length, updates.length]);
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>

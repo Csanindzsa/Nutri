@@ -13,7 +13,7 @@ import Login from "./Login";
 import ConfirmEmail from "./ConfirmEmail";
 import MainPage from "./MainPage";
 import CreateFood from "./CreateFood";
-import { Restaurant, Food, Ingredient } from "../interfaces";
+import { User, Restaurant, Food, Ingredient } from "../interfaces";
 import ApprovableFoods from "./ApprovableFoods";
 import ApproveRemovals from "./ApproveRemovals";
 import ApproveUpdates from "./ApproveUpdates";
@@ -26,6 +26,7 @@ import ViewFood from "../components/ViewFood";
 import Approvals from "./Approvals";
 import NotFound from "./NotFound";
 import Forbidden from "./Forbidden";
+import decodeToken from "../utils/decodeToken";
 import {
   AppBar,
   Toolbar,
@@ -115,16 +116,8 @@ const AuthButton = styled(Button)<StyledButtonProps>(({ theme }) => ({
   },
 }));
 
-// Function to decode JWT token
-const decodeToken = (token: string) => {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload;
-  } catch (err) {
-    console.error("Error decoding token:", err);
-    return null;
-  }
-};
+
+
 
 const refreshAccessToken = async (refreshToken: string | null) => {
   if (!refreshToken) return null;
@@ -195,7 +188,7 @@ const Navbar = ({
   ];
 
   // Conditional navigation items based on user role
-  if (userData.username) {
+  if (userData.is_supervisor) {
     // Replace the three separate approval links with a single entry
     navItems.push({ name: "Approvals", path: "/approvals" });
   }
@@ -450,6 +443,7 @@ const App = () => {
     user_id?: number;
     username?: string;
     email?: string;
+    is_supervisor?: boolean;
   }>({});
   const [restaurants, setRestaurants] = useState<Array<Restaurant>>([]);
   const [ingredients, setIngredients] = useState<Array<Ingredient>>([]);
@@ -497,6 +491,7 @@ const App = () => {
                 user_id: decoded.user_id,
                 username: decoded.username,
                 email: decoded.email,
+                is_supervisor: decoded.is_supervisor,
               });
             }
           } else {
@@ -557,6 +552,7 @@ const App = () => {
                 user_id: newDecoded.user_id,
                 username: newDecoded.username,
                 email: newDecoded.email,
+                is_supervisor: newDecoded.is_supervisor,
               });
             }
           }
@@ -886,7 +882,7 @@ const App = () => {
                 >
                   <ApproveFoodPage
                     accessToken={accessToken}
-                    userId={userData.user_id}
+                    user={userData}
                     ingredients={ingredients}
                     foods={foods}
                     handleApprove={handleApprove}
@@ -972,18 +968,18 @@ const App = () => {
 // Create a wrapper component to handle fetching the specific food data
 const ApproveFoodPage: React.FC<{
   accessToken: string | null;
-  userId: number | undefined;
+  user: User | undefined;
   ingredients: Ingredient[];
   foods: Food[];
   handleApprove: (foodId: number) => void;
   showApproveButton?: boolean;
 }> = ({
   accessToken,
-  userId,
+  user,
   ingredients,
   foods,
   handleApprove,
-  showApproveButton = true,
+  showApproveButton = user?.is_supervisor,
 }) => {
   const { foodId } = useParams<{ foodId: string }>();
   const location = useLocation();
@@ -1058,7 +1054,7 @@ const ApproveFoodPage: React.FC<{
     <ApproveFood
       food={food}
       accessToken={accessToken}
-      userId={userId}
+      userId={user?.user_id}
       ingredients={ingredients}
       onApprove={() => {
         handleApprove(food.id);
