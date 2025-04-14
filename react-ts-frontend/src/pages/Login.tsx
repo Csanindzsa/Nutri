@@ -17,6 +17,7 @@ import {
 
 import { API_ENDPOINTS } from "../config/environment";
 import { styled } from "@mui/material/styles";
+import decodeToken from "../utils/decodeToken";
 
 const FormPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -91,14 +92,22 @@ const Login: React.FC<LoginProps> = ({
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
 
+      
+      
+
       // Update state
       setAccessToken(access);
       setRefreshToken(refresh);
-      setUserData({
-        user_id,
-        username,
-        email: userEmail,
-      });
+      const decoded = decodeToken(access);
+      if (decoded){ //must exist at this point
+        setUserData({
+          user_id: decoded.user_id,
+          username: decoded.username,
+          email: decoded.email,
+          is_supervisor: decoded.is_supervisor
+        });
+      }
+      
 
       // Navigate to the page they were trying to access
       navigate(from);
