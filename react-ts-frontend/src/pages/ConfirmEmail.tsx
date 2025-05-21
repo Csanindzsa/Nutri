@@ -53,8 +53,7 @@ const ConfirmEmail = () => {
       } else {
         const data = await response.json();
         setError(
-          data.detail ||
-            "Invalid or expired confirmation link. Please request a new one."
+          "Your approval request was likely approved before the page has fully loaded, or the token never existed. Please try logging in."
         );
         setIsSuccess(false);
       }
